@@ -34,7 +34,7 @@ def print_matrix(matrix):
     print("Matrix:")
     for row in matrix:
         for cell in row:
-            print([cell[0],cell[1]], end=" ")
+            print([cell[0]["cutting_price"],cell[1]], end=" ")
         print()
     print("------------")
 
@@ -42,7 +42,7 @@ def multiplier(sell_bid, buy_bid):
     return round(1/abs(sell_bid["linearlocation"] - buy_bid["linearlocation"]),2)
 
 def price_per_credit(sell_bid, buy_bid, mult):
-    print("---- price per credit ----")
+    print_debug("---- price per credit ----")
     quantity = min(sell_bid["quantity"], buy_bid["quantity"])
     buyer_max_extra_tokens = seller_max_extra_tokens =  quantity * mult/2
     print_debug("max extra tokens: ", quantity*mult)
@@ -66,7 +66,7 @@ def price_per_credit(sell_bid, buy_bid, mult):
     print_debug("seller desired price per credit: ", sell_bid["price_per_credit"])
 
     if sell_bid["price_per_credit"] > buyer_is_willing_to_pay_per_credit_from_seller_perspective:
-        return 0
+        return {"cutting_price": 0, "quantity": 0}
     average = (sell_bid["price_per_credit"] + buyer_is_willing_to_pay_per_credit_from_seller_perspective) / 2
     print_debug("cutting price is ", average)
     print_debug("buyer effectively pays ", average*(to_be_aquired+to_be_aquired*mult/2))
@@ -89,8 +89,8 @@ def johann_algorithm(sell_bids, buy_bids):
                     continue
                 mult = multiplier(sell_bid, buy_bid)
                 ppc = price_per_credit(sell_bid, buy_bid, mult)
-                if ppc == 0:
-                    continue
+                if ppc["cutting_price"] == 0:
+                    mult = 0
                 row.append([ppc, mult, buy_bid, sell_bid])
             matrix.append(row)
         return matrix
