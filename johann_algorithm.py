@@ -44,31 +44,34 @@ def multiplier(sell_bid, buy_bid):
 def price_per_credit(sell_bid, buy_bid, mult):
     print("---- price per credit ----")
     quantity = min(sell_bid["quantity"], buy_bid["quantity"])
-    buyer_extra_tokens = seller_extra_tokens =  quantity * mult/2
+    buyer_total_extra_tokens = seller_total_extra_tokens =  quantity * mult/2
     print_debug("total extra tokens: ", quantity*mult)
-    print_debug("buyer's extra tokens: ", buyer_extra_tokens)
-    print_debug("seller's extra tokens: ", seller_extra_tokens)
-    acquirable_quantity = quantity + buyer_extra_tokens + seller_extra_tokens
+    print_debug("buyer's extra tokens: ", buyer_total_extra_tokens)
+    print_debug("seller's extra tokens: ", seller_total_extra_tokens)
+    acquirable_quantity = quantity + buyer_total_extra_tokens + seller_total_extra_tokens
     print_debug("total acquirable quantity: ", acquirable_quantity)
-    to_be_aquired =  acquirable_quantity if buy_bid["quantity"] >= acquirable_quantity else buy_bid["quantity"]
-    # the seller wil receive their extra tokens and buy the buyer's extra tokens.
-    # Thus, only actual_quantity_buyer_needs is decremented from the seller's quantity.
-    actual_quantity_buyer_needs = to_be_aquired - buyer_extra_tokens - seller_extra_tokens
-    print_debug("actual quantity buyer needs acounting for extra credits: ", actual_quantity_buyer_needs)
 
-    buyer_is_willing_to_pay_total = buy_bid["price_per_credit"]*(actual_quantity_buyer_needs+seller_extra_tokens)
+    to_be_aquired = 0
+    if buy_bid["quantity"] >= acquirable_quantity:
+        to_be_aquired = buy_bid["quantity"]
+    else:
+        to_be_aquired = buy_bid["quantity"]/(1+mult) # buy_bid["quantity"] = to_be_aquired + to_be_aquired*mult
+    print_debug("actual quantity buyer needs from sell bid: ", to_be_aquired)
+
+    # buyer will pay for the credits and proportionally to the extra seller tokens
+    buyer_is_willing_to_pay_total = buy_bid["price_per_credit"]*(to_be_aquired+to_be_aquired*mult/2)
     print_debug("buyer is willing to pay total: ", buyer_is_willing_to_pay_total)
-    print_debug("buyer willing price per credit: ", buyer_is_willing_to_pay_total/actual_quantity_buyer_needs)
-    buyer_is_willing_to_pay_per_credit_from_seller_perspective = buyer_is_willing_to_pay_total/actual_quantity_buyer_needs
+    print_debug("buyer willing price per credit: ", buyer_is_willing_to_pay_total/to_be_aquired)
+    buyer_is_willing_to_pay_per_credit_from_seller_perspective = buyer_is_willing_to_pay_total/to_be_aquired
     print_debug("seller desired price per credit: ", sell_bid["price_per_credit"])
 
     if sell_bid["price_per_credit"] > buyer_is_willing_to_pay_per_credit_from_seller_perspective:
         return 0
     average = (sell_bid["price_per_credit"] + buyer_is_willing_to_pay_per_credit_from_seller_perspective) / 2
     print_debug("cutting price to ", average)
-    print_debug("buyer effectively pays ", average*(actual_quantity_buyer_needs+seller_extra_tokens))
-    print_debug("buyer effectively pays per credit ", average*(actual_quantity_buyer_needs+seller_extra_tokens)/to_be_aquired)
-    print_debug("seller effectively receives ", average*(actual_quantity_buyer_needs+seller_extra_tokens))
+    print_debug("buyer effectively pays ", average*(to_be_aquired))
+    print_debug("buyer effectively pays per credit ", average)
+    print_debug("seller effectively receives ", average*to_be_aquired)
     print_debug("seller effectively receives per credit ", average)
     return {"cutting_price": round(average,2), "quantity": to_be_aquired}
 
