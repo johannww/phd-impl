@@ -73,6 +73,7 @@ def price_per_credit(sell_bid, buy_bid, mult):
     print_debug("buyer effectively pays per credit ", average*(to_be_aquired+to_be_aquired*mult/2)/(to_be_aquired+to_be_aquired*mult))
     print_debug("seller effectively receives ", average*(to_be_aquired+to_be_aquired*mult/2))
     print_debug("seller effectively receives per credit ", average)
+    # TODO: remove rounding
     return {"cutting_price": round(average,2), "quantity": to_be_aquired}
 
 # TODO: THIS IS NOT DONE YET
