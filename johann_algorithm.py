@@ -51,8 +51,11 @@ def price_per_credit(sell_bid, buy_bid, mult):
     acquirable_quantity = quantity + buyer_max_extra_tokens + seller_max_extra_tokens
     print_debug("total acquirable quantity: ", acquirable_quantity)
 
-    # buy_bid["quantity"] = to_be_aquired + to_be_aquired*mult
-    to_be_aquired = buy_bid["quantity"]/(1+mult)
+    if buy_bid["quantity"] >= acquirable_quantity:
+        to_be_aquired = quantity
+    else:
+        # buy_bid["quantity"] = to_be_aquired + to_be_aquired*mult
+        to_be_aquired = buy_bid["quantity"]/(1+mult)
     print_debug("actual quantity buyer needs from sell bid: ", to_be_aquired)
 
     # buyer will pay for the credits and proportionally to the extra seller tokens
@@ -65,10 +68,10 @@ def price_per_credit(sell_bid, buy_bid, mult):
     if sell_bid["price_per_credit"] > buyer_is_willing_to_pay_per_credit_from_seller_perspective:
         return 0
     average = (sell_bid["price_per_credit"] + buyer_is_willing_to_pay_per_credit_from_seller_perspective) / 2
-    print_debug("cutting price to ", average)
-    print_debug("buyer effectively pays ", average*(to_be_aquired))
-    print_debug("buyer effectively pays per credit ", average)
-    print_debug("seller effectively receives ", average*to_be_aquired)
+    print_debug("cutting price is ", average)
+    print_debug("buyer effectively pays ", average*(to_be_aquired+to_be_aquired*mult/2))
+    print_debug("buyer effectively pays per credit ", average*(to_be_aquired+to_be_aquired*mult/2)/(to_be_aquired+to_be_aquired*mult))
+    print_debug("seller effectively receives ", average*(to_be_aquired+to_be_aquired*mult/2))
     print_debug("seller effectively receives per credit ", average)
     return {"cutting_price": round(average,2), "quantity": to_be_aquired}
 
