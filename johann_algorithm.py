@@ -6,6 +6,8 @@
 #bBid2 p21   p22    p23
 #bBid3 p31   p32    p33
 
+import pprint
+
 sell_bids = [
         {"price_per_credit": 20, "quantity": 10, "linearlocation": 0},
         {"price_per_credit": 50, "quantity": 10, "linearlocation": 10},
@@ -20,6 +22,7 @@ buy_bids = [
 
 def print_matrix(matrix):
     print("------------")
+    print("Matrix:")
     for row in matrix:
         for cell in row:
             print([cell[0],cell[1]], end=" ")
@@ -75,11 +78,14 @@ def johann_algorithm(sell_bids, buy_bids):
     while len(matrix) > 0:
         print_matrix(matrix)
         bid = get_combination_with_highest_multiplier(matrix)
-        print("satisfying bid: ", bid)
+        print("-----------------")
+        print("satisfying bid: ")
+        pprint.pprint(bid)
+        print("-----------------")
         satisfy_bid(bid, matched_bids)
         matrix = mount_matrix(sell_bids, buy_bids)
 
-    __import__('pprint').pprint(matched_bids)
+    pprint.pprint(matched_bids)
 
     # TODO: i can satisfy the bids with higher multiplier first, as they represent a more
     # efficient carbon sinking. Also, the profit of the multiplier must be split between the
