@@ -15,10 +15,19 @@ sell_bids = [
         ]
 
 buy_bids = [
-        {"price_per_credit": 60, "quantity": 10, "linearlocation": -3},
+        {"price_per_credit": 19.9, "quantity": 10, "linearlocation": -3},
         {"price_per_credit": 40, "quantity": 10, "linearlocation": -4},
         {"price_per_credit": 90, "quantity": 10, "linearlocation": 24},
         ]
+
+debug = True
+
+def print_debug(*args):
+    if not debug:
+        return
+    for arg in args:
+        print(arg, end=" ")
+    print()
 
 def print_matrix(matrix):
     print("------------")
@@ -32,13 +41,36 @@ def print_matrix(matrix):
 def multiplier(sell_bid, buy_bid):
     return round(1/abs(sell_bid["linearlocation"] - buy_bid["linearlocation"]),2)
 
-def price_per_credit(sell_bid, buy_bid):
-    #price = price_per_credit * quantity
-    # quantity_to_burn = min(sell_bid["quantity"], buy_bid["quantity"])*multiplier
-    if sell_bid["price_per_credit"] > buy_bid["price_per_credit"]:
+def price_per_credit(sell_bid, buy_bid, mult):
+    print("---- price per credit ----")
+    quantity = min(sell_bid["quantity"], buy_bid["quantity"])
+    buyer_extra_tokens = seller_extra_tokens =  quantity * mult/2
+    print_debug("total extra tokens: ", quantity*mult)
+    print_debug("buyer's extra tokens: ", buyer_extra_tokens)
+    print_debug("seller's extra tokens: ", seller_extra_tokens)
+    acquirable_quantity = quantity + buyer_extra_tokens + seller_extra_tokens
+    print_debug("total acquirable quantity: ", acquirable_quantity)
+    to_be_aquired =  acquirable_quantity if buy_bid["quantity"] >= acquirable_quantity else buy_bid["quantity"]
+    # the seller wil receive their extra tokens and buy the buyer's extra tokens.
+    # Thus, only actual_quantity_buyer_needs is decremented from the seller's quantity.
+    actual_quantity_buyer_needs = to_be_aquired - buyer_extra_tokens - seller_extra_tokens
+    print_debug("actual quantity buyer needs acounting for extra credits: ", actual_quantity_buyer_needs)
+
+    buyer_is_willing_to_pay_total = buy_bid["price_per_credit"]*(actual_quantity_buyer_needs+seller_extra_tokens)
+    print_debug("buyer is willing to pay total: ", buyer_is_willing_to_pay_total)
+    print_debug("buyer willing price per credit: ", buyer_is_willing_to_pay_total/actual_quantity_buyer_needs)
+    buyer_is_willing_to_pay_per_credit_from_seller_perspective = buyer_is_willing_to_pay_total/actual_quantity_buyer_needs
+    print_debug("seller desired price per credit: ", sell_bid["price_per_credit"])
+
+    if sell_bid["price_per_credit"] > buyer_is_willing_to_pay_per_credit_from_seller_perspective:
         return 0
-    average = (sell_bid["price_per_credit"] + buy_bid["price_per_credit"]) / 2
-    return round(average,2)
+    average = (sell_bid["price_per_credit"] + buyer_is_willing_to_pay_per_credit_from_seller_perspective) / 2
+    print_debug("cutting price to ", average)
+    print_debug("buyer effectively pays ", average*(actual_quantity_buyer_needs+seller_extra_tokens))
+    print_debug("buyer effectively pays per credit ", average*(actual_quantity_buyer_needs+seller_extra_tokens)/to_be_aquired)
+    print_debug("seller effectively receives ", average*(actual_quantity_buyer_needs+seller_extra_tokens))
+    print_debug("seller effectively receives per credit ", average)
+    return {"cutting_price": round(average,2), "quantity": to_be_aquired}
 
 # TODO: THIS IS NOT DONE YET
 def johann_algorithm(sell_bids, buy_bids):
@@ -51,8 +83,10 @@ def johann_algorithm(sell_bids, buy_bids):
             for buy_bid in buy_bids:
                 if buy_bid["quantity"] == 0:
                     continue
-                ppc = price_per_credit(sell_bid, buy_bid)
                 mult = multiplier(sell_bid, buy_bid)
+                ppc = price_per_credit(sell_bid, buy_bid, mult)
+                if ppc == 0:
+                    continue
                 row.append([ppc, mult, buy_bid, sell_bid])
             matrix.append(row)
         return matrix
