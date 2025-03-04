@@ -9,7 +9,7 @@
 import pprint
 
 sell_bids = [
-        {"price_per_credit": 20, "quantity": 10, "linearlocation": 0},
+        {"price_per_credit": 20, "quantity": 5, "linearlocation": 0},
         {"price_per_credit": 50, "quantity": 10, "linearlocation": 10},
         {"price_per_credit": 40, "quantity": 10, "linearlocation": 30},
         ]
@@ -63,21 +63,26 @@ def johann_algorithm(sell_bids, buy_bids):
             for combination in row:
                 if combination[1] > max_mult_combination[1]:
                     max_mult_combination = combination
+        if max_mult_combination[1] == 0:
+            return None
         return max_mult_combination
 
     def satisfy_bid(bid, matched_bids):
-        which_bid = bid[2]["quantity"] - bid[3]["quantity"]
+        if bid == None:
+            return
+        quantity = min(bid[2]["quantity"], bid[3]["quantity"])
         matched_bids.append({"sell_bid": bid[3], "buy_bid": bid[2], "quantity": min(bid[2]["quantity"], bid[3]["quantity"])})
-        if which_bid <= 0:
-            bid[2]["quantity"] = 0
-        if which_bid >= 0:
-            bid[3]["quantity"] = 0
+        bid[2]["quantity"] -= quantity
+        bid[3]["quantity"] -= quantity
 
     matrix = mount_matrix(sell_bids, buy_bids)
     matched_bids = []
-    while len(matrix) > 0:
+    len_matched_bids = 0
+    while True:
         print_matrix(matrix)
         bid = get_combination_with_highest_multiplier(matrix)
+        if bid == None:
+            break
         print("-----------------")
         print("satisfying bid: ")
         pprint.pprint(bid)
@@ -86,6 +91,10 @@ def johann_algorithm(sell_bids, buy_bids):
         matrix = mount_matrix(sell_bids, buy_bids)
 
     pprint.pprint(matched_bids)
+
+    print("Bids not fully matched")
+    buy_and_sell_bids = sell_bids + buy_bids
+    pprint.pprint([x for x in buy_and_sell_bids if x["quantity"] > 0])
 
     # TODO: i can satisfy the bids with higher multiplier first, as they represent a more
     # efficient carbon sinking. Also, the profit of the multiplier must be split between the
