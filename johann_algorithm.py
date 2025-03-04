@@ -44,18 +44,15 @@ def multiplier(sell_bid, buy_bid):
 def price_per_credit(sell_bid, buy_bid, mult):
     print("---- price per credit ----")
     quantity = min(sell_bid["quantity"], buy_bid["quantity"])
-    buyer_total_extra_tokens = seller_total_extra_tokens =  quantity * mult/2
-    print_debug("total extra tokens: ", quantity*mult)
-    print_debug("buyer's extra tokens: ", buyer_total_extra_tokens)
-    print_debug("seller's extra tokens: ", seller_total_extra_tokens)
-    acquirable_quantity = quantity + buyer_total_extra_tokens + seller_total_extra_tokens
+    buyer_max_extra_tokens = seller_max_extra_tokens =  quantity * mult/2
+    print_debug("max extra tokens: ", quantity*mult)
+    print_debug("buyer's max extra tokens: ", buyer_max_extra_tokens)
+    print_debug("seller's max extra tokens: ", seller_max_extra_tokens)
+    acquirable_quantity = quantity + buyer_max_extra_tokens + seller_max_extra_tokens
     print_debug("total acquirable quantity: ", acquirable_quantity)
 
-    to_be_aquired = 0
-    if buy_bid["quantity"] >= acquirable_quantity:
-        to_be_aquired = buy_bid["quantity"]
-    else:
-        to_be_aquired = buy_bid["quantity"]/(1+mult) # buy_bid["quantity"] = to_be_aquired + to_be_aquired*mult
+    # buy_bid["quantity"] = to_be_aquired + to_be_aquired*mult
+    to_be_aquired = buy_bid["quantity"]/(1+mult)
     print_debug("actual quantity buyer needs from sell bid: ", to_be_aquired)
 
     # buyer will pay for the credits and proportionally to the extra seller tokens
