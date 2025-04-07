@@ -21,6 +21,7 @@ func (a *Auction) calculateCommitment(
 	buyBids []*BuyBid,
 	sellBids []*SellBid,
 	privatePrice []*PrivatePrice,
+	txTimestamp string,
 ) (*[32]byte, error) {
 	buyBidsBytes, err := json.Marshal(buyBids)
 	if err != nil {
@@ -39,6 +40,9 @@ func (a *Auction) calculateCommitment(
 
 	auctionDataBytes := append(buyBidsBytes, sellBidsBytes...)
 	auctionDataBytes = append(auctionDataBytes, privatePriceBytes...)
+
+	txTimestampBytes := []byte(txTimestamp)
+	auctionDataBytes = append(auctionDataBytes, txTimestampBytes...)
 
 	commitment := sha256.Sum256(auctionDataBytes)
 
