@@ -17,10 +17,10 @@ const (
 // BuyBid represents an ask from a buyer.
 // Their ID could be either x509 or pseudonym-based
 type BuyBid struct {
-	ID          []string        `json:"id"`
-	AskPriceID  PrivatePrice    `json:"askPrice"`
-	AskQuantity float64         `json:"askQuantity"`
+	ccstate.WorldStateReconstructor[*BuyBid]
 	BuyerID     carbon.Identity `json:"buyerID"`
+	Timestamp   string          `json:"timestamp"`
+	AskQuantity float64         `json:"askQuantity"`
 }
 
 func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID carbon.Identity) error {
@@ -39,7 +39,12 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID c
 		return fmt.Errorf("could not get transaction timestamp: %v", err)
 	}
 
-	bidID := []string{buyerID.String(), bidTS.String()}
+	buyBid := &BuyBid{
+		BuyerID:     buyerID,
+		Timestamp:   bidTS.String(),
+		AskQuantity: quantity,
+	}
+	bidID := buyBid.GetID()
 
 	privatePrice := &PrivatePrice{
 		Price: float64(price),
@@ -50,11 +55,6 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID c
 		return err
 	}
 
-	buyBid := &BuyBid{
-		ID:          bidID,
-		AskQuantity: quantity,
-		BuyerID:     buyerID,
-	}
 	if err := ccstate.PutStateWithCompositeKey[*BuyBid](stub, BUY_BID_PREFIX, bidID, buyBid); err != nil {
 		return err
 	}
@@ -66,4 +66,8 @@ func RetractBuyBid(stub shim.ChaincodeStubInterface, bidID []string) error {
 		return err
 	}
 	return nil
+}
+
+func (b *BuyBid) GetID() []string {
+	return []string{b.BuyerID.String(), b.Timestamp}
 }
