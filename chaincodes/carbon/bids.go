@@ -76,7 +76,7 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID I
 	return nil
 }
 
-func PublisSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID uint64) error {
+func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID uint64) error {
 	priceBytes, err := getTransientData(stub, "price")
 	if err != nil {
 		return err
