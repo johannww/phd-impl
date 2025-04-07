@@ -11,7 +11,7 @@ import (
 // PrivatePrice is an for-the-government-only price encoded as a base64 string.
 type PrivatePrice struct {
 	Price float64  `json:"price"`
-	BidID []string `json:"bidID"`
+	BidID []string `json:"bidID"` // This could be (Sell|Buy)bid or also MatchedBid
 }
 
 // BuyBid represents an ask from a buyer.
@@ -28,6 +28,12 @@ type SellBid struct {
 	AskPriceID  PrivatePrice `json:"askPrice"`
 	AskQuantity float64      `json:"askQuantity"`
 	CreditID    uint64       `json:"creditID"`
+}
+
+type MatchedBid struct {
+	BuyBidID  []string `json:"buyBidID"`
+	SellBidID []string `json:"sellBidID"`
+	Quantity  float64  `json:"quantity"`
 }
 
 const (
