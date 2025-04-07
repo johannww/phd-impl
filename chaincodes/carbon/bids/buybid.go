@@ -66,6 +66,13 @@ func RetractBuyBid(stub shim.ChaincodeStubInterface, bidID []string) error {
 	return nil
 }
 
+func (b *BuyBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
+	err := ccstate.GetStateWithCompositeKey[*BuyBid](stub, BUY_BID_PREFIX, keyAttributes, b)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (b *BuyBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	if b.Timestamp == "" {
