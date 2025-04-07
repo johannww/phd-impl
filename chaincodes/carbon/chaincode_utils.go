@@ -1,6 +1,7 @@
 package carbon
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/shim"
