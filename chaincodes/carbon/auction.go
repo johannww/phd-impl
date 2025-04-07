@@ -1,6 +1,8 @@
 package carbon
 
 import (
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
@@ -8,18 +10,39 @@ import (
 )
 
 const (
-	TEE_CONTAINER_HASH_PREFIX = "teeContainerHash"
+	TEE_CONTAINER_HASH_PREFIX  = "teeContainerHash"
+	PVT_DATA_COMMITMENT_PREFIX = "pvtDataCommitment"
 )
 
 type Auction struct{}
 
-// TODO:
+// TODO: add more fields relevant to the auction
 func (a *Auction) calculateCommitment(
 	buyBids []*BuyBid,
 	sellBids []*SellBid,
-	// privateData
-) error {
-	return nil
+	privatePrice []*PrivatePrice,
+) (*[32]byte, error) {
+	buyBidsBytes, err := json.Marshal(buyBids)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal buy bids: %v", err)
+	}
+
+	sellBidsBytes, err := json.Marshal(sellBids)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal sell bids: %v", err)
+	}
+
+	privatePriceBytes, err := json.Marshal(privatePrice)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal private price: %v", err)
+	}
+
+	allBidsBytes := append(buyBidsBytes, sellBidsBytes...)
+	allBidsBytes = append(allBidsBytes, privatePriceBytes...)
+
+	commitment := sha256.Sum256(allBidsBytes)
+
+	return &commitment, nil
 }
 
 // TODO: finish this
