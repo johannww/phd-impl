@@ -57,15 +57,15 @@ func GetPvtDataWithCompositeKey[T any](
 	pvtDataStruct T) error {
 	stateKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
 	if err != nil {
-		return fmt.Errorf("could not create composite key for state: %v", err)
+		return fmt.Errorf("could not create composite key for private data: %v", err)
 	}
 	stateBytes, err := stub.GetPrivateData(collectionName, stateKey)
 	if err != nil {
-		return fmt.Errorf("could not get state: %v", err)
+		return fmt.Errorf("could not get private data: %v", err)
 	}
 	err = json.Unmarshal(stateBytes, pvtDataStruct)
 	if err != nil {
-		return fmt.Errorf("could not unmarshal state: %v", err)
+		return fmt.Errorf("could not unmarshal private data: %v", err)
 	}
 	return nil
 }
