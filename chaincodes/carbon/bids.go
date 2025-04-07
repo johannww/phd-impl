@@ -113,3 +113,27 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID
 	}
 	return nil
 }
+
+func retractBid(stub shim.ChaincodeStubInterface, objectType string, bidID []string) error {
+	if err := deleteStateWithCompositeKey(stub, objectType, bidID); err != nil {
+		return fmt.Errorf("could not delete bid: %v", err)
+	}
+	if err := deletePvtDataWithCompositeKey(stub, objectType, bidID, PVT_DATA_COLLECTION); err != nil {
+		return fmt.Errorf("could not delete private data: %v", err)
+	}
+	return nil
+}
+
+func RetractBuyBid(stub shim.ChaincodeStubInterface, bidID []string) error {
+	if err := retractBid(stub, BUY_BID_PREFIX, bidID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func RetractSellBid(stub shim.ChaincodeStubInterface, bidID []string) error {
+	if err := retractBid(stub, SELL_BID_PREFIX, bidID); err != nil {
+		return err
+	}
+	return nil
+}
