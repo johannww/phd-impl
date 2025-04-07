@@ -37,10 +37,10 @@ func (a *Auction) calculateCommitment(
 		return nil, fmt.Errorf("could not marshal private price: %v", err)
 	}
 
-	allBidsBytes := append(buyBidsBytes, sellBidsBytes...)
-	allBidsBytes = append(allBidsBytes, privatePriceBytes...)
+	auctionDataBytes := append(buyBidsBytes, sellBidsBytes...)
+	auctionDataBytes = append(auctionDataBytes, privatePriceBytes...)
 
-	commitment := sha256.Sum256(allBidsBytes)
+	commitment := sha256.Sum256(auctionDataBytes)
 
 	return &commitment, nil
 }
