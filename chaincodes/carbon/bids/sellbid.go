@@ -64,7 +64,7 @@ func RetractSellBid(stub shim.ChaincodeStubInterface, bidID []string) error {
 }
 
 func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	err := ccstate.GetStateWithCompositeKey[*SellBid](stub, SELL_BID_PREFIX, keyAttributes, s)
+	err := ccstate.GetStateWithCompositeKey(stub, SELL_BID_PREFIX, keyAttributes, s)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 		s.PrivatePrice = nil // Let's not store private data in the world state
 	}
 
-	if err := ccstate.PutStateWithCompositeKey[*SellBid](stub, SELL_BID_PREFIX, s.GetID(), s); err != nil {
+	if err := ccstate.PutStateWithCompositeKey(stub, SELL_BID_PREFIX, s.GetID(), s); err != nil {
 		return fmt.Errorf("could not put sellbid in state: %v", err)
 	}
 
