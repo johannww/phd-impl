@@ -38,7 +38,7 @@ const (
 	SELL_BID_PVT        = "sellBidPvt"
 )
 
-func PublishBuyBid(quantity float64, buyerID Identity, stub shim.ChaincodeStubInterface) error {
+func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID Identity) error {
 	priceBytes, err := getTransientData(stub, "price")
 	if err != nil {
 		return err
