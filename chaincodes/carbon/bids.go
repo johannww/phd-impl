@@ -27,7 +27,7 @@ type SellBid struct {
 	ID          []string     `json:"id"`
 	AskPriceID  PrivatePrice `json:"askPrice"`
 	AskQuantity float64      `json:"askQuantity"`
-	PropertyID  uint64       `json:"propertyID"`
+	CreditID    uint64       `json:"creditID"`
 }
 
 const (
