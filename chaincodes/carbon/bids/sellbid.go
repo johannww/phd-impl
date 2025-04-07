@@ -47,14 +47,12 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID
 		Price: float64(price),
 		BidID: bidID,
 	}
+	sellBid.PrivatePrice = privatePrice
 
-	if err := ccstate.PutPvtDataWithCompositeKey[*PrivatePrice](stub, SELL_BID_PVT, bidID, PVT_DATA_COLLECTION, privatePrice); err != nil {
+	if err := sellBid.ToWorldState(stub); err != nil {
 		return err
 	}
 
-	if err := ccstate.PutStateWithCompositeKey[*SellBid](stub, SELL_BID_PREFIX, bidID, sellBid); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -65,6 +63,32 @@ func RetractSellBid(stub shim.ChaincodeStubInterface, bidID []string) error {
 	return nil
 }
 
+
+func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
+	if s.CreditID == 0 {
+		return fmt.Errorf("creditID is not set")
+	}
+	if s.Timestamp == "" {
+		return fmt.Errorf("timestamp is empty")
+	}
+	if s.AskQuantity <= 0 {
+		return fmt.Errorf("askQuantity is not set")
+	}
+
+	if s.PrivatePrice != nil {
+		err := s.PrivatePrice.ToWorldState(stub)
+		if err != nil {
+			return fmt.Errorf("could not put private price in state: %v", err)
+		}
+		s.PrivatePrice = nil // Let's not store private data in the world state
+	}
+
+	if err := ccstate.PutStateWithCompositeKey[*SellBid](stub, SELL_BID_PREFIX, s.GetID(), s); err != nil {
+		return fmt.Errorf("could not put sellbid in state: %v", err)
+	}
+
+	return nil
+}
 
 func (s *SellBid) GetID() []string {
 	return []string{strconv.FormatUint(s.CreditID, 10), s.Timestamp}
