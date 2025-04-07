@@ -52,8 +52,8 @@ func (a *Auction) PublishTEEContainerHash(stub shim.ChaincodeStubInterface, cont
 		return fmt.Errorf("this identity cannot publish the auction's container hash: %v", err)
 	}
 
-	transTs, err := stub.GetTxTimestamp()
-	putStateWithCompositeKey[string](stub, TEE_CONTAINER_HASH_PREFIX, []string{transTs.String()}, containerHash)
+	txTimestamp, err := stub.GetTxTimestamp()
+	putStateWithCompositeKey[string](stub, TEE_CONTAINER_HASH_PREFIX, []string{txTimestamp.String()}, containerHash)
 	if err != nil {
 		return err
 	}
