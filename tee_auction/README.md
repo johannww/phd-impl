@@ -1,0 +1,4 @@
+# Under development
+
+I can re-use modules and data from "github.com/johannww/phd-impl/chaincodes/carbon" and my Microsoft Confidential Container experiments [link](https://github.com/johannww/ubuntu-learning/blob/c79ef19b5f794e165b5ad1df2ca365b92516c3b5/crypto/azure_tee/README.md#L34)
+
