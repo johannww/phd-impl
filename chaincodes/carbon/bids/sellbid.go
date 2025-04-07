@@ -14,7 +14,7 @@ const (
 )
 
 type SellBid struct {
-	ccstate.WorldStateReconstructor[*BuyBid]
+	ccstate.WorldStateReconstructor
 	CreditID    uint64  `json:"creditID"`
 	Timestamp   string  `json:"timestamp"`
 	AskQuantity float64 `json:"askQuantity"`
