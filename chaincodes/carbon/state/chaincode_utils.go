@@ -49,6 +49,22 @@ func PutStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectTyp
 	return nil
 }
 
+func GetStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, stateStruct T) error {
+	stateKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
+	if err != nil {
+		return fmt.Errorf("could not create composite key for state: %v", err)
+	}
+	stateBytes, err := stub.GetState(stateKey)
+	if err != nil {
+		return fmt.Errorf("could not get state: %v", err)
+	}
+	err = json.Unmarshal(stateBytes, stateStruct)
+	if err != nil {
+		return fmt.Errorf("could not unmarshal state: %v", err)
+	}
+	return nil
+}
+
 func DeletePvtDataWithCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, collectionName string) error {
 	pvtDataKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
 	if err != nil {
