@@ -1,4 +1,4 @@
-package carbon
+package state
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 )
 
-func getTransientData(stub shim.ChaincodeStubInterface, key string) ([]byte, error) {
+func GetTransientData(stub shim.ChaincodeStubInterface, key string) ([]byte, error) {
 	transient, err := stub.GetTransient()
 	if err != nil {
 		fmt.Errorf("could not get transient data: %v", err)
@@ -19,7 +19,7 @@ func getTransientData(stub shim.ChaincodeStubInterface, key string) ([]byte, err
 	return transientField, nil
 }
 
-func putPvtDataWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, collectionName string, pvtDataStruct T) error {
+func PutPvtDataWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, collectionName string, pvtDataStruct T) error {
 	pvtDataKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
 	if err != nil {
 		return fmt.Errorf("could not create composite key for pvt data: %v", err)
@@ -34,7 +34,7 @@ func putPvtDataWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectT
 	return nil
 }
 
-func putStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, stateStruct T) error {
+func PutStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, stateStruct T) error {
 	stateKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
 	if err != nil {
 		return fmt.Errorf("could not create composite key for state: %v", err)
@@ -49,7 +49,7 @@ func putStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectTyp
 	return nil
 }
 
-func deletePvtDataWithCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, collectionName string) error {
+func DeletePvtDataWithCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, collectionName string) error {
 	pvtDataKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
 	if err != nil {
 		return fmt.Errorf("could not create composite key for pvt data: %v", err)
@@ -62,7 +62,7 @@ func deletePvtDataWithCompositeKey(stub shim.ChaincodeStubInterface, objectType 
 	return nil
 }
 
-func deleteStateWithCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string) error {
+func DeleteStateWithCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string) error {
 	stateKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
 	if err != nil {
 		return fmt.Errorf("could not create composite key for state: %v", err)

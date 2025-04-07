@@ -1,4 +1,4 @@
-package carbon
+package auction
 
 import (
 	"crypto/sha256"
@@ -7,6 +7,8 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
+	ccstate "github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
 const (
@@ -18,9 +20,9 @@ type Auction struct{}
 
 // TODO: add more fields relevant to the auction
 func (a *Auction) calculateCommitment(
-	buyBids []*BuyBid,
-	sellBids []*SellBid,
-	privatePrice []*PrivatePrice,
+	buyBids []*bids.BuyBid,
+	sellBids []*bids.SellBid,
+	privatePrice []*bids.PrivatePrice,
 	txTimestamp string,
 ) (*[32]byte, error) {
 	buyBidsBytes, err := json.Marshal(buyBids)
@@ -57,7 +59,10 @@ func (a *Auction) PublishTEEContainerHash(stub shim.ChaincodeStubInterface, cont
 	}
 
 	txTimestamp, err := stub.GetTxTimestamp()
-	putStateWithCompositeKey[string](stub, TEE_CONTAINER_HASH_PREFIX, []string{txTimestamp.String()}, containerHash)
+	ccstate.PutStateWithCompositeKey[string](
+		stub, TEE_CONTAINER_HASH_PREFIX,
+		[]string{txTimestamp.String()},
+		containerHash)
 	if err != nil {
 		return err
 	}
