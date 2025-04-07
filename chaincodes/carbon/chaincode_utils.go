@@ -48,3 +48,27 @@ func putStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectTyp
 	}
 	return nil
 }
+
+func deletePvtDataWithCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, collectionName string) error {
+	pvtDataKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
+	if err != nil {
+		return fmt.Errorf("could not create composite key for pvt data: %v", err)
+	}
+	if err := stub.DelPrivateData(collectionName, pvtDataKey); err != nil {
+		return fmt.Errorf("could not delete private data: %v", err)
+	}
+	// TODO: perhaps also purge the private data
+	// stub.PurgePrivateData(collectionName, pvtDataKey)
+	return nil
+}
+
+func deleteStateWithCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string) error {
+	stateKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
+	if err != nil {
+		return fmt.Errorf("could not create composite key for state: %v", err)
+	}
+	if err := stub.DelState(stateKey); err != nil {
+		return fmt.Errorf("could not delete state: %v", err)
+	}
+	return nil
+}
