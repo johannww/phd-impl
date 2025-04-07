@@ -61,7 +61,7 @@ func PublishBuyBid(quantity float64, buyerID Identity, stub shim.ChaincodeStubIn
 		BidID: bidID,
 	}
 
-	if err := putPvtDataWithCompositeKey[*PrivatePrice](stub, BUY_BID_PREFIX, bidID, PVT_DATA_COLLECTION, privatePrice); err != nil {
+	if err := putPvtDataWithCompositeKey[*PrivatePrice](stub, BUY_BID_PVT, bidID, PVT_DATA_COLLECTION, privatePrice); err != nil {
 		return err
 	}
 
