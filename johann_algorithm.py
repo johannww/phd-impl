@@ -16,11 +16,12 @@ sell_bids = [
 
 buy_bids = [
         {"price_per_credit": 19.9, "quantity": 10, "linearlocation": -3},
+        # {"price_per_credit": 19.9, "quantity": 6, "linearlocation": -3},
         {"price_per_credit": 40, "quantity": 10, "linearlocation": -4},
         {"price_per_credit": 90, "quantity": 10, "linearlocation": 24},
         ]
 
-debug = True
+debug = False
 
 def print_debug(*args):
     if not debug:
@@ -139,3 +140,25 @@ def johann_algorithm(sell_bids, buy_bids):
     # buyer and the seller.
 
 johann_algorithm(sell_bids, buy_bids)
+
+# def price_per_credit(sell_bid, buy_bid, mult):
+#     quantity = min(sell_bid["quantity"], buy_bid["quantity"])
+#     buyer_max_extra_tokens = seller_max_extra_tokens =  quantity * mult/2
+#     acquirable_quantity = quantity + buyer_max_extra_tokens + seller_max_extra_tokens
+#
+#     if buy_bid["quantity"] >= acquirable_quantity:
+#         to_be_aquired = quantity
+#     else:
+#         # buy_bid["quantity"] = to_be_aquired + to_be_aquired*mult
+#         to_be_aquired = buy_bid["quantity"]/(1+mult)
+#
+#     # buyer will pay for the credits and proportionally to the extra seller tokens
+#     buyer_is_willing_to_pay_total = buy_bid["price_per_credit"]*(to_be_aquired+to_be_aquired*mult/2)
+#     buyer_is_willing_to_pay_per_credit_from_seller_perspective = buyer_is_willing_to_pay_total/to_be_aquired
+#
+#     if sell_bid["price_per_credit"] > buyer_is_willing_to_pay_per_credit_from_seller_perspective:
+#         return {"cutting_price": 0, "quantity": 0}
+#     average = (sell_bid["price_per_credit"] + buyer_is_willing_to_pay_per_credit_from_seller_perspective) / 2
+#     # TODO: remove rounding
+#     return {"cutting_price": round(average,2), "quantity": to_be_aquired}
+
