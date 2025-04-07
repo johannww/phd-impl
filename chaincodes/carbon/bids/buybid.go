@@ -17,10 +17,10 @@ const (
 // BuyBid represents an ask from a buyer.
 // Their ID could be either x509 or pseudonym-based
 type BuyBid struct {
-	ccstate.WorldStateReconstructor
-	BuyerID     carbon.Identity `json:"buyerID"`
-	Timestamp   string          `json:"timestamp"`
-	AskQuantity float64         `json:"askQuantity"`
+	BuyerID      carbon.Identity `json:"buyerID"`
+	Timestamp    string          `json:"timestamp"`
+	AskQuantity  float64         `json:"askQuantity"`
+	PrivatePrice *PrivatePrice   `json:"privatePrice"`
 }
 
 func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID carbon.Identity) error {

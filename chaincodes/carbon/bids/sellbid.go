@@ -14,10 +14,10 @@ const (
 )
 
 type SellBid struct {
-	ccstate.WorldStateReconstructor
-	CreditID    uint64  `json:"creditID"`
-	Timestamp   string  `json:"timestamp"`
-	AskQuantity float64 `json:"askQuantity"`
+	CreditID     uint64        `json:"creditID"`
+	Timestamp    string        `json:"timestamp"`
+	AskQuantity  float64       `json:"askQuantity"`
+	PrivatePrice *PrivatePrice `json:"privatePrice"`
 }
 
 func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID uint64) error {
