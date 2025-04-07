@@ -75,3 +75,41 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID I
 	}
 	return nil
 }
+
+func PublisSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID uint64) error {
+	priceBytes, err := getTransientData(stub, "price")
+	if err != nil {
+		return err
+	}
+
+	price, err := strconv.ParseFloat(string(priceBytes), 64)
+	if err != nil {
+		return fmt.Errorf("could not parse price: %v", err)
+	}
+
+	bidTS, err := stub.GetTxTimestamp()
+	if err != nil {
+		return fmt.Errorf("could not get transaction timestamp: %v", err)
+	}
+
+	bidID := []string{strconv.FormatUint(creditID, 10), bidTS.String()}
+
+	privatePrice := &PrivatePrice{
+		Price: float64(price),
+		BidID: bidID,
+	}
+
+	if err := putPvtDataWithCompositeKey[*PrivatePrice](stub, SELL_BID_PVT, bidID, PVT_DATA_COLLECTION, privatePrice); err != nil {
+		return err
+	}
+
+	sellBid := &SellBid{
+		ID:          bidID,
+		AskQuantity: quantity,
+		CreditID:    creditID,
+	}
+	if err := putStateWithCompositeKey[*SellBid](stub, SELL_BID_PREFIX, bidID, sellBid); err != nil {
+		return err
+	}
+	return nil
+}
