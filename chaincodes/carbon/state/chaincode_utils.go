@@ -10,7 +10,7 @@ import (
 func GetTransientData(stub shim.ChaincodeStubInterface, key string) ([]byte, error) {
 	transient, err := stub.GetTransient()
 	if err != nil {
-		fmt.Errorf("could not get transient data: %v", err)
+		return nil, fmt.Errorf("could not get transient data: %v", err)
 	}
 	transientField, ok := transient[key]
 	if !ok {
