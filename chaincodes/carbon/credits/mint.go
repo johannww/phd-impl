@@ -1,4 +1,4 @@
-package carbon
+package credits
 
 // MintCredit represents a carbon credit that has been minted and
 // it is associated to mint multiplier and mint timestamp.

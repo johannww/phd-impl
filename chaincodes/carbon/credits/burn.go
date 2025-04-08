@@ -1,4 +1,4 @@
-package carbon
+package credits
 
 // BurnCredit represents a minted carbon credit to be burned.
 // it is associated to burn multiplier and burn timestamp.

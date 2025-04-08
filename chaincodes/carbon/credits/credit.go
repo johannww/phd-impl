@@ -1,4 +1,4 @@
-package carbon
+package credits
 
 import "github.com/hyperledger/fabric-chaincode-go/shim"
 
