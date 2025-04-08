@@ -11,3 +11,9 @@ type WorldStateManager interface {
 	ToWorldState(stub shim.ChaincodeStubInterface) error
 	GetID() []string
 }
+
+type WorldStateManagerWithExtraPrefix interface {
+	FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string, extraPrefix string) error
+	ToWorldState(stub shim.ChaincodeStubInterface, extraPrefix string) error
+	GetID() []string
+}
