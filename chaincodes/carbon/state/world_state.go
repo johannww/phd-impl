@@ -2,11 +2,11 @@ package state
 
 import "github.com/hyperledger/fabric-chaincode-go/shim"
 
-// WorldStateReconstructor is an interface for reconstructing objects
+// WorldStateManager is an interface for reconstructing objects
 // from the world state.
 // This is useful for reconstructing objects from the world state,
 // considering nested fields.
-type WorldStateReconstructor interface {
+type WorldStateManager interface {
 	FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error
 	ToWorldState(stub shim.ChaincodeStubInterface) error
 	GetID() []string
