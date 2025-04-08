@@ -1,4 +1,4 @@
-package carbon
+package identities
 
 // TODO: add attributes
 type Identity interface {
