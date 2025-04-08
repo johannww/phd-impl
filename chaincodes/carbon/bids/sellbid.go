@@ -105,5 +105,6 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 }
 
 func (s *SellBid) GetID() []string {
+	// TODO: possible colision with other bids
 	return []string{strconv.FormatUint(s.CreditID, 10), s.Timestamp}
 }
