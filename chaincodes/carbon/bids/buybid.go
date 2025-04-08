@@ -6,7 +6,6 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
-	"github.com/johannww/phd-impl/chaincodes/carbon"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	ccstate "github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
@@ -19,13 +18,13 @@ const (
 // BuyBid represents an ask from a buyer.
 // Their ID could be either x509 or pseudonym-based
 type BuyBid struct {
-	BuyerID      carbon.Identity `json:"buyerID"`
-	Timestamp    string          `json:"timestamp"`
-	AskQuantity  float64         `json:"askQuantity"`
-	PrivatePrice *PrivatePrice   `json:"privatePrice"`
+	BuyerID      identities.Identity `json:"buyerID"`
+	Timestamp    string              `json:"timestamp"`
+	AskQuantity  float64             `json:"askQuantity"`
+	PrivatePrice *PrivatePrice       `json:"privatePrice"`
 }
 
-func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID carbon.Identity) error {
+func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID identities.Identity) error {
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
 		return err
