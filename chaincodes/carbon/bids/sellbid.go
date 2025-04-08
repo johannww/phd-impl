@@ -68,6 +68,13 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 	if err != nil {
 		return err
 	}
+
+	if cid.AssertAttributeValue(stub, "price_viewer", "true") == nil {
+		privatePrice := &PrivatePrice{}
+		privatePrice.FromWorldState(stub, s.GetID(), SELL_BID_PVT)
+		s.PrivatePrice = privatePrice
+	}
+
 	return nil
 }
 
@@ -83,7 +90,7 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	}
 
 	if s.PrivatePrice != nil {
-		err := s.PrivatePrice.ToWorldState(stub)
+		err := s.PrivatePrice.ToWorldState(stub, SELL_BID_PVT)
 		if err != nil {
 			return fmt.Errorf("could not put private price in state: %v", err)
 		}

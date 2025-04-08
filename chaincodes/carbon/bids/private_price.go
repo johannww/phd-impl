@@ -7,6 +7,7 @@ import (
 
 const (
 	PVT_DATA_COLLECTION = "privateDataCollection"
+	PVT_PRICE_PREFIX    = "privatePrice"
 )
 
 // TODO: this may be a float64 passed to the chaincode via transient data
@@ -16,14 +17,20 @@ type PrivatePrice struct {
 	BidID []string `json:"bidID"` // This could be (Sell|Buy)bid or also MatchedBid
 }
 
-func (privateprice *PrivatePrice) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	panic("not implemented") // TODO: Implement
+func (privPrice *PrivatePrice) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string, extraPrefix string) error {
+	err := ccstate.GetPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, keyAttributes, PVT_DATA_COLLECTION, privPrice)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (privateprice *PrivatePrice) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	panic("not implemented") // TODO: Implement
+func (privPrice *PrivatePrice) ToWorldState(stub shim.ChaincodeStubInterface, extraPrefix string) error {
+	priceID := append([]string{extraPrefix}, privPrice.GetID()...)
+	ccstate.PutPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION, privPrice)
+	return nil
 }
 
-func (privateprice *PrivatePrice) GetID() []string {
-	panic("not implemented") // TODO: Implement
+func (privPrice *PrivatePrice) GetID() []string {
+	return privPrice.BidID
 }
