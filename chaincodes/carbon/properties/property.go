@@ -1,4 +1,4 @@
-package carbon
+package properties
 
 type Coordinates struct {
 	Latitude  float64
