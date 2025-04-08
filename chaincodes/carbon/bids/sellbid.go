@@ -69,6 +69,9 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 		return err
 	}
 
+	// TODO: load credit from world state.
+	// perhaps, check if it should be done
+
 	if cid.AssertAttributeValue(stub, "price_viewer", "true") == nil {
 		privatePrice := &PrivatePrice{}
 		privatePrice.FromWorldState(stub, s.GetID(), SELL_BID_PVT)
@@ -87,6 +90,13 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	}
 	if s.AskQuantity <= 0 {
 		return fmt.Errorf("askQuantity is not set")
+	}
+
+	if s.Credit != nil {
+		err := s.Credit.ToWorldState(stub)
+		if err != nil {
+			return fmt.Errorf("could not put credit in state: %v", err)
+		}
 	}
 
 	if s.PrivatePrice != nil {
