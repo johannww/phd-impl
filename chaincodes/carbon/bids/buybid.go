@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	ccstate "github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
@@ -72,7 +74,7 @@ func (b *BuyBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes 
 		return err
 	}
 
-	if cid.AssertAttributeValue(stub, "price_viewer", "true") == nil {
+	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
 		privatePrice := &PrivatePrice{}
 		privatePrice.FromWorldState(stub, b.GetID(), BUY_BID_PVT)
 		b.PrivatePrice = privatePrice
