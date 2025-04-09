@@ -109,9 +109,7 @@ func SetupIdentities(stub *shimtest.MockStub) MockIdentities {
 	mockIds[REGULAR_ID] = generateHFSerializedIdentity(
 		x509_TYPE,
 		&attrmgr.Attributes{
-			Attrs: map[string]string{
-				identities.PriceViewer: "true",
-			},
+			Attrs: map[string]string{},
 		}, "AUCTIONEER", "auctioneer1",
 	)
 
