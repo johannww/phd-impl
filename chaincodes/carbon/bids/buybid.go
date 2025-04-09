@@ -25,6 +25,11 @@ type BuyBid struct {
 }
 
 func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID identities.Identity) error {
+	// TODO: cidID is nil when idemix
+	cidID, _ := cid.GetID(stub)
+	// TODO: enhance this
+	buyerID = &identities.X509Identity{CertID: cidID}
+
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
 		return err
