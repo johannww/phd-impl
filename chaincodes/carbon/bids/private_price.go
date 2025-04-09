@@ -18,7 +18,8 @@ type PrivatePrice struct {
 }
 
 func (privPrice *PrivatePrice) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string, extraPrefix string) error {
-	err := ccstate.GetPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, keyAttributes, PVT_DATA_COLLECTION, privPrice)
+	priceID := append([]string{extraPrefix}, keyAttributes...)
+	err := ccstate.GetPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION, privPrice)
 	if err != nil {
 		return err
 	}
