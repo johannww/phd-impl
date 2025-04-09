@@ -1,0 +1,141 @@
+package carbon_tests
+
+import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/json"
+	"encoding/pem"
+	"fmt"
+	"math/big"
+	"strings"
+	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-chaincode-go/pkg/attrmgr"
+	"github.com/hyperledger/fabric-chaincode-go/shimtest"
+	"github.com/hyperledger/fabric-protos-go/msp"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+)
+
+type MockIdentities map[string][]byte
+
+const (
+	REGULAR_ID = "regular"
+	IDEMIX_ID  = "idemix"
+)
+
+const (
+	x509_TYPE   = "x509"
+	IDEMIX_TYPE = "idemix"
+)
+
+func generateIdemix(mspName string) []byte {
+	roleIdentifier, _ := proto.Marshal(&msp.MSPRole{
+		Role: msp.MSPRole_CLIENT,
+	})
+	ouIdentifier, _ := proto.Marshal(&msp.OrganizationUnit{
+		OrganizationalUnitIdentifier: mspName,
+	})
+	idemixID, _ := proto.Marshal(&msp.SerializedIdemixIdentity{
+		NymX:  []byte("nymX"),
+		NymY:  []byte("nymY"),
+		Role:  roleIdentifier,
+		Ou:    ouIdentifier,
+		Proof: []byte("proof"),
+	})
+	return idemixID
+}
+
+func generateX509(attrs *attrmgr.Attributes, mspName, cn string) []byte {
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, _ := rand.Int(rand.Reader, serialNumberLimit)
+	keyUsage := x509.KeyUsageDigitalSignature
+	marshaledAttr, _ := json.Marshal(attrs)
+	template := &x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization:       []string{strings.ToUpper(mspName)},
+			OrganizationalUnit: []string{mspName},
+			CommonName:         cn,
+		},
+		ExtraExtensions: []pkix.Extension{{
+			Id:       attrmgr.AttrOID,
+			Critical: false,
+			Value:    marshaledAttr,
+		}},
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().Add(time.Duration(365 * 24 * time.Hour)),
+
+		KeyUsage:              keyUsage,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+	priv, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	derBytes, err := x509.CreateCertificate(rand.Reader, template, template, &priv.PublicKey, priv)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	certBytesPem := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+	// ioutil.WriteFile("cert.pem", certBytesPem, 0)
+	return certBytesPem
+}
+
+func generateHFSerializedIdentity(idType string, attrs *attrmgr.Attributes, mspName, cn string) []byte {
+	var credentialsBytes []byte
+
+	switch idType {
+	case x509_TYPE:
+		credentialsBytes = generateX509(attrs, mspName, cn)
+	case IDEMIX_TYPE:
+		credentialsBytes = generateIdemix(mspName)
+	default:
+		panic(fmt.Sprintf("Unknown identity type: %s", idType))
+	}
+
+	hfSerializedID, _ := proto.Marshal(&msp.SerializedIdentity{
+		Mspid:   mspName,
+		IdBytes: credentialsBytes,
+	})
+
+	return hfSerializedID
+}
+
+func SetupIdentities(stub *shimtest.MockStub) MockIdentities {
+	mockIds := make(map[string][]byte)
+
+	mockIds[REGULAR_ID] = generateHFSerializedIdentity(
+		x509_TYPE,
+		&attrmgr.Attributes{
+			Attrs: map[string]string{
+				identities.PriceViewer: "true",
+			},
+		}, "AUCTIONEER", "auctioneer1",
+	)
+
+	mockIds[IDEMIX_ID] = generateHFSerializedIdentity(
+		IDEMIX_TYPE,
+		nil,
+		"COMPANY",
+		"",
+	)
+
+	// Generate a certificate for the price viewer
+	mockIds[identities.PriceViewer] = generateHFSerializedIdentity(
+		x509_TYPE,
+		&attrmgr.Attributes{
+			Attrs: map[string]string{
+				identities.PriceViewer: "true",
+			},
+		}, "AUCTIONEER", "auctioneer1",
+	)
+
+	// // Generate idmix identity for buyer
+	// mockIds[IDEMIX_ID] = generateIdemix(attrmgr.Attributes{
+	// 	Attrs: map[string]string{}}, "BUYER", "buyer1",
+	// )
+
+	return mockIds
+}
