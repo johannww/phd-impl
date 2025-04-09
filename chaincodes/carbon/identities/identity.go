@@ -6,7 +6,7 @@ type Identity interface {
 }
 
 type X509Identity struct {
-	CertID string
+	CertID string `json:"certID"`
 }
 
 func (x509identity *X509Identity) String() string {

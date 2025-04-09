@@ -18,13 +18,13 @@ const (
 // BuyBid represents an ask from a buyer.
 // Their ID could be either x509 or pseudonym-based
 type BuyBid struct {
-	BuyerID      identities.Identity `json:"buyerID"`
-	Timestamp    string              `json:"timestamp"`
-	AskQuantity  float64             `json:"askQuantity"`
+	// TODO: temp fix for teste
+	// TODO: interfaces cannot be marshalled
+	BuyerID      *identities.X509Identity `json:"buyerID"`
 	PrivatePrice *PrivatePrice       `json:"privatePrice"`
 }
 
-func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID identities.Identity) error {
+func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *identities.X509Identity) error {
 	// TODO: cidID is nil when idemix
 	cidID, _ := cid.GetID(stub)
 	// TODO: enhance this
