@@ -3,7 +3,6 @@ package carbon_tests
 import (
 	"testing"
 
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/hyperledger/fabric-chaincode-go/shimtest"
 	"github.com/johannww/phd-impl/chaincodes/carbon"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
@@ -14,9 +13,6 @@ func TestBid(t *testing.T) {
 	stub := shimtest.NewMockStub("carbon", &carbon.Carbon{})
 	possibleIds := SetupIdentities(stub)
 	stub.Creator = possibleIds[REGULAR_ID]
-	stub.TxTimestamp = &timestamp.Timestamp{
-		Seconds: 1,
-	}
 
 	stub.TransientMap = map[string][]byte{
 		"price": []byte("1000"),
