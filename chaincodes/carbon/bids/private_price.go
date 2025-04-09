@@ -27,7 +27,10 @@ func (privPrice *PrivatePrice) FromWorldState(stub shim.ChaincodeStubInterface, 
 
 func (privPrice *PrivatePrice) ToWorldState(stub shim.ChaincodeStubInterface, extraPrefix string) error {
 	priceID := append([]string{extraPrefix}, privPrice.GetID()...)
-	ccstate.PutPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION, privPrice)
+	err := ccstate.PutPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION, privPrice)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
