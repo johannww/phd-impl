@@ -23,6 +23,28 @@ func TestBid(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error publishing buy bid: %v", err)
 	}
+
+	creatorId, _ := cid.GetID(stub)
+	lastInsertTimestamp := stub.TxTimestamp.AsTime().String()
+	buyBid := &bids.BuyBid{}
+
+	err = buyBid.FromWorldState(stub, []string{creatorId, lastInsertTimestamp})
+	t.Log(buyBid.PrivatePrice)
+	if err != nil || buyBid.PrivatePrice != nil {
+		t.Fatal("PrivatePrice should be nil. REGULAR_ID should not be able to see it")
+	}
+
+	stub.Creator = possibleIds[identities.PriceViewer]
+	creatorId, _ = cid.GetID(stub)
+	buyBid = &bids.BuyBid{}
+
+	err = buyBid.FromWorldState(stub, []string{creatorId, lastInsertTimestamp})
+	if buyBid.PrivatePrice == nil {
+		value, _, _ := cid.GetAttributeValue(stub, identities.PriceViewer)
+		t.Logf("Error: %v", err)
+		t.Logf("Creator's %s: %s", identities.PriceViewer, value)
+		t.Fatal("PrivatePrice should be 1000. identities.PriceViewer should be able to see it")
+	}
 }
 
 // func TestWithGoMock(t *testing.T) {
