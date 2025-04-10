@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: golang:1.23
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Go
         uses: actions/setup-go@v2
