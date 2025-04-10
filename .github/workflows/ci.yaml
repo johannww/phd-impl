@@ -22,10 +22,8 @@ jobs:
         with:
           go-version: 1.23
 
-      - name: List directories
-        run: pwd
-      - name: List directories
-        run: ls -la .
+      - name: Build carbon chaincode
+        run: go mod tidy && go mod vendor && go build -o carbon ./cmd/carbon/main.go
 
   # docker-build:
   #   needs: build
