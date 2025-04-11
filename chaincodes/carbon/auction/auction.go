@@ -79,7 +79,6 @@ func (a *Auction) verifyTEEProof(proof []byte) bool {
 // Currently this supports Microsoft Confidential Containers, which
 // use the AMD SEV-SNP attestation protocol.
 func (a *Auction) PublishTEEProof(stub shim.ChaincodeStubInterface, auctionID string) error {
-
 	// Get commitment
 
 	// Verify
