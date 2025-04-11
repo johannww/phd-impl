@@ -21,7 +21,9 @@ type BuyBid struct {
 	// TODO: temp fix for teste
 	// TODO: interfaces cannot be marshalled
 	BuyerID      *identities.X509Identity `json:"buyerID"`
-	PrivatePrice *PrivatePrice       `json:"privatePrice"`
+	Timestamp    string                   `json:"timestamp"`
+	AskQuantity  float64                  `json:"askQuantity"`
+	PrivatePrice *PrivatePrice            `json:"privatePrice"`
 }
 
 func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *identities.X509Identity) error {
