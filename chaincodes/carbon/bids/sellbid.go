@@ -6,6 +6,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	ccstate "github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
@@ -16,10 +17,11 @@ const (
 )
 
 type SellBid struct {
-	CreditID     uint64        `json:"creditID"`
-	Timestamp    string        `json:"timestamp"`
-	AskQuantity  float64       `json:"askQuantity"`
-	PrivatePrice *PrivatePrice `json:"privatePrice"`
+	CreditID     uint64          `json:"creditID"`
+	Timestamp    string          `json:"timestamp"`
+	Credit       *credits.Credit `json:"credit"`
+	AskQuantity  float64         `json:"askQuantity"`
+	PrivatePrice *PrivatePrice   `json:"privatePrice"`
 }
 
 func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID uint64) error {
