@@ -5,3 +5,6 @@ I can re-use modules and data from "github.com/johannww/phd-impl/chaincodes/carb
 
 I also could use [fabric private chaincodes](https://github.com/hyperledger/fabric-private-chaincode/tree/main/samples) that use Intel SGX
 
+These articles reference it: https://ieeexplore.ieee.org/document/10628912 and 
+https://ieeexplore.ieee.org/abstract/document/9049585
+
