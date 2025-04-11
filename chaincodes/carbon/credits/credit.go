@@ -1,6 +1,9 @@
 package credits
 
-import "github.com/hyperledger/fabric-chaincode-go/shim"
+import (
+	"github.com/hyperledger/fabric-chaincode-go/shim"
+	prop "github.com/johannww/phd-impl/chaincodes/carbon/properties"
+)
 
 const (
 	CREDIT_PREFIX = "credit"
@@ -10,20 +13,25 @@ const (
 // at a specific time.
 // TODO: enhance this struct
 type Credit struct {
-	ID       string        `json:"id"`
-	Owner    string        `json:"owner"`
-	Property Property      `json:"property"`
-	Chunk    PropertyChunk `json:"chunk"`
+	OwnerID  string         `json:"owner"`
+	Property *prop.Property `json:"property"`
+	Chunk    *prop.Property `json:"chunk"`
 }
 
+// TODO:
 func (c *Credit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) (_ error) {
 	panic("not implemented") // TODO: Implement
 }
 
+// TODO:
 func (c *Credit) ToWorldState(stub shim.ChaincodeStubInterface) (_ error) {
 	panic("not implemented") // TODO: Implement
 }
 
+// TODO:
 func (c *Credit) GetID() (_ []string) {
-	panic("not implemented") // TODO: Implement
+	creditId := []string{c.OwnerID}
+	creditId = append(creditId, c.Property.GetID()...)
+	creditId = append(creditId, c.Chunk.GetID()...)
+	return creditId
 }
