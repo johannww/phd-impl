@@ -54,7 +54,8 @@ func GetPvtDataWithCompositeKey[T any](
 	objectType string,
 	keyAttributes []string,
 	collectionName string,
-	pvtDataStruct T) error {
+	pvtDataStruct T,
+) error {
 	stateKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
 	if err != nil {
 		return fmt.Errorf("could not create composite key for private data: %v", err)
