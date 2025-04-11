@@ -4,6 +4,7 @@ on:
       - main
     paths:
       - "chaincodes/carbon/**"
+      - ".github/workflows/chaincode.yaml"
   pull_request:
     branches:
       - main
