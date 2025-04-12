@@ -18,5 +18,7 @@ func (carbon *Carbon) Init(stub shim.ChaincodeStubInterface) pb.Response {
 // Updated state variables are not committed to the ledger until the
 // transaction is committed.
 func (carbon *Carbon) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
+	// TODO: perhaps use the contract api here
+	// it uses reflect to auto parse the parameters
 	panic("not implemented") // TODO: Implement
 }
