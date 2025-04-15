@@ -9,4 +9,5 @@ FROM ubuntu:22.04
 
 COPY --from=builder /cc/carbon /usr/local/bin/carbon
 ENTRYPOINT ["/usr/local/bin/carbon"]
+EXPOSE 7052
 
