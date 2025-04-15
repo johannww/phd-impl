@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/hyperledger/fabric-chaincode-go/shim"
@@ -42,7 +43,7 @@ func main() {
 		tlsProps.Key = readTlsCert(tlsKeyPath)
 		tlsProps.Cert = readTlsCert(tlsCertPath)
 		tlsProps.ClientCACerts = readTlsCert(tlsClientCACertPath)
-
+		fmt.Println("mTLS is enabled")
 	}
 
 	server := shim.ChaincodeServer{
