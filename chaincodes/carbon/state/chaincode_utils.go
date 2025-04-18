@@ -34,6 +34,17 @@ func PutPvtDataWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectT
 	return nil
 }
 
+func PutState[T any](stub shim.ChaincodeStubInterface, key string, stateStruct T) error {
+	stateBytes, err := json.Marshal(stateStruct)
+	if err != nil {
+		return fmt.Errorf("could not marshal state: %v", err)
+	}
+	if err := stub.PutState(key, stateBytes); err != nil {
+		return fmt.Errorf("could not put state: %v", err)
+	}
+	return nil
+}
+
 func PutStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, stateStruct T) error {
 	stateKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
 	if err != nil {
