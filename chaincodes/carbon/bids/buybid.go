@@ -93,6 +93,7 @@ func (b *BuyBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes 
 	return nil
 }
 
+// TODO: test for the bids mutex timestamp
 func (b *BuyBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	if b.Timestamp == "" {
 		return fmt.Errorf("timestamp is empty")

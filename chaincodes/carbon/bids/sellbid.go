@@ -85,6 +85,7 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 	return nil
 }
 
+// TODO: test for the bids mutex timestamp
 func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	if s.CreditID == 0 {
 		return fmt.Errorf("creditID is not set")
