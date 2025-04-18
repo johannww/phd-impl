@@ -23,7 +23,7 @@ type BuyBid struct {
 	BuyerID      *identities.X509Identity `json:"buyerID"`
 	Timestamp    string                   `json:"timestamp"`
 	AskQuantity  float64                  `json:"askQuantity"`
-	PrivatePrice *PrivatePrice            `json:"privatePrice"`
+	PrivatePrice *PrivatePrice            `json:"-"`
 }
 
 func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *identities.X509Identity) error {
@@ -108,7 +108,6 @@ func (b *BuyBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 		if err != nil {
 			return fmt.Errorf("could not put private price in world state: %v", err)
 		}
-		b.PrivatePrice = nil // Let's not store private data in the world state
 	}
 
 	if err := ccstate.PutStateWithCompositeKey(stub, BUY_BID_PREFIX, b.GetID(), b); err != nil {
