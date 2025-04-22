@@ -8,6 +8,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	ccstate "github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 )
 
 const (
@@ -46,10 +47,11 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *
 	if err != nil {
 		return fmt.Errorf("could not get transaction timestamp: %v", err)
 	}
+	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
 
 	buyBid := &BuyBid{
 		BuyerID:     buyerID,
-		Timestamp:   bidTS.AsTime().String(),
+		Timestamp:   bidTSStr,
 		AskQuantity: quantity,
 	}
 	bidID := buyBid.GetID()
