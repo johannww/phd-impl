@@ -8,6 +8,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 )
 
 func TestBid(t *testing.T) {
@@ -26,7 +27,8 @@ func TestBid(t *testing.T) {
 	}
 
 	creatorId, _ := cid.GetID(stub)
-	lastInsertTimestamp := stub.TxTimestamp.AsTime().String()
+	protoTs, _ := stub.GetTxTimestamp()
+	lastInsertTimestamp := utils.TimestampRFC3339UtcString(protoTs)
 	buyBid := &bids.BuyBid{}
 
 	err = buyBid.FromWorldState(stub, []string{creatorId, lastInsertTimestamp})
