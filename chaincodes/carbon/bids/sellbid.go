@@ -47,11 +47,11 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID
 		Timestamp:   bidTSStr,
 		AskQuantity: quantity,
 	}
-	bidID := sellBid.GetID()
+	bidID := *(sellBid.GetID())
 
 	privatePrice := &PrivatePrice{
 		Price: float64(price),
-		BidID: bidID,
+		BidID: bidID[0],
 	}
 	sellBid.PrivatePrice = privatePrice
 
@@ -80,7 +80,7 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 
 	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
 		privatePrice := &PrivatePrice{}
-		privatePrice.FromWorldState(stub, s.GetID(), SELL_BID_PVT)
+		privatePrice.FromWorldState(stub, (*s.GetID())[0], SELL_BID_PVT)
 		s.PrivatePrice = privatePrice
 	}
 
@@ -120,7 +120,9 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	return nil
 }
 
-func (s *SellBid) GetID() []string {
+func (s *SellBid) GetID() *[][]string {
 	// TODO: possible colision with other bids
-	return []string{strconv.FormatUint(s.CreditID, 10), s.Timestamp}
+	return &[][]string{
+		{strconv.FormatUint(s.CreditID, 10), s.Timestamp},
+	}
 }

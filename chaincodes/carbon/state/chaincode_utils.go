@@ -45,8 +45,26 @@ func PutState[T any](stub shim.ChaincodeStubInterface, key string, stateStruct T
 	return nil
 }
 
-func PutStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, stateStruct T) error {
-	stateKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
+func putSecondaryIndexes(stub shim.ChaincodeStubInterface, keyAttributes *[][]string, objectType string) error {
+	marshalledPrimaryKey, err := json.Marshal((*keyAttributes)[0])
+	if err != nil {
+		return fmt.Errorf("could not marshal primary key: %v", err)
+	}
+
+	for i := 1; i < len(*keyAttributes); i++ {
+		stateKey, err := stub.CreateCompositeKey(objectType, (*keyAttributes)[i])
+		if err != nil {
+			return fmt.Errorf("could not create composite key for state: %v", err)
+		}
+		if err := stub.PutState(stateKey, marshalledPrimaryKey); err != nil {
+			return fmt.Errorf("could not put secondary key: %v", err)
+		}
+	}
+	return nil
+}
+
+func PutStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes *[][]string, stateStruct T) error {
+	stateKey, err := stub.CreateCompositeKey(objectType, (*keyAttributes)[0])
 	if err != nil {
 		return fmt.Errorf("could not create composite key for state: %v", err)
 	}
@@ -57,6 +75,12 @@ func PutStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectTyp
 	if err := stub.PutState(stateKey, stateBytes); err != nil {
 		return fmt.Errorf("could not put state: %v", err)
 	}
+
+	if len(*keyAttributes) == 1 {
+		return nil
+	}
+	putSecondaryIndexes(stub, keyAttributes, objectType)
+
 	return nil
 }
 

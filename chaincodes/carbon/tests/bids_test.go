@@ -31,17 +31,18 @@ func TestBid(t *testing.T) {
 	lastInsertTimestamp := utils.TimestampRFC3339UtcString(protoTs)
 	buyBid := &bids.BuyBid{}
 
-	err = buyBid.FromWorldState(stub, []string{creatorId, lastInsertTimestamp})
+	err = buyBid.FromWorldState(stub, []string{lastInsertTimestamp, creatorId})
 	t.Log(buyBid.PrivatePrice)
 	if err != nil || buyBid.PrivatePrice != nil {
-		t.Fatal("PrivatePrice should be nil. REGULAR_ID should not be able to see it")
+		t.Fatalf(`PrivatePrice should be nil or error should not happen.
+		REGULAR_ID should not be able to see it: %v`, err)
 	}
 
 	stub.Creator = possibleIds[identities.PriceViewer]
 	creatorId, _ = cid.GetID(stub)
 	buyBid = &bids.BuyBid{}
 
-	err = buyBid.FromWorldState(stub, []string{creatorId, lastInsertTimestamp})
+	err = buyBid.FromWorldState(stub, []string{lastInsertTimestamp, creatorId})
 	if buyBid.PrivatePrice == nil {
 		value, _, _ := cid.GetAttributeValue(stub, identities.PriceViewer)
 		t.Logf("Error: %v", err)

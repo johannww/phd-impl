@@ -61,7 +61,7 @@ func (a *Auction) PublishTEEContainerHash(stub shim.ChaincodeStubInterface, cont
 	txTimestamp, err := stub.GetTxTimestamp()
 	ccstate.PutStateWithCompositeKey[string](
 		stub, TEE_CONTAINER_HASH_PREFIX,
-		[]string{txTimestamp.String()},
+		&[][]string{{txTimestamp.String()}},
 		containerHash)
 	if err != nil {
 		return err

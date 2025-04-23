@@ -72,14 +72,16 @@ func (ocd *OffChainData) FromJson() (any, error) {
 	return reflectValue, nil
 }
 
+// TODO:
 func (ocd *OffChainData) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	return state.PutStateWithCompositeKey(stub, OFF_CHAIN_DATA_PREFIX, keyAttributes, ocd)
+	panic("not implemented")
+	return nil
 }
 
 func (ocd *OffChainData) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	return state.PutStateWithCompositeKey(stub, OFF_CHAIN_DATA_PREFIX, []string{ocd.Uri}, ocd)
+	return state.PutStateWithCompositeKey(stub, OFF_CHAIN_DATA_PREFIX, ocd.GetID(), ocd)
 }
 
-func (ocd *OffChainData) GetID() []string {
-	return []string{ocd.Uri}
+func (ocd *OffChainData) GetID() *[][]string {
+	return &[][]string{{ocd.Uri}}
 }
