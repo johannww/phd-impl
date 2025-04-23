@@ -6,6 +6,12 @@ import (
 	v "github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
 )
 
+const (
+	PROPERTY_PREFIX       = "property"
+	PROPERTY_CHUNK_PREFIX = "propertyChunk"
+	COORDINATES_PREFIX    = "coords"
+)
+
 type Coordinates struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
@@ -37,9 +43,13 @@ func (propertychunk *PropertyChunk) GetID() *[][]string {
 	panic("not implemented") // TODO: Implement
 }
 
+// TODO: review how chunks should be loaded
 type Property struct {
-	ID     uint64          `json:"id"`
-	Chunks []PropertyChunk `json:"-"`
+	ID uint64 `json:"id"`
+	// Chunks will not be marshalled to the world state via
+	// this struct. Instead, it will be marshalled via the
+	// PropertyChunk struct.
+	Chunks *[]PropertyChunk `json:"chunks"`
 }
 
 var _ state.WorldStateManager = (*Property)(nil)
@@ -49,11 +59,20 @@ func (property *Property) FromWorldState(stub shim.ChaincodeStubInterface, keyAt
 }
 
 func (property *Property) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	panic("not implemented") // TODO: Implement
+	chunks := property.Chunks
+	property.Chunks = nil // do not marshal chunks in the property struct
+
+	err := state.PutStateWithCompositeKey(stub, PROPERTY_PREFIX, property.GetID(), property)
+
+	for _, chunk := range *chunks {
+		chunk.ToWorldState(stub)
+	}
+
+	// reset property chunks
+	property.Chunks = chunks
+	return err
 }
 
 func (property *Property) GetID() *[][]string {
-	panic("not implemented") // TODO: Implement
+	return &[][]string{{string(property.ID)}}
 }
-
-// mock
