@@ -17,8 +17,9 @@ type Coordinates struct {
 // property struct---it could generate MVCC_READ_CONFLICT errors.
 // See: https://github.com/hyperledger/fabric/issues/3748
 type PropertyChunk struct {
-	PropertyID  uint64
-	Coordinates []Coordinates
+	PropertyID       uint64
+	Coordinates      []Coordinates
+	VegetationsProps []v.VegetationProps
 }
 
 var _ state.WorldStateManager = (*PropertyChunk)(nil)
