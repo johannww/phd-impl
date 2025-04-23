@@ -14,9 +14,8 @@ const (
 // at a specific time.
 // TODO: enhance this struct
 type Credit struct {
-	OwnerID  string         `json:"owner"`
-	Property *prop.Property `json:"property"`
-	Chunk    *prop.Property `json:"chunk"`
+	OwnerID string              `json:"owner"`
+	Chunk   *prop.PropertyChunk `json:"chunk"`
 }
 
 var _ state.WorldStateManager = (*Credit)(nil)
@@ -34,7 +33,6 @@ func (c *Credit) ToWorldState(stub shim.ChaincodeStubInterface) (_ error) {
 // TODO:
 func (c *Credit) GetID() *[][]string {
 	creditId := []string{c.OwnerID}
-	creditId = append(creditId, (*c.Property.GetID())[0]...)
 	creditId = append(creditId, (*c.Chunk.GetID())[0]...)
 	return &[][]string{creditId}
 }
