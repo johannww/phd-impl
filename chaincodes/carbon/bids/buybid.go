@@ -27,6 +27,8 @@ type BuyBid struct {
 	PrivatePrice *PrivatePrice            `json:"-"`
 }
 
+var _ ccstate.WorldStateManager = (*BuyBid)(nil)
+
 func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *identities.X509Identity) error {
 	// TODO: cidID is nil when idemix
 	cidID, _ := cid.GetID(stub)

@@ -23,6 +23,8 @@ type OffChainData struct {
 	DataBytes   []byte `json:"-"` // this prevents the field from being serialized
 }
 
+var _ state.WorldStateManager = (*OffChainData)(nil)
+
 // TODO:
 func (ocd *OffChainData) loadDataFromUri() error {
 	if ocd.Uri == "" {

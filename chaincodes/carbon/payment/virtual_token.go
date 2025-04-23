@@ -1,6 +1,9 @@
 package payment
 
-import "github.com/hyperledger/fabric-chaincode-go/shim"
+import (
+	"github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+)
 
 const (
 	PVT_DATA_COLLECTION      = "privateDataCollection"
@@ -11,6 +14,8 @@ type VirtualTokenWallet struct {
 	OwnerID  string  `json:"owner"`
 	Quantity float64 `json:"quantity"`
 }
+
+var _ state.WorldStateManager = (*VirtualTokenWallet)(nil)
 
 func MintVirtualToken(stub shim.ChaincodeStubInterface, ownerID string, quantity float64) (*VirtualTokenWallet, error) {
 	tokenWallet := &VirtualTokenWallet{OwnerID: ownerID}
@@ -39,6 +44,6 @@ func (virtualtokenwallet *VirtualTokenWallet) ToWorldState(stub shim.ChaincodeSt
 	panic("not implemented") // TODO: Implement
 }
 
-func (virtualtokenwallet *VirtualTokenWallet) GetID() []string {
+func (virtualtokenwallet *VirtualTokenWallet) GetID() *[][]string {
 	panic("not implemented") // TODO: Implement
 }

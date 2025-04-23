@@ -3,6 +3,7 @@ package credits
 import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	prop "github.com/johannww/phd-impl/chaincodes/carbon/properties"
+	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
 const (
@@ -18,6 +19,8 @@ type Credit struct {
 	Chunk    *prop.Property `json:"chunk"`
 }
 
+var _ state.WorldStateManager = (*Credit)(nil)
+
 // TODO:
 func (c *Credit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) (_ error) {
 	panic("not implemented") // TODO: Implement
@@ -29,9 +32,9 @@ func (c *Credit) ToWorldState(stub shim.ChaincodeStubInterface) (_ error) {
 }
 
 // TODO:
-func (c *Credit) GetID() (_ []string) {
+func (c *Credit) GetID() *[][]string {
 	creditId := []string{c.OwnerID}
-	creditId = append(creditId, c.Property.GetID()...)
-	creditId = append(creditId, c.Chunk.GetID()...)
-	return creditId
+	creditId = append(creditId, (*c.Property.GetID())[0]...)
+	creditId = append(creditId, (*c.Chunk.GetID())[0]...)
+	return &[][]string{creditId}
 }

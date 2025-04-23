@@ -25,6 +25,8 @@ type SellBid struct {
 	PrivatePrice *PrivatePrice   `json:"-"`
 }
 
+var _ ccstate.WorldStateManager = (*SellBid)(nil)
+
 func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID uint64) error {
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {

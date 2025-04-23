@@ -2,7 +2,7 @@ package bids
 
 import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
-	// ccstate "github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
 const (
@@ -13,6 +13,8 @@ const (
 // PrivateMultiplier is an for-the-government-only price encoded as a base64 string.
 type PrivateMultiplier struct{}
 
+var _ state.WorldStateManagerWithExtraPrefix = (*PrivateMultiplier)(nil)
+
 func (privPrice *PrivateMultiplier) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string, extraPrefix string) error {
 	panic("not implemented")
 }
@@ -21,6 +23,6 @@ func (privPrice *PrivateMultiplier) ToWorldState(stub shim.ChaincodeStubInterfac
 	panic("not implemented")
 }
 
-func (privPrice *PrivateMultiplier) GetID() []string {
+func (privPrice *PrivateMultiplier) GetID() *[][]string {
 	panic("not implemented")
 }

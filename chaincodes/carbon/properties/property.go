@@ -2,6 +2,8 @@ package properties
 
 import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+	v "github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
 )
 
 type Coordinates struct {
@@ -19,19 +21,25 @@ type PropertyChunk struct {
 	Coordinates []Coordinates
 }
 
+var _ state.WorldStateManager = (*PropertyChunk)(nil)
+
 func (propertychunk *PropertyChunk) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
 	panic("not implemented") // TODO: Implement
 }
+
 func (propertychunk *PropertyChunk) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	panic("not implemented") // TODO: Implement
 }
-func (propertychunk *PropertyChunk) GetID() []string {
+
+func (propertychunk *PropertyChunk) GetID() *[][]string {
 	panic("not implemented") // TODO: Implement
 }
 
 type Property struct {
 	ID uint64
 }
+
+var _ state.WorldStateManager = (*Property)(nil)
 
 func (property *Property) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
 	panic("not implemented") // TODO: Implement
@@ -41,7 +49,7 @@ func (property *Property) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	panic("not implemented") // TODO: Implement
 }
 
-func (property *Property) GetID() []string {
+func (property *Property) GetID() *[][]string {
 	panic("not implemented") // TODO: Implement
 }
 

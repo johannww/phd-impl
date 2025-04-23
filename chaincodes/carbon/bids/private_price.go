@@ -2,7 +2,7 @@ package bids
 
 import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
-	ccstate "github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
 const (
@@ -17,9 +17,11 @@ type PrivatePrice struct {
 	BidID []string `json:"bidID"` // This could be (Sell|Buy)bid or also MatchedBid
 }
 
+var _ state.WorldStateManagerWithExtraPrefix = (*PrivatePrice)(nil)
+
 func (privPrice *PrivatePrice) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string, extraPrefix string) error {
 	priceID := append([]string{extraPrefix}, keyAttributes...)
-	err := ccstate.GetPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION, privPrice)
+	err := state.GetPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION, privPrice)
 	if err != nil {
 		return err
 	}
@@ -27,14 +29,14 @@ func (privPrice *PrivatePrice) FromWorldState(stub shim.ChaincodeStubInterface, 
 }
 
 func (privPrice *PrivatePrice) ToWorldState(stub shim.ChaincodeStubInterface, extraPrefix string) error {
-	priceID := append([]string{extraPrefix}, privPrice.GetID()...)
-	err := ccstate.PutPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION, privPrice)
+	priceID := append([]string{extraPrefix}, (*privPrice.GetID())[0]...)
+	err := state.PutPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION, privPrice)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (privPrice *PrivatePrice) GetID() []string {
-	return privPrice.BidID
+func (privPrice *PrivatePrice) GetID() *[][]string {
+	return &[][]string{privPrice.BidID}
 }
