@@ -56,11 +56,11 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *
 		Timestamp:   bidTSStr,
 		AskQuantity: quantity,
 	}
-	bidID := buyBid.GetID()
+	bidID := *(buyBid.GetID())
 
 	privatePrice := &PrivatePrice{
 		Price: float64(price),
-		BidID: bidID,
+		BidID: bidID[0],
 	}
 	buyBid.PrivatePrice = privatePrice
 
