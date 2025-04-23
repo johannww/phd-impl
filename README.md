@@ -1,3 +1,13 @@
+# TODOs
+
+<!-- TODO: project todos --> 
+
+- [X] Understand and fix hyperledger bevel
+- [ ] Finish chaincode
+- [ ] Understand cacti and how to  uset it 
+- [ ] Understand hyperledger caliper for experiments
+- [ ] Understand grafana, prometheus for metrics
+
 # phd-impl
 
 # Description
