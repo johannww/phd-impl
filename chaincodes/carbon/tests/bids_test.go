@@ -61,20 +61,20 @@ func TestBidBatchRecover(t *testing.T) {
 	stub.Creator = possibleIds[REGULAR_ID]
 
 	numOfBids := int64(100)
-	timeBeforeInsertion := utils.TimestampRFC3339UtcString(timestamppb.Now())
+	initialTime := time.Now()
+	timeBeforeInsertion := utils.TimestampRFC3339UtcString(timestamppb.New(initialTime))
 	for i := int64(0); i < numOfBids; i++ {
 		stub.TransientMap = map[string][]byte{
 			"price": []byte(strconv.FormatInt(i+10, 10)),
 		}
 		stub.MockTransactionStart("tx" + strconv.FormatInt(i, 10))
-		stub.TxTimestamp = timestamppb.New(time.Now().Add(time.Duration(i) * time.Second))
+		stub.TxTimestamp = timestamppb.New(initialTime.Add(time.Duration(i) * time.Second))
 		err := bids.PublishBuyBid(stub, 100, &identities.X509Identity{})
 		if err != nil {
 			t.Fatalf("Error publishing buy bid: %v", err)
 		}
 	}
-	oneSecDurtaion, _ := time.ParseDuration("1s")
-	timeAfterInsertion := utils.TimestampRFC3339UtcString(timestamppb.New(stub.TxTimestamp.AsTime().Add(oneSecDurtaion)))
+	timeAfterInsertion := utils.TimestampRFC3339UtcString(timestamppb.New(stub.TxTimestamp.AsTime().Add(time.Duration(1) * time.Second)))
 
 	buyBidsBytes, err := state.GetStatesByRangeCompositeKey(stub, bids.BUY_BID_PREFIX, []string{timeBeforeInsertion}, []string{timeAfterInsertion})
 	if err != nil {

@@ -380,8 +380,9 @@ func (stub *MockStub) GetStateByRangeWithPagination(startKey, endKey string, pag
 	stateIterator := NewMockStateRangeQueryIterator(stub, startKey, endKey)
 
 	for elem := stub.Keys.Front(); elem != nil; elem = elem.Next() {
-		if strings.Compare(elem.Value.(string), startKey) >= 0 {
-			stateIterator.StartKey = elem.Value.(string)
+		elementKey := elem.Value.(string)
+		if strings.Compare(elementKey, endKey) < 0 &&
+			strings.Compare(elementKey, startKey) >= 0 {
 			stateIterator.Current = elem
 			break
 		}
@@ -399,7 +400,6 @@ func (stub *MockStub) GetStateByRangeWithPagination(startKey, endKey string, pag
 			break
 		}
 		metadata.FetchedRecordsCount++
-		stateIterator.EndKey = elementKey
 	}
 
 	return stateIterator, metadata, nil
