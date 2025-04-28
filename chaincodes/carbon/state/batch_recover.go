@@ -9,6 +9,7 @@ import (
 
 const PAGE_SIZE = 30000
 
+// TODO: implement
 func GetStatesByRange(stub shim.ChaincodeStubInterface, objectType string, key string) ([][]byte, error) {
 	return nil, nil
 }
