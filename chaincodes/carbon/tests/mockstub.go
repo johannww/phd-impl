@@ -372,7 +372,37 @@ func splitCompositeKey(compositeKey string) (string, []string, error) {
 // GetStateByRangeWithPagination ...
 func (stub *MockStub) GetStateByRangeWithPagination(startKey, endKey string, pageSize int32,
 	bookmark string) (shim.StateQueryIteratorInterface, *pb.QueryResponseMetadata, error) {
-	return nil, nil, nil
+	if bookmark != "" {
+		startKey = bookmark
+	}
+
+	metadata := &pb.QueryResponseMetadata{Bookmark: ""}
+	stateIterator := NewMockStateRangeQueryIterator(stub, startKey, endKey)
+
+	for elem := stub.Keys.Front(); elem != nil; elem = elem.Next() {
+		if strings.Compare(elem.Value.(string), startKey) >= 0 {
+			stateIterator.StartKey = elem.Value.(string)
+			stateIterator.Current = elem
+			break
+		}
+	}
+
+	elem := stateIterator.Current
+	for ; elem != nil; elem = elem.Next() {
+		elementKey := elem.Value.(string)
+		if strings.Compare(elementKey, endKey) > 0 ||
+			strings.Compare(elementKey, startKey) < 0 {
+			continue
+		}
+		if metadata.FetchedRecordsCount == pageSize {
+			metadata.Bookmark = elementKey
+			break
+		}
+		metadata.FetchedRecordsCount++
+		stateIterator.EndKey = elementKey
+	}
+
+	return stateIterator, metadata, nil
 }
 
 // GetStateByPartialCompositeKeyWithPagination ...
