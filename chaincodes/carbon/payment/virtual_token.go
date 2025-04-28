@@ -1,7 +1,11 @@
 package payment
 
 import (
+	"fmt"
+
+	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
@@ -20,6 +24,10 @@ var _ state.WorldStateManager = (*VirtualTokenWallet)(nil)
 func MintVirtualToken(stub shim.ChaincodeStubInterface, ownerID string, quantity float64) (*VirtualTokenWallet, error) {
 	tokenWallet := &VirtualTokenWallet{OwnerID: ownerID}
 	err := tokenWallet.FromWorldState(stub, []string{ownerID})
+	if cid.AssertAttributeValue(stub, identities.VirtualTokenMinter, "true") != nil {
+		return nil, fmt.Errorf("only identities with the attribute %s can mint virtual tokens", identities.VirtualTokenMinter)
+	}
+
 	// tokenWallet.FromWorldState
 	if err != nil {
 		return &VirtualTokenWallet{
