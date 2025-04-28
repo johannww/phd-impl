@@ -60,7 +60,6 @@ func GetStatesByRangeCompositeKey(stub shim.ChaincodeStubInterface, objectType s
 		}
 		defer stateIterator.Close()
 
-		bookmark = metadata.Bookmark
 		if metadata.FetchedRecordsCount == 0 {
 			break
 		}
@@ -70,6 +69,11 @@ func GetStatesByRangeCompositeKey(stub shim.ChaincodeStubInterface, objectType s
 			return nil, fmt.Errorf("could not read iterator states: %v", err)
 		}
 		states = append(states, statesInRange...)
+
+		bookmark = metadata.Bookmark
+		if bookmark == "" {
+			break
+		}
 
 	}
 
