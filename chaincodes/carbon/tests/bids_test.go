@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
-	"github.com/hyperledger/fabric-chaincode-go/shimtest"
 	"github.com/johannww/phd-impl/chaincodes/carbon"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
@@ -12,7 +11,7 @@ import (
 )
 
 func TestBid(t *testing.T) {
-	stub := shimtest.NewMockStub("carbon", &carbon.Carbon{})
+	stub := NewMockStub("carbon", &carbon.Carbon{})
 	possibleIds := SetupIdentities(stub)
 	stub.Creator = possibleIds[REGULAR_ID]
 

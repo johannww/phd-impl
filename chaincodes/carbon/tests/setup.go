@@ -15,7 +15,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-chaincode-go/pkg/attrmgr"
-	"github.com/hyperledger/fabric-chaincode-go/shimtest"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 )
@@ -103,7 +102,7 @@ func generateHFSerializedIdentity(idType string, attrs *attrmgr.Attributes, mspN
 	return hfSerializedID
 }
 
-func SetupIdentities(stub *shimtest.MockStub) MockIdentities {
+func SetupIdentities(stub *MockStub) MockIdentities {
 	mockIds := make(map[string][]byte)
 
 	mockIds[REGULAR_ID] = generateHFSerializedIdentity(

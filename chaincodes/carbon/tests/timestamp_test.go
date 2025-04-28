@@ -4,13 +4,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hyperledger/fabric-chaincode-go/shimtest"
 	"github.com/johannww/phd-impl/chaincodes/carbon"
 	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 )
 
 func TestUTCTimestamp(t *testing.T) {
-	stub := shimtest.NewMockStub("carbon", &carbon.Carbon{})
+	stub := NewMockStub("carbon", &carbon.Carbon{})
 	stub.MockTransactionStart("tx1")
 	ts, err := stub.GetTxTimestamp()
 	if err != nil {
