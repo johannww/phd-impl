@@ -1,6 +1,9 @@
 package properties
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 	v "github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
@@ -32,15 +35,32 @@ type PropertyChunk struct {
 var _ state.WorldStateManager = (*PropertyChunk)(nil)
 
 func (propertychunk *PropertyChunk) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	panic("not implemented") // TODO: Implement
+	if len(keyAttributes) != 2 {
+		return fmt.Errorf("invalid number of key attributes: %d", len(keyAttributes))
+	}
+
+	err := state.GetStateWithCompositeKey(stub, PROPERTY_CHUNK_PREFIX, keyAttributes, propertychunk)
+	if err != nil {
+		return fmt.Errorf("could not get property chunk from world state: %v", err)
+	}
+
+	return nil
 }
 
 func (propertychunk *PropertyChunk) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	panic("not implemented") // TODO: Implement
+	err := state.PutStateWithCompositeKey(stub, PROPERTY_CHUNK_PREFIX, propertychunk.GetID(), propertychunk)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (propertychunk *PropertyChunk) GetID() *[][]string {
-	panic("not implemented") // TODO: Implement
+	return &[][]string{{
+		strconv.FormatUint(propertychunk.PropertyID, 10),
+		strconv.FormatUint(propertychunk.ChunkID, 10),
+	}}
 }
 
 // TODO: review how chunks should be loaded
