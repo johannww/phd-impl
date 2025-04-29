@@ -106,6 +106,18 @@ func GetPvtDataWithCompositeKey[T any](
 	return nil
 }
 
+func GetState[T any](stub shim.ChaincodeStubInterface, objectType string, key string, stateStruct T) error {
+	stateBytes, err := stub.GetState(key)
+	if err != nil {
+		return fmt.Errorf("could not get state: %v", err)
+	}
+	err = json.Unmarshal(stateBytes, stateStruct)
+	if err != nil {
+		return fmt.Errorf("could not unmarshal state: %v", err)
+	}
+	return nil
+}
+
 func GetStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, stateStruct T) error {
 	stateKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
 	if err != nil {
