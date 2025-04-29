@@ -65,7 +65,8 @@ func (propertychunk *PropertyChunk) GetID() *[][]string {
 
 // TODO: review how chunks should be loaded
 type Property struct {
-	ID uint64 `json:"id"`
+	OwnerID string `json:"ownerId"`
+	ID      uint64 `json:"id"`
 	// Chunks will not be marshalled to the world state via
 	// this struct. Instead, it will be marshalled via the
 	// PropertyChunk struct.
@@ -94,5 +95,8 @@ func (property *Property) ToWorldState(stub shim.ChaincodeStubInterface) error {
 }
 
 func (property *Property) GetID() *[][]string {
-	return &[][]string{{string(property.ID)}}
+	return &[][]string{{
+		property.OwnerID,
+		strconv.FormatUint(property.ID, 10),
+	}}
 }
