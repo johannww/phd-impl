@@ -15,6 +15,7 @@ const (
 	OFF_CHAIN_DATA_PREFIX = "offChainData"
 )
 
+// TODO: should this be private and deal with access tokens?
 type OffChainData struct {
 	Uri         string `json:"uri"`
 	Method      string `json:"method"`
@@ -76,8 +77,7 @@ func (ocd *OffChainData) FromJson() (any, error) {
 
 // TODO:
 func (ocd *OffChainData) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	panic("not implemented")
-	return nil
+	return state.GetStateWithCompositeKey(stub, OFF_CHAIN_DATA_PREFIX, keyAttributes, ocd)
 }
 
 func (ocd *OffChainData) ToWorldState(stub shim.ChaincodeStubInterface) error {
@@ -86,4 +86,28 @@ func (ocd *OffChainData) ToWorldState(stub shim.ChaincodeStubInterface) error {
 
 func (ocd *OffChainData) GetID() *[][]string {
 	return &[][]string{{ocd.Uri}}
+}
+
+func PublishOffChainData(stub shim.ChaincodeStubInterface, uri string, method string, reflectType string, hash []byte) (*OffChainData, error) {
+	if _, ok := ReflectToTypes[reflectType]; !ok {
+		return nil, fmt.Errorf("could not find reflect type for %s", reflectType)
+	}
+
+	offChainData := &OffChainData{
+		Uri:         uri,
+		Method:      method,
+		ReflectType: reflectType,
+		Hash:        hash[:],
+	}
+
+	if _, err := offChainData.FromJson(); err != nil {
+		return nil, fmt.Errorf("could not load data: %v", err)
+	}
+
+	err := offChainData.ToWorldState(stub)
+	if err != nil {
+		return nil, fmt.Errorf("could not put off chain data in world state: %v", err)
+	}
+
+	return offChainData, nil
 }
