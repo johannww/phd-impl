@@ -14,7 +14,7 @@ func GetStatesByRange(stub shim.ChaincodeStubInterface, objectType string, key s
 	return nil, nil
 }
 
-func readIteratorStates(stateIterator shim.StateQueryIteratorInterface, metadata *peer.QueryResponseMetadata) ([][]byte, error) {
+func readIteratorStatesPagination(stateIterator shim.StateQueryIteratorInterface, metadata *peer.QueryResponseMetadata) ([][]byte, error) {
 	statesInRange := make([][]byte, metadata.GetFetchedRecordsCount())
 	i := 0
 	for stateIterator.HasNext() {
@@ -42,7 +42,7 @@ func getRangeCompositeKeys(stub shim.ChaincodeStubInterface, objectType string, 
 	return endKey, startKey, nil
 }
 
-func GetStatesByRangeCompositeKey(stub shim.ChaincodeStubInterface, objectType string, startPrefixes, endPrefixes []string) ([][]byte, error) {
+func GetStatesByRangeCompositeKeyReadOnly(stub shim.ChaincodeStubInterface, objectType string, startPrefixes, endPrefixes []string) ([][]byte, error) {
 	endKey, startKey, err := getRangeCompositeKeys(stub, objectType, startPrefixes, endPrefixes)
 	if err != nil {
 		return nil, fmt.Errorf("could not create composite key for: %v", err)
@@ -64,7 +64,7 @@ func GetStatesByRangeCompositeKey(stub shim.ChaincodeStubInterface, objectType s
 			break
 		}
 
-		statesInRange, err := readIteratorStates(stateIterator, metadata)
+		statesInRange, err := readIteratorStatesPagination(stateIterator, metadata)
 		if err != nil {
 			return nil, fmt.Errorf("could not read iterator states: %v", err)
 		}
