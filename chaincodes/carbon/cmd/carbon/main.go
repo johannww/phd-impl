@@ -1,61 +1,31 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/hyperledger/fabric-chaincode-go/shim"
-	cc "github.com/johannww/phd-impl/chaincodes/carbon"
-	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
+	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
-func readTlsCert(tlsCertPath string) []byte {
-	x509Cert, err := os.ReadFile(tlsCertPath)
-	if err != nil {
-		panic("Failed to read TLS certificate: " + err.Error())
-	}
-	return x509Cert
+type CarbonContract struct {
+	contractapi.Contract
+}
+
+// TODO: This is only a test function
+func (c *CarbonContract) CreateBuyBid(ctx contractapi.TransactionContextInterface, key string, value string) error {
+	stub := ctx.GetStub()
+	err := bids.PublishBuyBid(stub, 2, &identities.X509Identity{CertID: "certid"})
+	_, err = state.GetStatesByRangeCompositeKey(stub, "buyBid", []string{"a"}, []string{"ac"})
+	return err
 }
 
 func main() {
-	ccId := os.Getenv(utils.ChaincodeIdVariable)
-	addr := os.Getenv(utils.ServerAddressVariable)
-	tlsEnabled := os.Getenv(utils.TlsEnabledVariable)
-	tlsCertPath := os.Getenv(utils.ClientCertVariable)
-	tlsKeyPath := os.Getenv(utils.ClientKeyVariable)
-	tlsClientCACertPath := os.Getenv(utils.RootCertVariable)
-
-	if addr == "" {
-		if err := shim.Start(&cc.Carbon{}); err != nil {
-			panic(err)
-		}
-		return
+	carbonCC, err := contractapi.NewChaincode(new(CarbonContract))
+	if err != nil {
+		panic(err)
 	}
 
-	tlsProps := shim.TLSProperties{
-		Disabled: true,
-	}
-
-	if tlsEnabled == "true" {
-		if tlsCertPath == "" || tlsKeyPath == "" || tlsClientCACertPath == "" {
-			panic("TLS is enabled but required paths are not set")
-		}
-		tlsProps.Disabled = false
-		tlsProps.Key = readTlsCert(tlsKeyPath)
-		tlsProps.Cert = readTlsCert(tlsCertPath)
-		tlsProps.ClientCACerts = readTlsCert(tlsClientCACertPath)
-		fmt.Println("mTLS is enabled")
-	}
-
-	server := shim.ChaincodeServer{
-		CCID:     ccId,
-		Address:  addr,
-		CC:       &cc.Carbon{},
-		TLSProps: tlsProps,
-		KaOpts:   nil,
-	}
-
-	if err := server.Start(); err != nil {
+	if err := carbonCC.Start(); err != nil {
 		panic(err)
 	}
 }
