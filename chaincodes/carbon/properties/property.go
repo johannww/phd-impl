@@ -1,6 +1,7 @@
 package properties
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -70,13 +71,33 @@ type Property struct {
 	// Chunks will not be marshalled to the world state via
 	// this struct. Instead, it will be marshalled via the
 	// PropertyChunk struct.
-	Chunks *[]PropertyChunk `json:"chunks"`
+	Chunks []PropertyChunk `json:"chunks"`
 }
 
 var _ state.WorldStateManager = (*Property)(nil)
 
 func (property *Property) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	panic("not implemented") // TODO: Implement
+	err := state.GetStateWithCompositeKey(stub, PROPERTY_PREFIX, keyAttributes, property)
+	if err != nil {
+		return fmt.Errorf("could not get property from world state: %v", err)
+	}
+
+	chunksBytes, err := state.GetStatesByPartialCompositeKey(stub, PROPERTY_CHUNK_PREFIX, keyAttributes)
+	if err != nil {
+		return fmt.Errorf("could not get property chunks from world state: %v", err)
+	}
+
+	for _, chunkBytes := range chunksBytes {
+		propertyChunk := PropertyChunk{}
+		err = json.Unmarshal(chunkBytes, &propertyChunk)
+		if err != nil {
+			return fmt.Errorf("could not unmarshal property chunk: %v", err)
+		}
+		property.Chunks = append(property.Chunks, propertyChunk)
+	}
+
+	return nil
+
 }
 
 func (property *Property) ToWorldState(stub shim.ChaincodeStubInterface) error {
@@ -85,7 +106,7 @@ func (property *Property) ToWorldState(stub shim.ChaincodeStubInterface) error {
 
 	err := state.PutStateWithCompositeKey(stub, PROPERTY_PREFIX, property.GetID(), property)
 
-	for _, chunk := range *chunks {
+	for _, chunk := range chunks {
 		chunk.ToWorldState(stub)
 	}
 
