@@ -138,3 +138,10 @@ func GetStatesByRangeCompositeKeyReadOnly(stub shim.ChaincodeStubInterface, obje
 
 	return states, nil
 }
+
+// TODO: TEST THIS
+func GetStatesByPartialCompositeKey(stub shim.ChaincodeStubInterface, objectType string, prefixes []string) ([][]byte, error) {
+	startPrefixes := prefixes
+	endPrefixes := append(prefixes, string(maxUnicodeRuneValue))
+	return GetStatesByRangeCompositeKey(stub, objectType, startPrefixes, endPrefixes)
+}
