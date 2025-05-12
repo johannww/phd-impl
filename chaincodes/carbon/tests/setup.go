@@ -17,6 +17,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/pkg/attrmgr"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 )
 
 type MockIdentities map[string][]byte
@@ -102,7 +103,7 @@ func generateHFSerializedIdentity(idType string, attrs *attrmgr.Attributes, mspN
 	return hfSerializedID
 }
 
-func SetupIdentities(stub *MockStub) MockIdentities {
+func SetupIdentities(stub *mocks.MockStub) MockIdentities {
 	mockIds := make(map[string][]byte)
 
 	mockIds[REGULAR_ID] = generateHFSerializedIdentity(

@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/johannww/phd-impl/chaincodes/carbon"
+	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 )
 
 func TestUTCTimestamp(t *testing.T) {
-	stub := NewMockStub("carbon", &carbon.Carbon{})
+	stub := mocks.NewMockStub("carbon", &carbon.Carbon{})
 	stub.MockTransactionStart("tx1")
 	ts, err := stub.GetTxTimestamp()
 	if err != nil {

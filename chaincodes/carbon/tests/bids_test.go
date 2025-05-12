@@ -11,12 +11,13 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestBid(t *testing.T) {
-	stub := NewMockStub("carbon", &carbon.Carbon{})
+	stub := mocks.NewMockStub("carbon", &carbon.Carbon{})
 	possibleIds := SetupIdentities(stub)
 	stub.Creator = possibleIds[REGULAR_ID]
 
@@ -56,7 +57,7 @@ func TestBid(t *testing.T) {
 }
 
 func TestBidBatchRecover(t *testing.T) {
-	stub := NewMockStub("carbon", &carbon.Carbon{})
+	stub := mocks.NewMockStub("carbon", &carbon.Carbon{})
 	possibleIds := SetupIdentities(stub)
 	stub.Creator = possibleIds[REGULAR_ID]
 
