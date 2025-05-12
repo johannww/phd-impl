@@ -18,14 +18,15 @@ touch $FABRIC_SAMPLES_DIR/.nosync
 pushd $TEST_NETWORK_DIR
 git checkout 5fa5abbbcf
 
-# Include fabric binaries in PATH and set FABRIC_CFG_PATH
-export PATH=$PATH:$(realpath ../bin)
-export FABRIC_CFG_PATH=$(realpath ../config)
-
 # Install fabric binaries and images
 if [[ $1 == "prereq" ]]; then
     ./network.sh prereq -i $FABRIC_VER -cai $FABRIC_CA_VER
 fi
+
+# Include fabric binaries in PATH and set FABRIC_CFG_PATH
+export PATH=$PATH:$(realpath ../bin)
+export FABRIC_CFG_PATH=$(realpath ../config)
+
 ./network.sh down -ca
 ./network.sh up createChannel -ca
 docker container rm -f $(docker container ls -a | grep carbon_ccaas | awk '{print $1}')
