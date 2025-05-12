@@ -6,6 +6,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	cc "github.com/johannww/phd-impl/chaincodes/carbon"
+	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 )
 
 func readTlsCert(tlsCertPath string) []byte {
