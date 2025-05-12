@@ -294,9 +294,13 @@ func (stub *MockStub) DelState(key string) error {
 
 // GetStateByRange ...
 func (stub *MockStub) GetStateByRange(startKey, endKey string) (shim.StateQueryIteratorInterface, error) {
-	if err := validateSimpleKeys(startKey, endKey); err != nil {
-		return nil, err
-	}
+	// NOTE: JOHANN: I have my own fork that enables GetStateByRange with
+	// composite keys. I am also adapting the mock stub.
+	// See: github.com/johannww/fabric-chaincode-go
+
+	// if err := validateSimpleKeys(startKey, endKey); err != nil {
+	// 	return nil, err
+	// }
 	return NewMockStateRangeQueryIterator(stub, startKey, endKey), nil
 }
 

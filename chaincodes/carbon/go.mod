@@ -16,3 +16,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
 	google.golang.org/grpc v1.65.0 // indirect
 )
+
+replace github.com/hyperledger/fabric-chaincode-go v0.0.0-20240704073638-9fb89180dc17 => github.com/johannww/fabric-chaincode-go v0.0.0-20250512034341-b65d91f5138e
