@@ -23,7 +23,7 @@ export PATH=$PATH:$(realpath ../bin)
 export FABRIC_CFG_PATH=$(realpath ../config)
 
 # Install fabric binaries and images
-if [ $1 -eq "prereq" ]; then
+if [[ $1 == "prereq" ]]; then
     ./network.sh prereq -i $FABRIC_VER -cai $FABRIC_CA_VER
 fi
 ./network.sh down -ca
