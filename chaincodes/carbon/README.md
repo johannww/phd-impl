@@ -6,3 +6,14 @@
     - If the number of keys is equal to the limit, I will ask perform a search using the last key.
     - How do I retrieve totalQueryLimit?
 
+# Testing
+
+Setup the carbon chaincode with the fabric test network:
+```bash
+./tests/scripts/setup-test-network.sh
+# test the invoke:
+./tests/scripts/test-invoke.sh
+# cleanup (delete binaries, config and builders folders):
+./tests/scripts/cleanup.sh
+
+```

@@ -20,5 +20,6 @@ func (carbon *Carbon) Init(stub shim.ChaincodeStubInterface) pb.Response {
 func (carbon *Carbon) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	// TODO: perhaps use the contract api here
 	// it uses reflect to auto parse the parameters
-	panic("not implemented") // TODO: Implement
+	return shim.Success([]byte("Carbon chaincode is returning a success response"))
+	// panic("not implemented") // TODO: Implement
 }
