@@ -29,9 +29,11 @@ fi
 export PATH=$PATH:$(realpath ../bin)
 export FABRIC_CFG_PATH=$(realpath ../config)
 
+# remove existing ccaas. test-network does not do this.
+docker container rm -f $(docker container ls -a | grep carbon_ccaas | awk '{print $1}')
+
 ./network.sh down -ca
 ./network.sh up createChannel -ca
-docker container rm -f $(docker container ls -a | grep carbon_ccaas | awk '{print $1}')
 ./network.sh deployCCAAS -ccn carbon -ccp ../../../
 echo 1 > ccversion.txt
 

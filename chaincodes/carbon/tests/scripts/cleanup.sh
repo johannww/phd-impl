@@ -9,5 +9,9 @@ cd $SCRIPT_DIR/..
 FABRIC_SAMPLES_DIR=fabric-samples
 TEST_NETWORK_DIR=fabric-samples/test-network
 
-rm -rf $FABRIC_SAMPLES_DIR/{bin,config,builders}
+pushd $TEST_NETWORK_DIR
 
+docker container rm -f $(docker container ls -a | grep carbon_ccaas | awk '{print $1}')
+./network.sh down -ca
+
+popd
