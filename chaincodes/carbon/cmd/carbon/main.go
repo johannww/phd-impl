@@ -17,12 +17,12 @@ func readTlsCert(tlsCertPath string) []byte {
 }
 
 func main() {
-	ccId := os.Getenv("CHAINCODE_ID")
-	addr := os.Getenv("CHAINCODE_SERVER_ADDRESS")
-	tlsDisabled := os.Getenv("CHAINCODE_TLS_DISABLED")
-	tlsCertPath := os.Getenv("CHAINCODE_TLS_CERT")
-	tlsKeyPath := os.Getenv("CHAINCODE_TLS_KEY")
-	tlsClientCACertPath := os.Getenv("CHAINCODE_CLIENT_CA_CERT")
+	ccId := os.Getenv(utils.ChaincodeIdVariable)
+	addr := os.Getenv(utils.ServerAddressVariable)
+	tlsEnabled := os.Getenv(utils.TlsEnabledVariable)
+	tlsCertPath := os.Getenv(utils.ClientCertVariable)
+	tlsKeyPath := os.Getenv(utils.ClientKeyVariable)
+	tlsClientCACertPath := os.Getenv(utils.RootCertVariable)
 
 	if addr == "" {
 		if err := shim.Start(&cc.Carbon{}); err != nil {
@@ -35,7 +35,7 @@ func main() {
 		Disabled: true,
 	}
 
-	if tlsDisabled == "false" {
+	if tlsEnabled == "true" {
 		if tlsCertPath == "" || tlsKeyPath == "" || tlsClientCACertPath == "" {
 			panic("TLS is enabled but required paths are not set")
 		}
