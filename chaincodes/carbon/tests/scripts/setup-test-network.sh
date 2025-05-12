@@ -33,5 +33,6 @@ export FABRIC_CFG_PATH=$(realpath ../config)
 ./network.sh up createChannel -ca
 docker container rm -f $(docker container ls -a | grep carbon_ccaas | awk '{print $1}')
 ./network.sh deployCCAAS -ccn carbon -ccp ../../../
+echo 1 > ccversion.txt
 
 popd
