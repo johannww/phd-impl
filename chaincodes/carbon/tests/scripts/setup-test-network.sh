@@ -2,6 +2,8 @@
 # This script builds the chaincode and launches it as a service
 # in the fabric test network.
 
+DOWNLOAD_PREREQ=$1
+
 FABRIC_VER=2.5.12
 FABRIC_CA_VER=1.5.15
 
@@ -19,7 +21,7 @@ pushd $TEST_NETWORK_DIR
 git checkout 5fa5abbbcf
 
 # Install fabric binaries and images
-if [[ $1 == "prereq" ]]; then
+if [[ $DOWNLOAD_PREREQ == "prereq" ]]; then
     ./network.sh prereq -i $FABRIC_VER -cai $FABRIC_CA_VER
 fi
 
