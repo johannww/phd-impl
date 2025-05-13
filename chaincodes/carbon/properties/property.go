@@ -1,7 +1,6 @@
 package properties
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -82,19 +81,19 @@ func (property *Property) FromWorldState(stub shim.ChaincodeStubInterface, keyAt
 		return fmt.Errorf("could not get property from world state: %v", err)
 	}
 
-	chunksBytes, err := state.GetStatesByPartialCompositeKey(stub, PROPERTY_CHUNK_PREFIX, keyAttributes)
+	property.Chunks, err = state.GetStatesByPartialCompositeKey[PropertyChunk](stub, PROPERTY_CHUNK_PREFIX, keyAttributes)
 	if err != nil {
 		return fmt.Errorf("could not get property chunks from world state: %v", err)
 	}
 
-	for _, chunkBytes := range chunksBytes {
-		propertyChunk := PropertyChunk{}
-		err = json.Unmarshal(chunkBytes, &propertyChunk)
-		if err != nil {
-			return fmt.Errorf("could not unmarshal property chunk: %v", err)
-		}
-		property.Chunks = append(property.Chunks, propertyChunk)
-	}
+	// for _, chunkBytes := range chunksBytes {
+	// 	propertyChunk := PropertyChunk{}
+	// 	err = json.Unmarshal(chunkBytes, &propertyChunk)
+	// 	if err != nil {
+	// 		return fmt.Errorf("could not unmarshal property chunk: %v", err)
+	// 	}
+	// 	property.Chunks = append(property.Chunks, propertyChunk)
+	// }
 
 	return nil
 

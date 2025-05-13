@@ -77,7 +77,8 @@ func TestBidBatchRecover(t *testing.T) {
 	}
 	timeAfterInsertion := utils.TimestampRFC3339UtcString(timestamppb.New(stub.TxTimestamp.AsTime().Add(time.Duration(1) * time.Second)))
 
-	buyBidsBytes, err := state.GetStatesByRangeCompositeKey(stub, bids.BUY_BID_PREFIX, []string{timeBeforeInsertion}, []string{timeAfterInsertion})
+	// TODO: perhaps i could use GetStatesByRangeCompositeKey. It unmarshalls the state
+	buyBidsBytes, err := state.GetStatesBytesByRangeCompositeKey(stub, bids.BUY_BID_PREFIX, []string{timeBeforeInsertion}, []string{timeAfterInsertion})
 	if err != nil {
 		t.Fatalf("Error getting buy bids by range: %v", err)
 	}
