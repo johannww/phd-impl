@@ -82,9 +82,10 @@ func PutStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectTyp
 	if len(*keyAttributes) == 1 {
 		return nil
 	}
-	putSecondaryIndexes(stub, keyAttributes, objectType)
 
-	return nil
+	err = putSecondaryIndexes(stub, keyAttributes, objectType)
+
+	return err
 }
 
 func GetPvtDataWithCompositeKey[T any](
