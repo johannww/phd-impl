@@ -4,7 +4,6 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
-	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
 type CarbonContract struct {
@@ -15,7 +14,7 @@ type CarbonContract struct {
 func (c *CarbonContract) CreateBuyBid(ctx contractapi.TransactionContextInterface, key string, value string) error {
 	stub := ctx.GetStub()
 	err := bids.PublishBuyBid(stub, 2, &identities.X509Identity{CertID: "certid"})
-	_, err = state.GetStatesByRangeCompositeKey(stub, "buyBid", []string{"a"}, []string{"ac"})
+	// _, err = state.GetStatesByRangeCompositeKey(stub, "buyBid", []string{"a"}, []string{"ac"})
 	return err
 }
 
