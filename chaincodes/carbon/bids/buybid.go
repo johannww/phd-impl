@@ -78,12 +78,7 @@ func RetractBuyBid(stub shim.ChaincodeStubInterface, bidID []string) error {
 	return nil
 }
 
-func (b *BuyBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	err := ccstate.GetStateWithCompositeKey(stub, BUY_BID_PREFIX, keyAttributes, b)
-	if err != nil {
-		return err
-	}
-
+func (b *BuyBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) error {
 	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
 		privatePrice := &PrivatePrice{}
 		err := privatePrice.FromWorldState(stub, (*b.GetID())[0], BUY_BID_PVT)
@@ -92,6 +87,19 @@ func (b *BuyBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes 
 		}
 
 		b.PrivatePrice = privatePrice
+	}
+	return nil
+}
+
+func (b *BuyBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
+	err := ccstate.GetStateWithCompositeKey(stub, BUY_BID_PREFIX, keyAttributes, b)
+	if err != nil {
+		return err
+	}
+
+	err = b.FetchPrivatePrice(stub)
+	if err != nil {
+		return err
 	}
 
 	return nil

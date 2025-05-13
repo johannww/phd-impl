@@ -71,6 +71,18 @@ func RetractSellBid(stub shim.ChaincodeStubInterface, bidID []string) error {
 	return nil
 }
 
+func (s *SellBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) error {
+	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
+		privatePrice := &PrivatePrice{}
+		err := privatePrice.FromWorldState(stub, (*s.GetID())[0], SELL_BID_PVT)
+		if err != nil {
+			return fmt.Errorf("could not get private price from world state: %v", err)
+		}
+		s.PrivatePrice = privatePrice
+	}
+	return nil
+}
+
 func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
 	err := ccstate.GetStateWithCompositeKey(stub, SELL_BID_PREFIX, keyAttributes, s)
 	if err != nil {
@@ -80,10 +92,9 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 	// TODO: load credit from world state.
 	// perhaps, check if it should be done
 
-	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
-		privatePrice := &PrivatePrice{}
-		privatePrice.FromWorldState(stub, (*s.GetID())[0], SELL_BID_PVT)
-		s.PrivatePrice = privatePrice
+	err = s.FetchPrivatePrice(stub)
+	if err != nil {
+		return err
 	}
 
 	return nil
