@@ -1,5 +1,12 @@
 package bids
 
+import "github.com/hyperledger/fabric-chaincode-go/shim"
+
+const (
+	MATCHED_BID_PREFIX = "matchedBid"
+	MATCHED_BID_PVT    = "matchedBidPvt"
+)
+
 // TODO: Perhaps I should keep separate structs.
 // One for the LevelDB and one for the application.
 type MatchedBid struct {
@@ -10,4 +17,16 @@ type MatchedBid struct {
 	Quantity          float64            `json:"quantity"`
 	PrivatePrice      *PrivatePrice      `json:"privatePrice"`
 	PrivateMultiplier *PrivateMultiplier `json:"privateMultiplier"`
+}
+
+func (mb *MatchedBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
+	panic("not implemented") // TODO: Implement
+}
+func (mb *MatchedBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
+	panic("not implemented") // TODO: Implement
+}
+func (mb *MatchedBid) GetID() *[][]string {
+	buyBidFirstID := append((*mb.BuyBid.GetID())[0], (*mb.SellBid.GetID())[0]...)
+	sellBidFirstID := append((*mb.SellBid.GetID())[0], (*mb.BuyBid.GetID())[0]...)
+	return &[][]string{buyBidFirstID, sellBidFirstID}
 }
