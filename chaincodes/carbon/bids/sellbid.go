@@ -139,3 +139,12 @@ func (s *SellBid) GetID() *[][]string {
 		{strconv.FormatUint(s.CreditID, 10), s.Timestamp},
 	}
 }
+
+func (b *SellBid) Less(b2 *SellBid) int {
+	if b.PrivatePrice.Price < b2.PrivatePrice.Price {
+		return -1
+	} else if b.PrivatePrice.Price > b2.PrivatePrice.Price {
+		return 1
+	}
+	return 0
+}

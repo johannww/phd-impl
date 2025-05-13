@@ -136,3 +136,12 @@ func (b *BuyBid) GetID() *[][]string {
 		{b.BuyerID.String(), b.Timestamp},
 	}
 }
+
+func (b *BuyBid) Less(b2 *BuyBid) int {
+	if b.PrivatePrice.Price < b2.PrivatePrice.Price {
+		return -1
+	} else if b.PrivatePrice.Price > b2.PrivatePrice.Price {
+		return 1
+	}
+	return 0
+}
