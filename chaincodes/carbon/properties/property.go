@@ -70,7 +70,7 @@ type Property struct {
 	// Chunks will not be marshalled to the world state via
 	// this struct. Instead, it will be marshalled via the
 	// PropertyChunk struct.
-	Chunks []PropertyChunk `json:"chunks"`
+	Chunks []*PropertyChunk `json:"chunks"`
 }
 
 var _ state.WorldStateManager = (*Property)(nil)

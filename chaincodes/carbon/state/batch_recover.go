@@ -40,8 +40,8 @@ func readIteratorStates(stateIterator shim.StateQueryIteratorInterface) ([][]byt
 	return statesInRange, "", nil
 }
 
-func readUnmarshalledIteratorStates[T any](stateIterator shim.StateQueryIteratorInterface) ([]T, string, error) {
-	statesInRange := []T{}
+func readUnmarshalledIteratorStates[T any](stateIterator shim.StateQueryIteratorInterface) ([]*T, string, error) {
+	statesInRange := []*T{}
 	i := 0
 	lastKey := ""
 	for stateIterator.HasNext() {
@@ -55,8 +55,12 @@ func readUnmarshalledIteratorStates[T any](stateIterator shim.StateQueryIterator
 		}
 
 		var unmarshalledState T
-		err = json.Unmarshal(kv.GetValue(), unmarshalledState)
-		statesInRange = append(statesInRange, unmarshalledState)
+		err = json.Unmarshal(kv.GetValue(), &unmarshalledState)
+		if err != nil {
+			return nil, "", fmt.Errorf("could not unmarshal state: %v", err)
+		}
+
+		statesInRange = append(statesInRange, &unmarshalledState)
 		lastKey = kv.GetKey()
 		i++
 	}
@@ -93,13 +97,13 @@ func getRangeCompositeKeys(stub shim.ChaincodeStubInterface, objectType string, 
 	return endKey, startKey, nil
 }
 
-func GetStatesByRangeCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, startPrefixes, endPrefixes []string) ([]T, error) {
+func GetStatesByRangeCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, startPrefixes, endPrefixes []string) ([]*T, error) {
 	endKey, startKey, err := getRangeCompositeKeys(stub, objectType, startPrefixes, endPrefixes)
 	if err != nil {
 		return nil, fmt.Errorf("could not create composite key for: %v", err)
 	}
 
-	states := []T{}
+	states := []*T{}
 	for {
 		stateIterator, err := stub.GetStateByRange(startKey, endKey)
 		if err != nil {
@@ -204,7 +208,7 @@ func GetStatesBytesByPartialCompositeKey(stub shim.ChaincodeStubInterface, objec
 }
 
 // TODO: TEST THIS
-func GetStatesByPartialCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, prefixes []string) ([]T, error) {
+func GetStatesByPartialCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, prefixes []string) ([]*T, error) {
 	startPrefixes := prefixes
 	endPrefixes := append(prefixes, string(maxUnicodeRuneValue))
 	return GetStatesByRangeCompositeKey[T](stub, objectType, startPrefixes, endPrefixes)
