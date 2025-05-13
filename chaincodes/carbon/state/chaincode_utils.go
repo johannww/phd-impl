@@ -7,6 +7,8 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 )
 
+const SECONDARY_INDEX_OBJ_TYPE = "secondaryIndex"
+
 func GetTransientData(stub shim.ChaincodeStubInterface, key string) ([]byte, error) {
 	transient, err := stub.GetTransient()
 	if err != nil {
@@ -52,7 +54,8 @@ func putSecondaryIndexes(stub shim.ChaincodeStubInterface, keyAttributes *[][]st
 	}
 
 	for i := 1; i < len(*keyAttributes); i++ {
-		stateKey, err := stub.CreateCompositeKey(objectType, (*keyAttributes)[i])
+		attributes := append([]string{objectType}, (*keyAttributes)[i]...)
+		stateKey, err := stub.CreateCompositeKey(SECONDARY_INDEX_OBJ_TYPE, attributes)
 		if err != nil {
 			return fmt.Errorf("could not create composite key for state: %v", err)
 		}
