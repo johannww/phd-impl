@@ -1,7 +1,6 @@
 package carbon_tests
 
 import (
-	"encoding/json"
 	"strconv"
 	"testing"
 	"time"
@@ -77,24 +76,27 @@ func TestBidBatchRecover(t *testing.T) {
 	}
 	timeAfterInsertion := utils.TimestampRFC3339UtcString(timestamppb.New(stub.TxTimestamp.AsTime().Add(time.Duration(1) * time.Second)))
 
-	// TODO: perhaps i could use GetStatesByRangeCompositeKey. It unmarshalls the state
-	buyBidsBytes, err := state.GetStatesBytesByRangeCompositeKey(stub, bids.BUY_BID_PREFIX, []string{timeBeforeInsertion}, []string{timeAfterInsertion})
+	buyBids, err := state.GetStatesByRangeCompositeKey[bids.BuyBid](stub, bids.BUY_BID_PREFIX, []string{timeBeforeInsertion}, []string{timeAfterInsertion})
 	if err != nil {
 		t.Fatalf("Error getting buy bids by range: %v", err)
 	}
 
-	buyBids := make([]bids.BuyBid, len(buyBidsBytes))
-	for i, bid := range buyBidsBytes {
-		err = json.Unmarshal(bid, &buyBids[i])
-		if err != nil {
-			t.Fatalf("Error unmarshalling buy bid: %v", err)
-		}
+	if len(buyBids) != int(numOfBids) {
+		t.Fatalf("Expected %d buy bids, got %d", numOfBids, len(buyBids))
+	}
 
-		buyBidID := (*buyBids[i].GetID())[0]
-		if buyBids[i].FromWorldState(stub, buyBidID) != nil {
-			t.Fatalf("BuyBid from range query is not the same as the existing in the world state: %v", err)
+	// recover private prices
+	for i, bid := range buyBids {
+		stub.Creator = possibleIds[identities.PriceViewer]
+		bid.FetchPrivatePrice(stub)
+		if bid.PrivatePrice == nil {
+			t.Fatalf("PriceViewer should be able to see the private price: %v", bid.PrivatePrice)
 		}
-
+		t.Logf("BuyBid %d: %v\n", i, bid)
+		t.Logf("PrivatePrice %d: %v\n", i, bid.PrivatePrice)
+		if bid.PrivatePrice.Price != float64(i+10) {
+			t.Fatalf("Expected private price %d, got %f", i+10, bid.PrivatePrice.Price)
+		}
 	}
 }
 
