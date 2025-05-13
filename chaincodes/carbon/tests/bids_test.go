@@ -81,6 +81,18 @@ func TestBidBatchRecover(t *testing.T) {
 		t.Fatalf("Error getting buy bids by range: %v", err)
 	}
 
+	ensureAllBidsWereRetrieved(stub, t, buyBids, int(numOfBids), possibleIds)
+
+	buyBids, err = state.GetStatesByPartialCompositeKey[bids.BuyBid](stub, bids.BUY_BID_PREFIX, nil)
+	if err != nil {
+		t.Fatalf("Error getting buy bids by range: %v", err)
+	}
+	ensureAllBidsWereRetrieved(stub, t, buyBids, int(numOfBids), possibleIds)
+}
+
+func ensureAllBidsWereRetrieved(stub *mocks.MockStub, t *testing.T,
+	buyBids []*bids.BuyBid, numOfBids int,
+	possibleIds MockIdentities) {
 	if len(buyBids) != int(numOfBids) {
 		t.Fatalf("Expected %d buy bids, got %d", numOfBids, len(buyBids))
 	}
@@ -92,8 +104,8 @@ func TestBidBatchRecover(t *testing.T) {
 		if bid.PrivatePrice == nil {
 			t.Fatalf("PriceViewer should be able to see the private price: %v", bid.PrivatePrice)
 		}
-		t.Logf("BuyBid %d: %v\n", i, bid)
-		t.Logf("PrivatePrice %d: %v\n", i, bid.PrivatePrice)
+		// t.Logf("BuyBid %d: %v\n", i, bid)
+		// t.Logf("PrivatePrice %d: %v\n", i, bid.PrivatePrice)
 		if bid.PrivatePrice.Price != float64(i+10) {
 			t.Fatalf("Expected private price %d, got %f", i+10, bid.PrivatePrice.Price)
 		}
