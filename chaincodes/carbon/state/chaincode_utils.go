@@ -151,13 +151,30 @@ func DeletePvtDataWithCompositeKey(stub shim.ChaincodeStubInterface, objectType 
 	return nil
 }
 
-func DeleteStateWithCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string) error {
-	stateKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
+func DeleteStateWithCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes *[][]string) error {
+	stateKey, err := stub.CreateCompositeKey(objectType, (*keyAttributes)[0])
 	if err != nil {
 		return fmt.Errorf("could not create composite key for state: %v", err)
 	}
 	if err := stub.DelState(stateKey); err != nil {
 		return fmt.Errorf("could not delete state: %v", err)
+	}
+
+	err = deleteSecondaryIndexes(stub, keyAttributes, objectType)
+
+	return err
+}
+
+func deleteSecondaryIndexes(stub shim.ChaincodeStubInterface, keyAttributes *[][]string, objectType string) error {
+	for i := 1; i < len(*keyAttributes); i++ {
+		attributes := append([]string{objectType}, (*keyAttributes)[i]...)
+		stateKey, err := stub.CreateCompositeKey(SECONDARY_INDEX_OBJ_TYPE, attributes)
+		if err != nil {
+			return fmt.Errorf("could not create composite key for state: %v", err)
+		}
+		if err := stub.DelState(stateKey); err != nil {
+			return fmt.Errorf("could not delete secondary key: %v", err)
+		}
 	}
 	return nil
 }
