@@ -19,3 +19,8 @@ func (bc *BurnCredit) ToWorldState(stub shim.ChaincodeStubInterface) error {
 func (bc *BurnCredit) GetID() *[][]string {
 	return bc.MintCredit.GetID()
 }
+
+// TODO: implement
+func Burn(stub shim.ChaincodeStubInterface) error {
+	return nil
+}
