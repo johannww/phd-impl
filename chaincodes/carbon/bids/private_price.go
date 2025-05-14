@@ -6,8 +6,7 @@ import (
 )
 
 const (
-	PVT_DATA_COLLECTION = "privateDataCollection"
-	PVT_PRICE_PREFIX    = "privatePrice"
+	PVT_PRICE_PREFIX = "privatePrice"
 )
 
 // TODO: this may be a float64 passed to the chaincode via transient data
@@ -21,7 +20,7 @@ var _ state.WorldStateManagerWithExtraPrefix = (*PrivatePrice)(nil)
 
 func (privPrice *PrivatePrice) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string, extraPrefix string) error {
 	priceID := append([]string{extraPrefix}, keyAttributes...)
-	err := state.GetPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION, privPrice)
+	err := state.GetPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, state.BIDS_PVT_DATA_COLLECTION, privPrice)
 	if err != nil {
 		return err
 	}
@@ -30,7 +29,7 @@ func (privPrice *PrivatePrice) FromWorldState(stub shim.ChaincodeStubInterface, 
 
 func (privPrice *PrivatePrice) ToWorldState(stub shim.ChaincodeStubInterface, extraPrefix string) error {
 	priceID := append([]string{extraPrefix}, (*privPrice.GetID())[0]...)
-	err := state.PutPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION, privPrice)
+	err := state.PutPvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, state.BIDS_PVT_DATA_COLLECTION, privPrice)
 	if err != nil {
 		return err
 	}
@@ -39,7 +38,7 @@ func (privPrice *PrivatePrice) ToWorldState(stub shim.ChaincodeStubInterface, ex
 
 func (privPrice *PrivatePrice) DeleteFromWorldState(stub shim.ChaincodeStubInterface, extraPrefix string) error {
 	priceID := append([]string{extraPrefix}, (*privPrice.GetID())[0]...)
-	err := state.DeletePvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION)
+	err := state.DeletePvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, state.BIDS_PVT_DATA_COLLECTION)
 	return err
 }
 
