@@ -86,15 +86,6 @@ func (property *Property) FromWorldState(stub shim.ChaincodeStubInterface, keyAt
 		return fmt.Errorf("could not get property chunks from world state: %v", err)
 	}
 
-	// for _, chunkBytes := range chunksBytes {
-	// 	propertyChunk := PropertyChunk{}
-	// 	err = json.Unmarshal(chunkBytes, &propertyChunk)
-	// 	if err != nil {
-	// 		return fmt.Errorf("could not unmarshal property chunk: %v", err)
-	// 	}
-	// 	property.Chunks = append(property.Chunks, propertyChunk)
-	// }
-
 	return nil
 
 }
