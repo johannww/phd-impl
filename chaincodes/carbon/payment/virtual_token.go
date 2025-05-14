@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	PVT_VIRTUAL_TOKEN_PREFIX = "virtualToken"
+	VIRTUAL_TOKEN_WALLET_PREFIX = "virtualTokenWallet"
 )
 
 // VirtualTokenWallet is a wallet that stores tokens corresponding to a
@@ -45,14 +45,14 @@ func MintVirtualToken(stub shim.ChaincodeStubInterface, ownerID string, quantity
 	return tokenWallet, nil
 }
 
-func (virtualtokenwallet *VirtualTokenWallet) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	panic("not implemented") // TODO: Implement
+func (vtw *VirtualTokenWallet) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
+	return state.GetPvtDataWithCompositeKey(stub, VIRTUAL_TOKEN_WALLET_PREFIX, keyAttributes, state.BIDS_PVT_DATA_COLLECTION, vtw)
 }
 
-func (virtualtokenwallet *VirtualTokenWallet) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	panic("not implemented") // TODO: Implement
+func (vtw *VirtualTokenWallet) ToWorldState(stub shim.ChaincodeStubInterface) error {
+	return state.PutPvtDataWithCompositeKey(stub, VIRTUAL_TOKEN_WALLET_PREFIX, (*vtw.GetID())[0], state.BIDS_PVT_DATA_COLLECTION, vtw)
 }
 
-func (virtualtokenwallet *VirtualTokenWallet) GetID() *[][]string {
-	panic("not implemented") // TODO: Implement
+func (vtw *VirtualTokenWallet) GetID() *[][]string {
+	return &[][]string{{vtw.OwnerID}}
 }
