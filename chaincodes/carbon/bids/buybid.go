@@ -72,10 +72,12 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *
 }
 
 func RetractBuyBid(stub shim.ChaincodeStubInterface, bidID []string) error {
-	if err := retractBid(stub, BUY_BID_PREFIX, bidID); err != nil {
-		return err
+	mockBid := &BuyBid{
+		Timestamp: bidID[0],
+		BuyerID:   &identities.X509Identity{CertID: bidID[1]},
 	}
-	return nil
+	err := mockBid.DeleteFromWorldState(stub)
+	return err
 }
 
 func (b *BuyBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) error {
