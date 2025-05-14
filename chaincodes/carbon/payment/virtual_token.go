@@ -11,7 +11,7 @@ import (
 
 const (
 	PVT_DATA_COLLECTION      = "privateDataCollection"
-	PVT_VIRTUAL_TOKEn_PREFIX = "virtualToken"
+	PVT_VIRTUAL_TOKEN_PREFIX = "virtualToken"
 )
 
 type VirtualTokenWallet struct {
