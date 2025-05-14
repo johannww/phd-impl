@@ -17,8 +17,9 @@ const (
 	SELL_BID_PVT    = "sellBidPvt"
 )
 
+// TODO: review how the credit should be loaded here
 type SellBid struct {
-	CreditID     uint64          `json:"creditID"`
+	CreditID     string          `json:"creditID"`
 	Timestamp    string          `json:"timestamp"`
 	Credit       *credits.Credit `json:"credit"`
 	AskQuantity  float64         `json:"askQuantity"`
@@ -27,7 +28,7 @@ type SellBid struct {
 
 var _ ccstate.WorldStateManager = (*SellBid)(nil)
 
-func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID uint64) error {
+func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID string) error {
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
 		return err
@@ -102,7 +103,7 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 
 // TODO: test for the bids mutex timestamp
 func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	if s.CreditID == 0 {
+	if s.CreditID == "" {
 		return fmt.Errorf("creditID is not set")
 	}
 	if s.Timestamp == "" {
@@ -149,7 +150,7 @@ func (s *SellBid) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
 func (s *SellBid) GetID() *[][]string {
 	// TODO: possible colision with other bids
 	return &[][]string{
-		{strconv.FormatUint(s.CreditID, 10), s.Timestamp},
+		{s.CreditID, s.Timestamp},
 	}
 }
 
