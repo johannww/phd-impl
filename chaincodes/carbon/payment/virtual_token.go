@@ -13,6 +13,8 @@ const (
 	PVT_VIRTUAL_TOKEN_PREFIX = "virtualToken"
 )
 
+// VirtualTokenWallet is a wallet that stores tokens corresponding to a
+// fiat currency. It is used to pay for the carbon credits.
 type VirtualTokenWallet struct {
 	OwnerID  string  `json:"owner"`
 	Quantity float64 `json:"quantity"`
