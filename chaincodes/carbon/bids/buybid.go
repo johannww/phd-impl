@@ -21,10 +21,10 @@ const (
 type BuyBid struct {
 	// TODO: temp fix for teste
 	// TODO: interfaces cannot be marshalled
-	BuyerID      *identities.X509Identity `json:"buyerID"`
-	Timestamp    string                   `json:"timestamp"`
-	AskQuantity  float64                  `json:"askQuantity"`
-	PrivatePrice *PrivatePrice            `json:"-"`
+	BuyerID      string        `json:"buyerID"`
+	Timestamp    string        `json:"timestamp"`
+	AskQuantity  float64       `json:"askQuantity"`
+	PrivatePrice *PrivatePrice `json:"-"`
 }
 
 var _ ccstate.WorldStateManager = (*BuyBid)(nil)
@@ -52,7 +52,7 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *
 	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
 
 	buyBid := &BuyBid{
-		BuyerID:     buyerID,
+		BuyerID:     identities.GetID(stub),
 		Timestamp:   bidTSStr,
 		AskQuantity: quantity,
 	}
@@ -74,7 +74,7 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *
 func RetractBuyBid(stub shim.ChaincodeStubInterface, bidID []string) error {
 	mockBid := &BuyBid{
 		Timestamp: bidID[0],
-		BuyerID:   &identities.X509Identity{CertID: bidID[1]},
+		BuyerID:   bidID[1],
 	}
 	err := mockBid.DeleteFromWorldState(stub)
 	return err
@@ -112,8 +112,8 @@ func (b *BuyBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	if b.Timestamp == "" {
 		return fmt.Errorf("timestamp is empty")
 	}
-	if b.BuyerID == nil {
-		return fmt.Errorf("buyerID is nil")
+	if b.BuyerID == "" {
+		return fmt.Errorf("buyerID is empty")
 	}
 	if b.AskQuantity <= 0 {
 		return fmt.Errorf("ask quantity is invalid")
@@ -147,8 +147,8 @@ func (b *BuyBid) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
 
 func (b *BuyBid) GetID() *[][]string {
 	return &[][]string{
-		{b.Timestamp, b.BuyerID.String()},
-		{b.BuyerID.String(), b.Timestamp},
+		{b.Timestamp, b.BuyerID},
+		{b.BuyerID, b.Timestamp},
 	}
 }
 

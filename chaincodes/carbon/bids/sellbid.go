@@ -19,11 +19,12 @@ const (
 
 // TODO: review how the credit should be loaded here
 type SellBid struct {
-	CreditID     string          `json:"creditID"`
-	Timestamp    string          `json:"timestamp"`
-	Credit       *credits.Credit `json:"credit"`
-	AskQuantity  float64         `json:"askQuantity"`
-	PrivatePrice *PrivatePrice   `json:"-"`
+	SellerID     string              `json:"sellerID"`
+	CreditID     string              `json:"creditID"`
+	Timestamp    string              `json:"timestamp"`
+	Credit       *credits.MintCredit `json:"credit"`
+	AskQuantity  float64             `json:"askQuantity"`
+	PrivatePrice *PrivatePrice       `json:"-"`
 }
 
 var _ ccstate.WorldStateManager = (*SellBid)(nil)
@@ -46,6 +47,7 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID
 	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
 
 	sellBid := &SellBid{
+		SellerID:    identities.GetID(stub),
 		CreditID:    creditID,
 		Timestamp:   bidTSStr,
 		AskQuantity: quantity,
