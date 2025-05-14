@@ -68,7 +68,6 @@ func (propertychunk *PropertyChunk) GetID() *[][]string {
 	}}
 }
 
-// TODO: review how chunks should be loaded
 type Property struct {
 	OwnerID string `json:"ownerId"`
 	ID      uint64 `json:"id"`
