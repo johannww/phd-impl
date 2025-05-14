@@ -130,6 +130,19 @@ func (b *BuyBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	return nil
 }
 
+func (b *BuyBid) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
+	bidID := b.GetID()
+	err := ccstate.DeleteStateWithCompositeKey(stub, BUY_BID_PREFIX, bidID)
+	if err != nil {
+		return fmt.Errorf("could not delete buy bid: %v", err)
+	}
+
+	b.PrivatePrice.BidID = (*bidID)[0]
+	err = b.PrivatePrice.DeleteFromWorldState(stub, BUY_BID_PVT)
+
+	return err
+}
+
 func (b *BuyBid) GetID() *[][]string {
 	return &[][]string{
 		{b.Timestamp, b.BuyerID.String()},

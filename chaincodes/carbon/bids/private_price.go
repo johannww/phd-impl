@@ -37,6 +37,12 @@ func (privPrice *PrivatePrice) ToWorldState(stub shim.ChaincodeStubInterface, ex
 	return nil
 }
 
+func (privPrice *PrivatePrice) DeleteFromWorldState(stub shim.ChaincodeStubInterface, extraPrefix string) error {
+	priceID := append([]string{extraPrefix}, (*privPrice.GetID())[0]...)
+	err := state.DeletePvtDataWithCompositeKey(stub, PVT_PRICE_PREFIX, priceID, PVT_DATA_COLLECTION)
+	return err
+}
+
 func (privPrice *PrivatePrice) GetID() *[][]string {
 	return &[][]string{privPrice.BidID}
 }

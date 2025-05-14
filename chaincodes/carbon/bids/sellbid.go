@@ -65,7 +65,7 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID
 }
 
 func RetractSellBid(stub shim.ChaincodeStubInterface, bidID []string) error {
-	if err := retractBid(stub, SELL_BID_PREFIX, bidID); err != nil {
+	if err := retractBid(stub, SELL_BID_PREFIX, &[][]string{bidID}); err != nil {
 		return err
 	}
 	return nil
@@ -131,6 +131,19 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	}
 
 	return nil
+}
+
+func (s *SellBid) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
+	bidID := s.GetID()
+	err := ccstate.DeleteStateWithCompositeKey(stub, BUY_BID_PREFIX, bidID)
+	if err != nil {
+		return fmt.Errorf("could not delete sel bid: %v", err)
+	}
+
+	s.PrivatePrice.BidID = (*bidID)[0]
+	err = s.PrivatePrice.DeleteFromWorldState(stub, SELL_BID_PVT)
+
+	return err
 }
 
 func (s *SellBid) GetID() *[][]string {
