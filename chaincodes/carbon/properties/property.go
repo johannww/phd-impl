@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/data"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 	v "github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
 )
@@ -28,9 +29,10 @@ type Coordinate struct {
 // property struct---it could generate MVCC_READ_CONFLICT errors.
 // See: https://github.com/hyperledger/fabric/issues/3748
 type PropertyChunk struct {
-	PropertyID       uint64              `json:"propertyId"`
-	Coordinates      []Coordinate        `json:"coordinates"`
-	VegetationsProps []v.VegetationProps `json:"vegetationsProps"`
+	PropertyID       uint64                 `json:"propertyId"`
+	Coordinates      []Coordinate           `json:"coordinates"`
+	VegetationsProps []v.VegetationProps    `json:"vegetationsProps"`
+	ValidationProps  []data.ValidationProps `json:"validationProps"`
 }
 
 var _ state.WorldStateManager = (*PropertyChunk)(nil)

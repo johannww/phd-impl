@@ -9,6 +9,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/pkg/attrmgr"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
+	"github.com/johannww/phd-impl/chaincodes/carbon/data"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
@@ -138,6 +139,7 @@ func chunkForProperty(prop *properties.Property, id uint64) *properties.Property
 			},
 		},
 		VegetationsProps: []vegetation.VegetationProps{},
+		ValidationProps:  []data.ValidationProps{},
 	}
 	return chunk
 }
