@@ -11,14 +11,15 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
+	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
 	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestBid(t *testing.T) {
 	stub := mocks.NewMockStub("carbon", &carbon.Carbon{})
-	possibleIds := SetupIdentities(stub)
-	stub.Creator = possibleIds[REGULAR_ID]
+	possibleIds := setup.SetupIdentities(stub)
+	stub.Creator = possibleIds[setup.REGULAR_ID]
 
 	stub.TransientMap = map[string][]byte{
 		"price": []byte("1000"),
@@ -57,8 +58,8 @@ func TestBid(t *testing.T) {
 
 func TestBidBatchRecover(t *testing.T) {
 	stub := mocks.NewMockStub("carbon", &carbon.Carbon{})
-	possibleIds := SetupIdentities(stub)
-	stub.Creator = possibleIds[REGULAR_ID]
+	possibleIds := setup.SetupIdentities(stub)
+	stub.Creator = possibleIds[setup.REGULAR_ID]
 
 	numOfBids := int64(100)
 	initialTime := time.Now()
@@ -92,7 +93,7 @@ func TestBidBatchRecover(t *testing.T) {
 
 func ensureAllBidsWereRetrieved(stub *mocks.MockStub, t *testing.T,
 	buyBids []*bids.BuyBid, numOfBids int,
-	possibleIds MockIdentities) {
+	possibleIds setup.MockIdentities) {
 	if len(buyBids) != int(numOfBids) {
 		t.Fatalf("Expected %d buy bids, got %d", numOfBids, len(buyBids))
 	}
