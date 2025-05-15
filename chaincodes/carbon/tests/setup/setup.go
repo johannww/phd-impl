@@ -1,4 +1,4 @@
-package carbon_tests
+package setup_test
 
 import (
 	"crypto/ecdsa"
@@ -83,7 +83,7 @@ func generateX509(attrs *attrmgr.Attributes, mspName, cn string) []byte {
 	return certBytesPem
 }
 
-func generateHFSerializedIdentity(idType string, attrs *attrmgr.Attributes, mspName, cn string) []byte {
+func GenerateHFSerializedIdentity(idType string, attrs *attrmgr.Attributes, mspName, cn string) []byte {
 	var credentialsBytes []byte
 
 	switch idType {
