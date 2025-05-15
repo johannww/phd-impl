@@ -131,7 +131,7 @@ func GenMintCredits(props []*properties.Property, startTs, endTs time.Time, issu
 func chunkForProperty(prop *properties.Property) *properties.PropertyChunk {
 	chunk := &properties.PropertyChunk{
 		PropertyID: prop.ID,
-		// NOTE: chunks will probably be spread
+		// NOTE: chunks will be spread apart
 		Coordinates: []properties.Coordinate{
 			{
 				Latitude:  mathrand.Float64()*180 - 90,
