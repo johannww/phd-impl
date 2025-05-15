@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	mathrand "math/rand/v2"
 	"strings"
 	"time"
 
@@ -32,6 +33,10 @@ const (
 	IDEMIX_TYPE = "idemix"
 )
 
+const (
+	IDEMIX_NYM_LEN = 16
+)
+
 func generateIdemix(mspName string) []byte {
 	roleIdentifier, _ := proto.Marshal(&msp.MSPRole{
 		Role: msp.MSPRole_CLIENT,
@@ -39,9 +44,17 @@ func generateIdemix(mspName string) []byte {
 	ouIdentifier, _ := proto.Marshal(&msp.OrganizationUnit{
 		OrganizationalUnitIdentifier: mspName,
 	})
+
+	// each nym is 16 bytes long
+	var nymX, nymY []byte
+	for i := 0; i < IDEMIX_NYM_LEN; i++ {
+		nymX = append(nymX, byte(mathrand.IntN(256)))
+		nymY = append(nymY, byte(mathrand.IntN(256)))
+	}
+
 	idemixID, _ := proto.Marshal(&msp.SerializedIdemixIdentity{
-		NymX:  []byte("nymX"),
-		NymY:  []byte("nymY"),
+		NymX:  nymX,
+		NymY:  nymY,
 		Role:  roleIdentifier,
 		Ou:    ouIdentifier,
 		Proof: []byte("proof"),
