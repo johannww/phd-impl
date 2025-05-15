@@ -17,7 +17,7 @@ const (
 
 // TODO: we may use ints to better represent the coordinates
 // to avoid floating point errors
-type Coordinates struct {
+type Coordinate struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 }
@@ -29,7 +29,7 @@ type Coordinates struct {
 // See: https://github.com/hyperledger/fabric/issues/3748
 type PropertyChunk struct {
 	PropertyID       uint64              `json:"propertyId"`
-	Coordinates      []Coordinates       `json:"coordinates"`
+	Coordinates      []Coordinate        `json:"coordinates"`
 	VegetationsProps []v.VegetationProps `json:"vegetationsProps"`
 }
 
