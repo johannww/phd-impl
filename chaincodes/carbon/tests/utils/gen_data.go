@@ -3,10 +3,13 @@ package utils_test
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	mathrand "math/rand"
 
 	"github.com/hyperledger/fabric-chaincode-go/pkg/attrmgr"
+	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
+	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
 	"github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
@@ -16,6 +19,9 @@ func GenData(
 	nOwners int,
 	nChunks int,
 	nCompanies int,
+	startTimestamp string,
+	endTimestamp string,
+	issueInterval time.Duration,
 ) *TestData {
 	data := &TestData{}
 
@@ -24,8 +30,20 @@ func GenData(
 	GenCompanyIDs(nCompanies, mockIds)
 	props := GenProperties(nChunks, mockIds)
 
+	startTs, err := time.Parse(time.RFC3339, startTimestamp)
+	if err != nil {
+		panic(err)
+	}
+	endTs, err := time.Parse(time.RFC3339, endTimestamp)
+	if err != nil {
+		panic(err)
+	}
+
+	mintCredits := GenMintCredits(props, startTs, endTs, issueInterval)
+
 	data.Identities = mockIds
 	data.Properties = props
+	data.MintCredits = mintCredits
 
 	return data
 
@@ -81,20 +99,57 @@ func GenProperties(nChunks int, mockIds *setup.MockIdentities) []*properties.Pro
 		props = append(props, prop)
 
 		for range nChunks {
-			chunk := &properties.PropertyChunk{
-				PropertyID: id,
-				// NOTE: chunks will probably be spread
-				Coordinates: []properties.Coordinate{
-					{
-						Latitude:  mathrand.Float64()*180 - 90,
-						Longitude: mathrand.Float64()*360 - 180,
-					},
-				},
-				VegetationsProps: []vegetation.VegetationProps{},
-			}
+			chunk := chunkForProperty(prop, id)
 			prop.Chunks = append(prop.Chunks, chunk)
 		}
 	}
 
 	return props
+}
+
+func GenMintCredits(props []*properties.Property, startTs, endTs time.Time, issueInterval time.Duration) []*credits.MintCredit {
+	nDurations := int64(endTs.Sub(startTs) / issueInterval)
+	mintCredits := []*credits.MintCredit{}
+
+	for _, prop := range props {
+		for i := range prop.Chunks {
+			chunk := prop.Chunks[i]
+			for nDuration := int64(0); nDuration < nDurations; nDuration++ {
+				issueTs := startTs.Add(time.Duration(nDuration) * issueInterval)
+				issueTsStr := issueTs.Format(time.RFC3339)
+
+				credit := creditForChunk(chunk, prop, issueTsStr)
+				mintCredits = append(mintCredits, credit)
+			}
+		}
+	}
+	return mintCredits
+
+}
+
+func chunkForProperty(prop *properties.Property, id uint64) *properties.PropertyChunk {
+	chunk := &properties.PropertyChunk{
+		PropertyID: id,
+		// NOTE: chunks will probably be spread
+		Coordinates: []properties.Coordinate{
+			{
+				Latitude:  mathrand.Float64()*180 - 90,
+				Longitude: mathrand.Float64()*360 - 180,
+			},
+		},
+		VegetationsProps: []vegetation.VegetationProps{},
+	}
+	return chunk
+}
+
+func creditForChunk(chunk *properties.PropertyChunk, prop *properties.Property, issueTsStr string) *credits.MintCredit {
+	credit := &credits.MintCredit{
+		Credit: credits.Credit{
+			OwnerID: prop.OwnerID,
+			Chunk:   chunk,
+		},
+		MintMult:      policies.MintIndependentMult(chunk),
+		MintTimeStamp: issueTsStr,
+	}
+	return credit
 }
