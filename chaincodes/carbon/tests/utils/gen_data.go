@@ -128,9 +128,9 @@ func GenMintCredits(props []*properties.Property, startTs, endTs time.Time, issu
 
 }
 
-func chunkForProperty(prop *properties.Property, id uint64) *properties.PropertyChunk {
+func chunkForProperty(prop *properties.Property) *properties.PropertyChunk {
 	chunk := &properties.PropertyChunk{
-		PropertyID: id,
+		PropertyID: prop.ID,
 		// NOTE: chunks will probably be spread
 		Coordinates: []properties.Coordinate{
 			{
