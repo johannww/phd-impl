@@ -28,7 +28,7 @@ const (
 )
 
 const (
-	x509_TYPE   = "x509"
+	X509_TYPE   = "x509"
 	IDEMIX_TYPE = "idemix"
 )
 
@@ -87,7 +87,7 @@ func GenerateHFSerializedIdentity(idType string, attrs *attrmgr.Attributes, mspN
 	var credentialsBytes []byte
 
 	switch idType {
-	case x509_TYPE:
+	case X509_TYPE:
 		credentialsBytes = generateX509(attrs, mspName, cn)
 	case IDEMIX_TYPE:
 		credentialsBytes = generateIdemix(mspName)
@@ -106,14 +106,14 @@ func GenerateHFSerializedIdentity(idType string, attrs *attrmgr.Attributes, mspN
 func SetupIdentities(stub *mocks.MockStub) MockIdentities {
 	mockIds := make(map[string][]byte)
 
-	mockIds[REGULAR_ID] = generateHFSerializedIdentity(
-		x509_TYPE,
+	mockIds[REGULAR_ID] = GenerateHFSerializedIdentity(
+		X509_TYPE,
 		&attrmgr.Attributes{
 			Attrs: map[string]string{},
 		}, "AUCTIONEER", "auctioneer1",
 	)
 
-	mockIds[IDEMIX_ID] = generateHFSerializedIdentity(
+	mockIds[IDEMIX_ID] = GenerateHFSerializedIdentity(
 		IDEMIX_TYPE,
 		nil,
 		"COMPANY",
@@ -121,8 +121,8 @@ func SetupIdentities(stub *mocks.MockStub) MockIdentities {
 	)
 
 	// Generate a certificate for the price viewer
-	mockIds[identities.PriceViewer] = generateHFSerializedIdentity(
-		x509_TYPE,
+	mockIds[identities.PriceViewer] = GenerateHFSerializedIdentity(
+		X509_TYPE,
 		&attrmgr.Attributes{
 			Attrs: map[string]string{
 				identities.PriceViewer: "true",
