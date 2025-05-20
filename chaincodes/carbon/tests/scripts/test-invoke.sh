@@ -17,6 +17,8 @@ export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.examp
 export CORE_PEER_ADDRESS=localhost:7051
 export PATH=${PWD}/../bin:$PATH
 export FABRIC_CFG_PATH=${PWD}/../config
+export ORDERER_TLS_ROOTCERT_FILE=${PWD}/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
 
 # invoke the function
-peer chaincode query -C mychannel -n carbon -c '{"Args":["org.hyperledger.fabric:GetMetadata"]}'
+# peer chaincode query -C mychannel -n carbon -c '{"Args":["org.hyperledger.fabric:GetMetadata"]}'
+peer chaincode invoke -C mychannel -n carbon -c '{"Args":["CreateSellBid"]}' -o localhost:7050 --tls --cafile $ORDERER_TLS_ROOTCERT_FILE
