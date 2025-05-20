@@ -7,7 +7,7 @@ import (
 
 	mathrand "math/rand"
 
-	"github.com/hyperledger/fabric-chaincode-go/pkg/attrmgr"
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/attrmgr"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"

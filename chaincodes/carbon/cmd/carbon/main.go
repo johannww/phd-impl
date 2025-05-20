@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"

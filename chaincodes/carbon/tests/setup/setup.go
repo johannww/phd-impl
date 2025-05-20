@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-chaincode-go/pkg/attrmgr"
-	"github.com/hyperledger/fabric-protos-go/msp"
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/attrmgr"
+	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 )

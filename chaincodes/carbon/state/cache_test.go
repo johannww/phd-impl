@@ -3,7 +3,7 @@ package state
 import (
 	"testing"
 
-	"github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 )
 

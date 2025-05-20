@@ -1,7 +1,7 @@
 package credits
 
 import (
-	"github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	prop "github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )

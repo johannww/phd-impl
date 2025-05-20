@@ -1,6 +1,6 @@
 package credits
 
-import "github.com/hyperledger/fabric-chaincode-go/shim"
+import "github.com/hyperledger/fabric-chaincode-go/v2/shim"
 
 // BurnCredit represents a minted carbon credit to be burned.
 // it is associated to burn multiplier and burn timestamp.

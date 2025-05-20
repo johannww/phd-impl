@@ -1,6 +1,6 @@
 package bids
 
-import "github.com/hyperledger/fabric-chaincode-go/shim"
+import "github.com/hyperledger/fabric-chaincode-go/v2/shim"
 
 const (
 	MATCHED_BID_PREFIX = "matchedBid"

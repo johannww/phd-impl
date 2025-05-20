@@ -2,7 +2,7 @@ package state
 
 import (
 	"fmt"
-	"github.com/hyperledger/fabric-chaincode-go/shim"
+	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 )
 
 // GetStateFromCache tries to fetch the state from the cache first.

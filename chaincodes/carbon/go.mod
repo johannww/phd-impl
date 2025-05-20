@@ -4,9 +4,10 @@ go 1.23.1
 
 require (
 	github.com/golang/protobuf v1.5.4
-	github.com/hyperledger/fabric-chaincode-go v0.0.0-20240704073638-9fb89180dc17
-	github.com/hyperledger/fabric-contract-api-go v0.0.0-20240620231055-b8b28e7c4a13
+	github.com/hyperledger/fabric-chaincode-go/v2 v2.0.0
+	github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0
 	github.com/hyperledger/fabric-protos-go v0.3.3
+	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.4
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.3.2
 	google.golang.org/protobuf v1.34.1
@@ -45,4 +46,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/hyperledger/fabric-chaincode-go v0.0.0-20240704073638-9fb89180dc17 => github.com/johannww/fabric-chaincode-go v0.0.0-20250512034341-b65d91f5138e
+replace github.com/hyperledger/fabric-chaincode-go/v2 v2.0.0 => github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20250520213033-d967d6ea1875

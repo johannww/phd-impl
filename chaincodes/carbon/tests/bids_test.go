@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/johannww/phd-impl/chaincodes/carbon"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
