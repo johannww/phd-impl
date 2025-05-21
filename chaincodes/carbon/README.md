@@ -1,7 +1,9 @@
 # TODOs
 
 - [X] GetStateByRangeWithPagination only works for read only transactions.
-- use the contract api for faster development
+- [X] use the contract api for faster development
+- [] create a config for the test-network including idemix orgs
+
 
 # Testing
 
