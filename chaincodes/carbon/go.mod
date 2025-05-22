@@ -1,6 +1,6 @@
 module github.com/johannww/phd-impl/chaincodes/carbon
 
-go 1.23.1
+go 1.23.5
 
 require (
 	github.com/IBM/idemix v0.0.0-20250313153527-832db18b9478
