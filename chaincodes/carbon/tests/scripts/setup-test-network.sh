@@ -19,6 +19,7 @@ touch $FABRIC_SAMPLES_DIR/.nosync
 
 pushd $TEST_NETWORK_DIR
 git checkout 5fa5abbbcf
+git apply ../../config/idemix-patch.diff
 
 # Install fabric binaries and images
 if [[ $DOWNLOAD_PREREQ == "prereq" ]]; then

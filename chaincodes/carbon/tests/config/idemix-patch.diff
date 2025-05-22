@@ -1,0 +1,249 @@
+diff --git a/test-network/addOrg3/addOrg3.sh b/test-network/addOrg3/addOrg3.sh
+index 77a0cf3..e610935 100755
+--- a/test-network/addOrg3/addOrg3.sh
++++ b/test-network/addOrg3/addOrg3.sh
+@@ -181,7 +181,7 @@ function networkDown () {
+ }
+ 
+ # Using crpto vs CA. default is cryptogen
+-CRYPTO="cryptogen"
++CRYPTO="Certificate Authorities"
+ # timeout duration - the duration the CLI should wait for a response from
+ # another container before giving up
+ CLI_TIMEOUT=10
+diff --git a/test-network/addOrg3/compose/docker/docker-compose-org3.yaml b/test-network/addOrg3/compose/docker/docker-compose-org3.yaml
+index 12c9ea7..e3bd336 100644
+--- a/test-network/addOrg3/compose/docker/docker-compose-org3.yaml
++++ b/test-network/addOrg3/compose/docker/docker-compose-org3.yaml
+@@ -20,6 +20,7 @@ services:
+       #Generic peer variables
+       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_test
++      - CORE_PEER_LOCALMSPTYPE=idemix
+     volumes:
+       - ./docker/peercfg:/etc/hyperledger/peercfg
+       - ${DOCKER_SOCK}:/host/var/run/docker.sock
+diff --git a/test-network/addOrg3/configtx.yaml b/test-network/addOrg3/configtx.yaml
+index 93502f0..0e9f793 100644
+--- a/test-network/addOrg3/configtx.yaml
++++ b/test-network/addOrg3/configtx.yaml
+@@ -21,7 +21,9 @@ Organizations:
+         # ID to load the MSP definition as
+         ID: Org3MSP
+ 
+-        MSPDir: ../organizations/peerOrganizations/org3.example.com/msp
++        msptype: idemix
++
++        MSPDir: ../organizations/peerOrganizations/org3.example.com
+ 
+         Policies:
+             Readers:
+diff --git a/test-network/addOrg3/fabric-ca/registerEnroll.sh b/test-network/addOrg3/fabric-ca/registerEnroll.sh
+index 08913d0..aa9e3f7 100644
+--- a/test-network/addOrg3/fabric-ca/registerEnroll.sh
++++ b/test-network/addOrg3/fabric-ca/registerEnroll.sh
+@@ -32,29 +32,36 @@ function createOrg3 {
+ 
+ 	infoln "Registering peer0"
+   set -x
+-	fabric-ca-client register --caname ca-org3 --id.name peer0 --id.secret peer0pw --id.type peer --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++  # TODO: set proper role
++	fabric-ca-client register --caname ca-org3 --id.name peer0 --id.secret peer0pw --id.type peer --enrollment.type idemix --id.attrs 'role=1' --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++  { set +x; } 2>/dev/null
++
++	infoln "Registering peer0-tls"
++  set -x
++  # TODO: set proper role
++	fabric-ca-client register --caname ca-org3 --id.name peer0-tls --id.secret peer0pw --id.type peer --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
+   { set +x; } 2>/dev/null
+ 
+   infoln "Registering user"
+   set -x
+-  fabric-ca-client register --caname ca-org3 --id.name user1 --id.secret user1pw --id.type client --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++  fabric-ca-client register --caname ca-org3 --id.name user1 --id.secret user1pw --id.type client --enrollment.type idemix --id.attrs 'role=0' --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
+   { set +x; } 2>/dev/null
+ 
+   infoln "Registering the org admin"
+   set -x
+-  fabric-ca-client register --caname ca-org3 --id.name org3admin --id.secret org3adminpw --id.type admin --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++  fabric-ca-client register --caname ca-org3 --id.name org3admin --id.secret org3adminpw --id.type admin --enrollment.type idemix --id.attrs 'role=1' --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
+   { set +x; } 2>/dev/null
+ 
+   infoln "Generating the peer0 msp"
+   set -x
+-	fabric-ca-client enroll -u https://peer0:peer0pw@localhost:11054 --caname ca-org3 -M "${PWD}/../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++	fabric-ca-client enroll -u https://peer0:peer0pw@localhost:11054 --caname ca-org3 --enrollment.type idemix -M "${PWD}/../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
+   { set +x; } 2>/dev/null
+ 
+   cp "${PWD}/../organizations/peerOrganizations/org3.example.com/msp/config.yaml" "${PWD}/../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp/config.yaml"
+ 
+   infoln "Generating the peer0-tls certificates, use --csr.hosts to specify Subject Alternative Names"
+   set -x
+-  fabric-ca-client enroll -u https://peer0:peer0pw@localhost:11054 --caname ca-org3 -M "${PWD}/../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls" --enrollment.profile tls --csr.hosts peer0.org3.example.com --csr.hosts localhost --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++  fabric-ca-client enroll -u https://peer0-tls:peer0pw@localhost:11054 --caname ca-org3 -M "${PWD}/../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls" --enrollment.profile tls --csr.hosts peer0.org3.example.com --csr.hosts localhost --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
+   { set +x; } 2>/dev/null
+ 
+ 
+@@ -73,15 +80,19 @@ function createOrg3 {
+ 
+   infoln "Generating the user msp"
+   set -x
+-	fabric-ca-client enroll -u https://user1:user1pw@localhost:11054 --caname ca-org3 -M "${PWD}/../organizations/peerOrganizations/org3.example.com/users/User1@org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++	fabric-ca-client enroll -u https://user1:user1pw@localhost:11054 --caname ca-org3 --enrollment.type idemix -M "${PWD}/../organizations/peerOrganizations/org3.example.com/users/User1@org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
+   { set +x; } 2>/dev/null
+ 
+   cp "${PWD}/../organizations/peerOrganizations/org3.example.com/msp/config.yaml" "${PWD}/../organizations/peerOrganizations/org3.example.com/users/User1@org3.example.com/msp/config.yaml"
+ 
+   infoln "Generating the org admin msp"
+   set -x
+-	fabric-ca-client enroll -u https://org3admin:org3adminpw@localhost:11054 --caname ca-org3 -M "${PWD}/../organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++	fabric-ca-client enroll -u https://org3admin:org3adminpw@localhost:11054 --caname ca-org3  --enrollment.type idemix -M "${PWD}/../organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
+   { set +x; } 2>/dev/null
+ 
+   cp "${PWD}/../organizations/peerOrganizations/org3.example.com/msp/config.yaml" "${PWD}/../organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp/config.yaml"
++
++  infoln "Fixing the IssuerRevocationPublicKey for configtxgen, which expects RevocationPublicKey"
++  find "../" -type f -name '*IssuerRevocationPublicKey' -exec sh -c 'mv -f "$1" "${1//IssuerRevocationPublicKey/RevocationPublicKey}"' _ {} \;
++
+ }
+diff --git a/test-network/compose/compose-test-net.yaml b/test-network/compose/compose-test-net.yaml
+index dcac21b..9301d08 100644
+--- a/test-network/compose/compose-test-net.yaml
++++ b/test-network/compose/compose-test-net.yaml
+@@ -22,7 +22,7 @@ services:
+     labels:
+       service: hyperledger-fabric
+     environment:
+-      - FABRIC_LOGGING_SPEC=INFO
++      - FABRIC_LOGGING_SPEC=debug
+       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+       - ORDERER_GENERAL_LISTENPORT=7050
+       - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+diff --git a/test-network/compose/docker/docker-compose-test-net.yaml b/test-network/compose/docker/docker-compose-test-net.yaml
+index 421d8e0..b08771a 100644
+--- a/test-network/compose/docker/docker-compose-test-net.yaml
++++ b/test-network/compose/docker/docker-compose-test-net.yaml
+@@ -14,6 +14,7 @@ services:
+       #Generic peer variables
+       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_test
++      - FABRIC_LOGGING_SPEC=debug
+     volumes:
+       - ./docker/peercfg:/etc/hyperledger/peercfg
+       - ${DOCKER_SOCK}:/host/var/run/docker.sock
+@@ -27,6 +28,7 @@ services:
+       #Generic peer variables
+       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_test
++      - FABRIC_LOGGING_SPEC=debug
+     volumes:
+       - ./docker/peercfg:/etc/hyperledger/peercfg
+       - ${DOCKER_SOCK}:/host/var/run/docker.sock
+diff --git a/test-network/compose/docker/peercfg/core.yaml b/test-network/compose/docker/peercfg/core.yaml
+index 05653ae..9dad1c3 100644
+--- a/test-network/compose/docker/peercfg/core.yaml
++++ b/test-network/compose/docker/peercfg/core.yaml
+@@ -363,7 +363,7 @@ peer:
+         # via gossip.
+         # Note that 'gossip.state.enabled' controls point to point block replication
+         # of blocks committed in the past.
+-        blockGossipEnabled: true
++        blockGossipEnabled: false
+         # It sets the total time the delivery service may spend in reconnection
+         # attempts until its retry logic gives up and returns an error
+         reconnectTotalTimeThreshold: 3600s
+diff --git a/test-network/network.config b/test-network/network.config
+index f4af0ae..e1b6918 100644
+--- a/test-network/network.config
++++ b/test-network/network.config
+@@ -1,11 +1,11 @@
+ # default image tag, example: "2.5.12".  "default" will download the latest. (-i)
+-IMAGETAG="default"
++IMAGETAG="2.5.12"
+ 
+ # default ca image tag, example: "1.5.15". "default" will download the latest. (-cai)
+-CA_IMAGETAG="default"
++CA_IMAGETAG="1.5.15"
+ 
+ # Using crpto vs CA. default is cryptogen
+-CRYPTO="cryptogen"
++CRYPTO="Certificate Authorities"
+ 
+ # max number of retries before giving up (-r)
+ MAX_RETRY=5
+diff --git a/test-network/network.sh b/test-network/network.sh
+index 9f8b375..39ef8e8 100755
+--- a/test-network/network.sh
++++ b/test-network/network.sh
+@@ -96,7 +96,7 @@ function checkPrereqs() {
+ 
+   ## check for cfssl binaries
+   if [ "$CRYPTO" == "cfssl" ]; then
+-  
++
+     cfssl version > /dev/null 2>&1
+     if [[ $? -ne 0 ]]; then
+       errorln "cfssl binary not found.."
+@@ -213,11 +213,11 @@ function createOrgs() {
+     peer_cert admin Admin@org2.example.com org2
+ 
+     infoln "Creating Orderer Org Identities"
+-    #function_name cert-type   CN   
++    #function_name cert-type   CN
+     orderer_cert orderer orderer.example.com
+     orderer_cert admin Admin@example.com
+ 
+-  fi 
++  fi
+ 
+   # Create crypto material using Fabric CA
+   if [ "$CRYPTO" == "Certificate Authorities" ]; then
+@@ -401,7 +401,7 @@ function listChaincode() {
+ 
+ }
+ 
+-## Call the script to invoke 
++## Call the script to invoke
+ function invokeChaincode() {
+ 
+   export FABRIC_CFG_PATH=${PWD}/../config
+@@ -415,11 +415,11 @@ function invokeChaincode() {
+ 
+ }
+ 
+-## Call the script to query chaincode 
++## Call the script to query chaincode
+ function queryChaincode() {
+ 
+   export FABRIC_CFG_PATH=${PWD}/../config
+-  
++
+   . scripts/envVar.sh
+   . scripts/ccutils.sh
+ 
+@@ -624,7 +624,7 @@ while [[ $# -ge 1 ]] ; do
+   -ccqc )
+     CC_QUERY_CONSTRUCTOR="$2"
+     shift
+-    ;;    
++    ;;
+   * )
+     errorln "Unknown flag: $key"
+     printHelp
+diff --git a/test-network/scripts/envVar.sh b/test-network/scripts/envVar.sh
+index 6e051ac..7785d30 100755
+--- a/test-network/scripts/envVar.sh
++++ b/test-network/scripts/envVar.sh
+@@ -43,9 +43,11 @@ setGlobals() {
+     export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
+     export CORE_PEER_ADDRESS=localhost:9051
+   elif [ $USING_ORG -eq 3 ]; then
++    export FABRIC_LOGGING_SPEC=debug
+     export CORE_PEER_LOCALMSPID=Org3MSP
++    export CORE_PEER_LOCALMSPTYPE=idemix
+     export CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG3_CA
+-    export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp
++    export CORE_PEER_MSPCONFIGPATH=${TEST_NETWORK_HOME}/organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com
+     export CORE_PEER_ADDRESS=localhost:11051
+   else
+     errorln "ORG Unknown"
