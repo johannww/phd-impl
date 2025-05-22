@@ -22,3 +22,21 @@ export ORDERER_TLS_ROOTCERT_FILE=${PWD}/organizations/ordererOrganizations/examp
 # invoke the function
 # peer chaincode query -C mychannel -n carbon -c '{"Args":["org.hyperledger.fabric:GetMetadata"]}'
 peer chaincode invoke -C mychannel -n carbon -c '{"Args":["CreateSellBid"]}' -o localhost:7050 --tls --cafile $ORDERER_TLS_ROOTCERT_FILE
+if [[ $? == 0 ]]; then
+  echo "Invoke successful"
+else
+  echo "Invoke failed"
+  exit 1
+fi
+
+export CORE_PEER_LOCALMSPID=Org3MSP
+export CORE_PEER_LOCALMSPTYPE=idemix
+export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com
+peer chaincode invoke -C mychannel -n carbon -c '{"Args":["CreateSellBid"]}' -o localhost:7050 --tls --cafile $ORDERER_TLS_ROOTCERT_FILE
+if [[ $? == 0 ]]; then
+  echo "Idemix Invoke successful"
+else
+  echo "Idemix Invoke failed"
+  exit 1
+fi
