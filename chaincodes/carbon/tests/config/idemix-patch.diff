@@ -1,8 +1,39 @@
 diff --git a/test-network/addOrg3/addOrg3.sh b/test-network/addOrg3/addOrg3.sh
-index 77a0cf3..e610935 100755
+index 77a0cf3..6a24ace 100755
 --- a/test-network/addOrg3/addOrg3.sh
 +++ b/test-network/addOrg3/addOrg3.sh
-@@ -181,7 +181,7 @@ function networkDown () {
+@@ -155,8 +155,10 @@ function addOrg3 () {
+     generateOrg3Definition
+   fi
+ 
+-  infoln "Bringing up Org3 peer"
+-  Org3Up
++  # infoln "Bringing up Org3 peer"
++  # Org3Up
++  warnln "We cannot have a idemix peer"
++  warnln "So we will not start the peer for Org3"
+ 
+   # Create the configuration transaction needed to add
+   # Org3 to the network
+@@ -167,11 +169,12 @@ function addOrg3 () {
+     fatalln "ERROR !!!! Unable to create config tx"
+   fi
+ 
+-  infoln "Joining Org3 peers to network"
+-  . ../scripts/org3-scripts/joinChannel.sh $CHANNEL_NAME $CLI_DELAY $CLI_TIMEOUT $VERBOSE
+-  if [ $? -ne 0 ]; then
+-    fatalln "ERROR !!!! Unable to join Org3 peers to network"
+-  fi
++  warnln "We will not join the peer to the channel"
++  # infoln "Joining Org3 peers to network"
++  # . ../scripts/org3-scripts/joinChannel.sh $CHANNEL_NAME $CLI_DELAY $CLI_TIMEOUT $VERBOSE
++  # if [ $? -ne 0 ]; then
++  #   fatalln "ERROR !!!! Unable to join Org3 peers to network"
++  # fi
+ }
+ 
+ # Tear down running network
+@@ -181,7 +184,7 @@ function networkDown () {
  }
  
  # Using crpto vs CA. default is cryptogen
@@ -11,18 +42,6 @@ index 77a0cf3..e610935 100755
  # timeout duration - the duration the CLI should wait for a response from
  # another container before giving up
  CLI_TIMEOUT=10
-diff --git a/test-network/addOrg3/compose/docker/docker-compose-org3.yaml b/test-network/addOrg3/compose/docker/docker-compose-org3.yaml
-index 12c9ea7..e3bd336 100644
---- a/test-network/addOrg3/compose/docker/docker-compose-org3.yaml
-+++ b/test-network/addOrg3/compose/docker/docker-compose-org3.yaml
-@@ -20,6 +20,7 @@ services:
-       #Generic peer variables
-       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
-       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_test
-+      - CORE_PEER_LOCALMSPTYPE=idemix
-     volumes:
-       - ./docker/peercfg:/etc/hyperledger/peercfg
-       - ${DOCKER_SOCK}:/host/var/run/docker.sock
 diff --git a/test-network/addOrg3/configtx.yaml b/test-network/addOrg3/configtx.yaml
 index 93502f0..0e9f793 100644
 --- a/test-network/addOrg3/configtx.yaml
