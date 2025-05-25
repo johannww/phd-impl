@@ -26,8 +26,8 @@ const (
 	// certPath     = cryptoPath + "/users/User2@org1.example.com/msp/signcerts"
 	// keyPath      = cryptoPath + "/users/User2@org1.example.com/msp/keystore"
 	// tlsCertPath  = cryptoPath + "/peers/peer0.org1.example.com/tls/ca.crt"
-	peerEndpoint = "dns:///localhost:9051"
-	gatewayPeer  = "peer0.org2.example.com"
+	peerEndpoint = "dns:///localhost:7051"
+	gatewayPeer  = "peer0.org1.example.com"
 )
 
 var now = time.Now()
@@ -36,7 +36,7 @@ var assetId = fmt.Sprintf("asset%d", now.Unix()*1e3+int64(now.Nanosecond())/1e6)
 // TODO: This was not tested yet
 func Run(idemix bool, mspPath, mspID string) {
 	// The gRPC client connection should be shared by all Gateway connections to this endpoint
-	tlsCertDir := path.Join(mspPath, "..", "..", "..", "tlsca")
+	tlsCertDir := path.Join(mspPath, "..", "..", "..", "..", "org1.example.com", "tlsca")
 	clientConnection := newGrpcConnection(tlsCertDir)
 	defer clientConnection.Close()
 
@@ -161,7 +161,7 @@ func newIdemixIdentityAndSign(mspPath, mspID string) (identity.Identity, identit
 		panic(fmt.Sprintf("failed to read issuer public key: %w", err))
 	}
 
-	revocationPkBytes, err := os.ReadFile(path.Join(mspPath, "IssuerRevocationPublicKey"))
+	revocationPkBytes, err := os.ReadFile(path.Join(mspPath, "RevocationPublicKey"))
 	if err != nil {
 		panic(fmt.Sprintf("failed to read issuer revocation public key: %w", err))
 	}
