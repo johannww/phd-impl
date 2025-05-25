@@ -10,7 +10,9 @@
         ```bash
         docker logs peer0.org1.example.com -f:
         # signature invalid: zero-knowledge proof is invalid
+
         ```
+    - Should I CalculateProof() for each idemix nym?
 
 
 # Testing
