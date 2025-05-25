@@ -3,6 +3,9 @@
 - [X] GetStateByRangeWithPagination only works for read only transactions.
 - [X] use the contract api for faster development
 - [X] create a config for the test-network including idemix orgs
+- [] GATEWAY: Make the Idemix Identity create the pseudonym key and make the signer fetch it from the Idemix Identity
+    - This is necessary because the public identity is serialized before the signature. Therefore, we must
+        create the pseudonym before the signature function is invoked.
 
 
 # Testing
