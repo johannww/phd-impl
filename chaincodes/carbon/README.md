@@ -2,7 +2,7 @@
 
 - [X] GetStateByRangeWithPagination only works for read only transactions.
 - [X] use the contract api for faster development
-- [] create a config for the test-network including idemix orgs
+- [X] create a config for the test-network including idemix orgs
 
 
 # Testing
