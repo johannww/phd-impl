@@ -6,6 +6,11 @@
 - [] GATEWAY: Make the Idemix Identity create the pseudonym key and make the signer fetch it from the Idemix Identity
     - This is necessary because the public identity is serialized before the signature. Therefore, we must
         create the pseudonym before the signature function is invoked.
+    - [] There is an error with the constructed ZKP for the credential:
+        ```bash
+        docker logs peer0.org1.example.com -f:
+        # signature invalid: zero-knowledge proof is invalid
+        ```
 
 
 # Testing
