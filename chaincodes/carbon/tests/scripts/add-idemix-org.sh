@@ -14,7 +14,10 @@ pushd addOrg3
 ORG_PATH=../organizations/peerOrganizations/org3.example.com
 rm -rf $ORG_PATH
 ./addOrg3.sh generate
+
+echo "Converting the Idemix JSON files to Protobuf format"
 $SCRIPT_DIR/idemix-json-to-proto.sh $ORG_PATH $SCRIPT_DIR/../cmd/idemixtoproto/main.go
+
 ./addOrg3.sh up
 popd
 
