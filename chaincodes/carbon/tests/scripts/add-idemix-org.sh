@@ -18,6 +18,10 @@ rm -rf $ORG_PATH
 echo "Converting the Idemix JSON files to Protobuf format"
 $SCRIPT_DIR/idemix-json-to-proto.sh $ORG_PATH $SCRIPT_DIR/../cmd/idemixtoproto/main.go
 
+echo "Update the 'curveID' key for json SignerConfigs to 'curve_id'"
+echo "The fabric-gateway expects the key to be 'curve_id' instead of 'curveID'"
+sed -i 's/"curveID"/"curve_id"/g' $(find $ORG_PATH -wholename "*msp/user/SignerConfig")
+
 ./addOrg3.sh up
 popd
 
