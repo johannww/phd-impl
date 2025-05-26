@@ -13,6 +13,10 @@
 
         ```
     - Should I CalculateProof() for each idemix nym?
+    - [] It seems that the signer opts in the peer load nil values:
+    ```output
+    Failed verifing with opts [&{<nil> <nil> [] [{1 []} {2 1} {0 <nil>} {0 <nil>}] 3 2 [] 0 0xc00481a498 unknown hash value 0 0 <nil> 0}]
+    ```
 
 
 # Testing
