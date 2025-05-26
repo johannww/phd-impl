@@ -35,8 +35,17 @@ export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org1.e
 export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com
 peer chaincode invoke -C mychannel -n carbon -c '{"Args":["CreateSellBid"]}' -o localhost:7050 --tls --cafile $ORDERER_TLS_ROOTCERT_FILE
 if [[ $? == 0 ]]; then
-  echo "Idemix Invoke successful"
+  echo "Idemix Invoke as admin successful"
 else
-  echo "Idemix Invoke failed"
+  echo "Idemix Invoke as admin failed"
+  exit 1
+fi
+
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org3.example.com/users/User1@org3.example.com
+peer chaincode invoke -C mychannel -n carbon -c '{"Args":["CreateSellBid"]}' -o localhost:7050 --tls --cafile $ORDERER_TLS_ROOTCERT_FILE
+if [[ $? == 0 ]]; then
+  echo "Idemix Invoke as user successful"
+else
+  echo "Idemix Invoke as user failed"
   exit 1
 fi
