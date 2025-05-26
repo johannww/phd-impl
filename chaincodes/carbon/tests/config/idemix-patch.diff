@@ -58,40 +58,58 @@ index 93502f0..0e9f793 100644
          Policies:
              Readers:
 diff --git a/test-network/addOrg3/fabric-ca/registerEnroll.sh b/test-network/addOrg3/fabric-ca/registerEnroll.sh
-index 08913d0..aa9e3f7 100644
+index 08913d0..49599d4 100644
 --- a/test-network/addOrg3/fabric-ca/registerEnroll.sh
 +++ b/test-network/addOrg3/fabric-ca/registerEnroll.sh
-@@ -32,29 +32,36 @@ function createOrg3 {
+@@ -5,6 +5,16 @@
+ # SPDX-License-Identifier: Apache-2.0
+ #
+ 
++function fixIdemixRole {
++    MSP_DIR=$1
++    ROLE_NUM=$2
++
++    infoln "fabric ca has a bug regarding 'role' assignment. Fixing with jq:"
++    mv "$MSP_DIR/user/SignerConfig" "$MSP_DIR/user/SignerConfigFix"
++    jq ".role = $ROLE_NUM" "$MSP_DIR/user/SignerConfigFix" > "$MSP_DIR/user/SignerConfig"
++    rm "$MSP_DIR/user/SignerConfigFix"
++}
++
+ function createOrg3 {
+ 	infoln "Enrolling the CA admin"
+ 	mkdir -p ../organizations/peerOrganizations/org3.example.com/
+@@ -32,29 +42,37 @@ function createOrg3 {
  
  	infoln "Registering peer0"
    set -x
 -	fabric-ca-client register --caname ca-org3 --id.name peer0 --id.secret peer0pw --id.type peer --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
 +  # TODO: set proper role
-+	fabric-ca-client register --caname ca-org3 --id.name peer0 --id.secret peer0pw --id.type peer --enrollment.type idemix --id.attrs 'role=1' --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++	fabric-ca-client register --caname ca-org3 --id.name peer0 --id.secret peer0pw --id.type peer --enrollment.type idemix --id.attrs 'role=8' --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
 +  { set +x; } 2>/dev/null
 +
 +	infoln "Registering peer0-tls"
 +  set -x
-+  # TODO: set proper role
 +	fabric-ca-client register --caname ca-org3 --id.name peer0-tls --id.secret peer0pw --id.type peer --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
    { set +x; } 2>/dev/null
  
    infoln "Registering user"
    set -x
 -  fabric-ca-client register --caname ca-org3 --id.name user1 --id.secret user1pw --id.type client --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
-+  fabric-ca-client register --caname ca-org3 --id.name user1 --id.secret user1pw --id.type client --enrollment.type idemix --id.attrs 'role=0' --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++  fabric-ca-client register --caname ca-org3 --id.name user1 --id.secret user1pw --id.type client --enrollment.type idemix --id.attrs 'role=1' --id.affiliation "org1.department1" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
    { set +x; } 2>/dev/null
  
    infoln "Registering the org admin"
    set -x
 -  fabric-ca-client register --caname ca-org3 --id.name org3admin --id.secret org3adminpw --id.type admin --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
-+  fabric-ca-client register --caname ca-org3 --id.name org3admin --id.secret org3adminpw --id.type admin --enrollment.type idemix --id.attrs 'role=1' --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++  fabric-ca-client register --caname ca-org3 --id.name org3admin --id.secret org3adminpw --id.type admin --enrollment.type idemix --id.attrs 'role=2' --id.affiliation "org1.department1" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
    { set +x; } 2>/dev/null
  
    infoln "Generating the peer0 msp"
    set -x
 -	fabric-ca-client enroll -u https://peer0:peer0pw@localhost:11054 --caname ca-org3 -M "${PWD}/../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
-+	fabric-ca-client enroll -u https://peer0:peer0pw@localhost:11054 --caname ca-org3 --enrollment.type idemix -M "${PWD}/../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++    MSP_DIR="${PWD}/../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp"
++	fabric-ca-client enroll -u https://peer0:peer0pw@localhost:11054 --caname ca-org3 --enrollment.type idemix -M "$MSP_DIR" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++    fixIdemixRole "$MSP_DIR" 8
    { set +x; } 2>/dev/null
  
    cp "${PWD}/../organizations/peerOrganizations/org3.example.com/msp/config.yaml" "${PWD}/../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/msp/config.yaml"
@@ -103,12 +121,14 @@ index 08913d0..aa9e3f7 100644
    { set +x; } 2>/dev/null
  
  
-@@ -73,15 +80,19 @@ function createOrg3 {
+@@ -73,15 +91,23 @@ function createOrg3 {
  
    infoln "Generating the user msp"
    set -x
 -	fabric-ca-client enroll -u https://user1:user1pw@localhost:11054 --caname ca-org3 -M "${PWD}/../organizations/peerOrganizations/org3.example.com/users/User1@org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
-+	fabric-ca-client enroll -u https://user1:user1pw@localhost:11054 --caname ca-org3 --enrollment.type idemix -M "${PWD}/../organizations/peerOrganizations/org3.example.com/users/User1@org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++    MSP_DIR="${PWD}/../organizations/peerOrganizations/org3.example.com/users/User1@org3.example.com/msp"
++	fabric-ca-client enroll -u https://user1:user1pw@localhost:11054 --caname ca-org3 --enrollment.type idemix -M "$MSP_DIR" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++    fixIdemixRole "$MSP_DIR" 0
    { set +x; } 2>/dev/null
  
    cp "${PWD}/../organizations/peerOrganizations/org3.example.com/msp/config.yaml" "${PWD}/../organizations/peerOrganizations/org3.example.com/users/User1@org3.example.com/msp/config.yaml"
@@ -116,7 +136,9 @@ index 08913d0..aa9e3f7 100644
    infoln "Generating the org admin msp"
    set -x
 -	fabric-ca-client enroll -u https://org3admin:org3adminpw@localhost:11054 --caname ca-org3 -M "${PWD}/../organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
-+	fabric-ca-client enroll -u https://org3admin:org3adminpw@localhost:11054 --caname ca-org3  --enrollment.type idemix -M "${PWD}/../organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++    MSP_DIR="${PWD}/../organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp"
++	fabric-ca-client enroll -u https://org3admin:org3adminpw@localhost:11054 --caname ca-org3  --enrollment.type idemix -M "$MSP_DIR" --tls.certfiles "${PWD}/fabric-ca/org3/tls-cert.pem"
++    fixIdemixRole "$MSP_DIR" 2 # see: https://github.com/IBM/idemix/blob/832db18b94785ad2657d91da96dd6c3401af1616/idemixmsp.go#L209
    { set +x; } 2>/dev/null
  
    cp "${PWD}/../organizations/peerOrganizations/org3.example.com/msp/config.yaml" "${PWD}/../organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp/config.yaml"
