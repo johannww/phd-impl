@@ -20,8 +20,8 @@ func (c *CarbonContract) CreateBuyBid(ctx contractapi.TransactionContextInterfac
 }
 
 // TODO: implement
-func (c *CarbonContract) CreateSellBid(ctx contractapi.TransactionContextInterface) error {
-	return nil
+func (c *CarbonContract) CreateSellBid(ctx contractapi.TransactionContextInterface) (string, error) {
+	return "Not Implemented Yet", nil
 }
 
 // TODO: implement
