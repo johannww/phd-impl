@@ -138,8 +138,8 @@ github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6 h1:IMpCMJCFktzPLWepq/V48vZJ
 github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6/go.mod h1:bJnwzfv03oZQeCc863pdGTDgf5nmCy6Za3RAE7d2XsQ=
 github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20250520213033-d967d6ea1875 h1:vA+pnVjgETHFIwZemJrB+EEgXdr2x1lc45MPUqR/UkA=
 github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20250520213033-d967d6ea1875/go.mod h1:PHHaFffjw7p7n9bmCfcm7RqDqYdivNEsJdiNIKZo5Lk=
-github.com/johannww/fabric-gateway v0.0.0-20250525045012-6c0694e0fa53 h1:Hf5GkHZlJ1/cP4zM6Hfysw+E8jfs7CxPSDSRdnuy8QQ=
-github.com/johannww/fabric-gateway v0.0.0-20250525045012-6c0694e0fa53/go.mod h1:oNc3G95RYZKSOFAzThQc9PFHPZ4E7Odv3VUYQ5SHda4=
+github.com/johannww/fabric-gateway v0.0.0-20250526183728-6469bffc8277 h1:+YScOQ0/9TjffBz+PMn6U6njfD4moubCqFpMBbfiMPo=
+github.com/johannww/fabric-gateway v0.0.0-20250526183728-6469bffc8277/go.mod h1:oNc3G95RYZKSOFAzThQc9PFHPZ4E7Odv3VUYQ5SHda4=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
