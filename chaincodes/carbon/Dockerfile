@@ -2,7 +2,7 @@ FROM golang:1.23.5 AS builder
 
 COPY . /cc
 WORKDIR /cc
-RUN go mod tidy && go mod vendor
+RUN if [ ! -d "vendor" ]; then go mod tidy && go mod vendor; fi
 RUN go build -o carbon ./cmd/carbon/main.go
 
 FROM ubuntu:22.04
