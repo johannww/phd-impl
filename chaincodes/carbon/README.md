@@ -3,21 +3,7 @@
 - [X] GetStateByRangeWithPagination only works for read only transactions.
 - [X] use the contract api for faster development
 - [X] create a config for the test-network including idemix orgs
-- [] GATEWAY: Make the Idemix Identity create the pseudonym key and make the signer fetch it from the Idemix Identity
-    - This is necessary because the public identity is serialized before the signature. Therefore, we must
-        create the pseudonym before the signature function is invoked.
-    - [] There is an error with the constructed ZKP for the credential:
-        ```bash
-        docker logs peer0.org1.example.com -f:
-        # signature invalid: zero-knowledge proof is invalid
-
-        ```
-    - Should I CalculateProof() for each idemix nym?
-    - [] It seems that the signer opts in the peer load nil values:
-    ```output
-    Failed verifing with opts [&{<nil> <nil> [] [{1 []} {2 1} {0 <nil>} {0 <nil>}] 3 2 [] 0 0xc00481a498 unknown hash value 0 0 <nil> 0}]
-    ```
-    - I think I found out: there is no "organizational_unit_identifier" in the issued credentials
+- [X] GATEWAY: Make the Idemix Identity create the pseudonym key and make the signer fetch it from the Idemix Identity
 
 
 # Testing
