@@ -17,6 +17,7 @@
     ```output
     Failed verifing with opts [&{<nil> <nil> [] [{1 []} {2 1} {0 <nil>} {0 <nil>}] 3 2 [] 0 0xc00481a498 unknown hash value 0 0 <nil> 0}]
     ```
+    - I think I found out: there is no "organizational_unit_identifier" in the issued credentials
 
 
 # Testing
