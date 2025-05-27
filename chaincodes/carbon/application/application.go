@@ -54,7 +54,7 @@ func Run(idemix bool, mspPath, mspID string) {
 	gw, err := client.Connect(
 		id,
 		client.WithSign(sign),
-		client.WithHash(hash.SHA256),
+		client.WithHash(hash.NONE),
 		client.WithClientConnection(clientConnection),
 		// Default timeouts for different gRPC calls
 		client.WithEvaluateTimeout(5*time.Second),
