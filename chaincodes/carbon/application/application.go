@@ -47,7 +47,10 @@ func Run(idemix bool, mspPath, mspID string) {
 		sign = newSign(mspPath)
 	} else {
 		id, sign = newIdemixIdentityAndSign(mspPath, mspID)
-		id.(*identity.IdemixIdentity).NewPseudonym()
+		err := id.(*identity.IdemixIdentity).NewPseudonym()
+		if err != nil {
+			panic(fmt.Errorf("failed to create Idemix pseudonym: %w", err))
+		}
 	}
 
 	// Create a Gateway connection for a specific client identity
