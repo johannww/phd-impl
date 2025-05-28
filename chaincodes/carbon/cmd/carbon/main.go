@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
@@ -52,6 +55,20 @@ func (c *CarbonContract) UnlockAuctionSemaphore(ctx contractapi.TransactionConte
 // TODO: implement
 func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface) error {
 	return nil
+}
+
+func (c *CarbonContract) CheckCredAttr(ctx contractapi.TransactionContextInterface, attrName string) (string, error) {
+	stub := ctx.GetStub()
+	attrValue, found, err := cid.GetAttributeValue(stub, attrName)
+	if err != nil {
+		return "", err
+	}
+
+	if !found {
+		return "", fmt.Errorf("Attribute '%s' not found", attrName)
+	}
+
+	return attrValue, nil
 }
 
 func main() {
