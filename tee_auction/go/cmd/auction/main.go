@@ -1,10 +1,25 @@
 package main
 
+import (
+	"crypto/ed25519"
+	"crypto/rand"
+)
+
 // TODO: This program will execute the auction on an
 // Azure Confidential Container.
 func main() {
 
 	// Generate key pair
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+
+	if len(pub) != ed25519.PublicKeySize {
+		panic("Invalid public key size")
+	}
+
+	_ = priv
 
 	// Put the public key's hash in the AMD SEV-SNP report
 	// on ReportData field. See:
