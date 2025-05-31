@@ -3,8 +3,8 @@
 # This file was based on ./../chaincodes/carbon/Dockerfile
 FROM golang:1.23.5 AS builder
 
-COPY . /tee-auction
-WORKDIR /tee-auction
+COPY . /tee_auction
+WORKDIR /tee_auction
 RUN if [ ! -d "vendor" ]; then go mod tidy && go mod vendor; fi
 # RUN go build -o carbon ./cmd/carbon/main.go
 
