@@ -30,3 +30,13 @@ az acr create --resource-group carbon --name $REGISTRY_NAME --sku Basic --admin-
 az acr login --name $REGISTRY_NAME
 ```
 
+## Compile the container and push it to the ACR
+
+```bash
+REGISTRY=carbonchain.azurecr.io
+
+cd ./tee_auction
+docker build -t $REGISTRY/carbon_auction:latest .
+docker push $REGISTRY/carbon_auction:latest
+```
+
