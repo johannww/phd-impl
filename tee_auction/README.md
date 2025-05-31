@@ -12,3 +12,20 @@ Perhaps my idea of using an amd sev is better.
 These articles reference it: https://ieeexplore.ieee.org/document/10628912 and 
 https://ieeexplore.ieee.org/abstract/document/9049585
 
+# Setup
+
+## Install dependencies and create required Azure resources
+
+```bash
+sudo pacman -S azure-cli
+az login
+
+# Extension to create the policy for confidential containers
+az extension add -n confcom 
+
+# create the Azure Container Registry (ACR) to store the confidential container images
+az group create --name carbon --location eastus
+az acr create --resource-group carbon --name carbonchain --sku Basic --admin-enabled true
+az acr login --name carbonchain
+```
+
