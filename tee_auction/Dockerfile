@@ -3,10 +3,10 @@
 # This file was based on ./../chaincodes/carbon/Dockerfile
 FROM golang:1.23.5 AS builder
 
-COPY . /tee_auction
-WORKDIR /tee_auction
+COPY ./go /tee_auction/go
+WORKDIR /tee_auction/go
 RUN if [ ! -d "vendor" ]; then go mod tidy && go mod vendor; fi
-# RUN go build -o carbon ./cmd/carbon/main.go
+RUN go build -o auction ./cmd/auction/main.go
 
 FROM ubuntu:22.04
 
@@ -16,8 +16,8 @@ FROM ubuntu:22.04
 # See initLocal() in: golang/1.23.1/go/src/time/zoneinfo_unix.go
 ENV TZ=UTC
 
-# COPY --from=builder /cc/carbon /usr/local/bin/carbon
-# ENTRYPOINT ["/usr/local/bin/carbon"]
+COPY --from=builder /tee_auction/go/auction /usr/local/bin/auction
+ENTRYPOINT ["/usr/local/bin/auction"]
 EXPOSE 80
 EXPOSE 443
 
