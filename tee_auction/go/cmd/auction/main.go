@@ -3,6 +3,9 @@ package main
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"fmt"
+
+	"github.com/johannww/phd-impl/tee_auction/report"
 )
 
 // TODO: This program will execute the auction on an
@@ -25,6 +28,16 @@ func main() {
 	// on ReportData field. See:
 	// https://github.com/johannww/ubuntu-learning/blob/4933313b537c6283dbef8eb093b3924611c5061c/crypto/azure_tee/containers/report_attester/snp_attestation_report.go#L39-L40
 	// See page 56 (REPORT_DATA) of https://www.amd.com/content/dam/amd/en/documents/epyc-technical-docs/specifications/56860.pdf
+	reportUserData := [report.USER_DATA_SIZE]byte{}
+	for i := 0; i < ed25519.PublicKeySize; i++ {
+		reportUserData[i] = pub[i] // Copy public key bytes to report data
+	}
+
+	reportBytes, err := report.GetAmdSevSnpReport(reportUserData)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to get AMD SEV-SNP report: %v", err))
+	}
+	fmt.Printf("AMD SEV-SNP report: %x\n", reportBytes)
 
 	// Wait for requests
 
