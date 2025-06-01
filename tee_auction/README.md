@@ -76,4 +76,22 @@ echo $REPORT | jq '.report_data' | xargs -I{} echo 'The first 32 bytes are the c
 az container delete --resource-group carbon --name carbon-auction-container --yes
 ```
 
+# Verifying the report
+
+To verify the report and assure that the policy generated was satisfied, we can check the `ccePolicy` hash against the one in the ARM template:
+
+```bash
+# BOTH SHOULD BE THE SAME
+jq '.resources.[0].properties.confidentialComputeProperties.ccePolicy' ./azure/arm_template.json | sed s/\"//g | base64 -d | sha256sum
+
+echo $REPORT | jq '.host_data'
+```
+
+We can also re-check that we this policy was the same as generated and posseses the desired container layers:
+
+```bash
+az confcom acipolicygen -a ./azure/arm_template.json --outraw-pretty-print
+az confcom acipolicygen -a ./azure/arm_template.json
+```
+
 
