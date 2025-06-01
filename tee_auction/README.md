@@ -52,4 +52,25 @@ sed -i "s/REGISTRY_PASS/$REGISTRY_PASS/" ./azure/arm_template.json
 az confcom acipolicygen -a ./azure/arm_template.json
 ```
 
+## Deploy the confidential container and retrieve the report
+
+```bash
+az deployment group create --resource-group carbon --template-file ./azure/arm_template.json
+
+CONTAINER_IP=$(az container show --resource-group carbon --name carbon-auction-container --query "ipAddress.ip" -o tsv)
+
+# Check the report
+REPORT=$(curl http://$CONTAINER_IP:8080/report | jq)
+echo $REPORT
+
+echo $REPORT | jq '.report_data' | xargs -I{} echo 'The first 32 bytes are the container ed25519 public key: {}'
+
+```
+
+## Teardown container
+
+```bash
+az container delete --resource-group carbon --name carbon-auction-container --yes
+```
+
 
