@@ -67,8 +67,8 @@
         "imageRegistryCredentials": [
           {
             "server": "carbonchain.azurecr.io",
-            "username": "",
-            "password": ""
+            "username": REGISTRY_USER,
+            "password": REGISTRY_PASS
           }
         ],
         "confidentialComputeProperties": {
