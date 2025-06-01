@@ -3,11 +3,14 @@ package api
 import (
 	"net/http"
 
+	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
 	"github.com/gin-gonic/gin"
+	"github.com/johannww/phd-impl/tee_auction/report"
 )
 
 type AuctionServer struct {
-	ReportBytes []byte
+	ReportBytes        []byte
+	DeserializedReport *attest.SNPAttestationReport
 }
 
 var db = map[string]string{}
@@ -20,6 +23,20 @@ func (server *AuctionServer) SetupRouter() *gin.Engine {
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
+	})
+
+	r.GET("/report", func(c *gin.Context) {
+		if server.DeserializedReport == nil {
+			var err error
+			server.DeserializedReport, err = report.DeserializedReport(server.ReportBytes)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to deserialize report"})
+				return
+			}
+			server.DeserializedReport = server.DeserializedReport
+		}
+
+		c.JSON(http.StatusOK, server.DeserializedReport)
 	})
 
 	// Get user value

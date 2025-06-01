@@ -22,3 +22,13 @@ func GetAmdSevSnpReport(reportUserData [USER_DATA_SIZE]byte) ([]byte, error) {
 	return report, nil
 
 }
+
+func DeserializedReport(reportBytes []byte) (*attest.SNPAttestationReport, error) {
+	deserializedReport := &attest.SNPAttestationReport{}
+	err := deserializedReport.DeserializeReport(reportBytes)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to deserialize attestation report: %v", err)
+	}
+
+	return deserializedReport, nil
+}
