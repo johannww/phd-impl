@@ -50,6 +50,9 @@ sed -i "s/REGISTRY_USER/$REGISTRY_USER/" ./azure/arm_template.json
 sed -i "s/REGISTRY_PASS/$REGISTRY_PASS/" ./azure/arm_template.json
 
 az confcom acipolicygen -a ./azure/arm_template.json
+
+# To the policy in human readable format
+az confcom acipolicygen -a ./azure/arm_template.json --outraw-pretty-print
 ```
 
 ## Deploy the confidential container and retrieve the report
