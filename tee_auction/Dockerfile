@@ -1,7 +1,7 @@
 # TODO: Finish this file
 
 # This file was based on ./../chaincodes/carbon/Dockerfile
-FROM golang:1.23.5 AS builder
+FROM golang:1.24.3 AS builder
 
 COPY ./go /tee_auction/go
 WORKDIR /tee_auction/go
