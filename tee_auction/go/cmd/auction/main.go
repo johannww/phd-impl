@@ -4,7 +4,9 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"fmt"
+	"net/http"
 
+	"github.com/johannww/phd-impl/tee_auction/api"
 	"github.com/johannww/phd-impl/tee_auction/report"
 )
 
@@ -40,5 +42,12 @@ func main() {
 	fmt.Printf("AMD SEV-SNP report: %x\n", reportBytes)
 
 	// Wait for requests
-
+	auctionServer := &api.AuctionServer{
+		ReportBytes: reportBytes,
+	}
+	router := auctionServer.SetupRouter()
+	http.ListenAndServe(":8080", router)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to start server: %v", err))
+	}
 }
