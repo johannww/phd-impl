@@ -56,3 +56,6 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// NOTE: This is temporary until microsoft fixes serialization
+replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250521161531-e3e00a1a216a => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91

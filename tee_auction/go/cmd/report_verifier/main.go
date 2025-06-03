@@ -23,6 +23,7 @@ func main() {
 	}
 
 	verify, err := report.VerifyReportSignature(reportJsonBytes)
+	// verify, err := report.VerifyReportSignatureBase64(reportJsonBytes)
 
 	if err != nil {
 		panic(fmt.Sprintf("Failed to verify report signature: %v", err))
