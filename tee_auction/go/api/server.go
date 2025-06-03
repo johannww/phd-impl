@@ -39,6 +39,11 @@ func (server *AuctionServer) SetupRouter() *gin.Engine {
 		c.JSON(http.StatusOK, server.DeserializedReport)
 	})
 
+	r.GET("/reportb64", func(c *gin.Context) {
+		b64Str := base64.StdEncoding.EncodeToString(server.ReportBytes)
+		c.JSON(http.StatusOK, b64Str)
+	})
+
 	// Get user value
 	r.GET("/user/:name", func(c *gin.Context) {
 		user := c.Params.ByName("name")
