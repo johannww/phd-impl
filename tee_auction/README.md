@@ -100,13 +100,9 @@ az confcom acipolicygen -a ./azure/arm_template.json --outraw-pretty-print
 az confcom acipolicygen -a ./azure/arm_template.json
 ```
 
-To verify the signature against the AMD certification chain, we can use th
-
-**NOT WORKING YET**:
+## Verify the signature against AMD Certification chain
 
 ```bash
-cd go
-go run ./cmd/report_verifier/main.go --reportJsonPath ../report.json
+cd ./go
+go run ./cmd/report_verifier --reportJsonPath ../report.json
 ```
-
-
