@@ -25,12 +25,12 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 	}
 
 	var err error
-	a.BuyBidsBytes, err = state.GetStatesBytesByRangeCompositeKey(stub, bids.BUY_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
+	buyBids, err := state.GetStatesByRangeCompositeKey[bids.BuyBid](stub, bids.BUY_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
 	if err != nil {
 		return fmt.Errorf("could not get buy bids: %v", err)
 	}
 
-	a.SellBidsBytes, err = state.GetStatesBytesByRangeCompositeKey(stub, bids.SELL_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
+	sellBids, err := state.GetStatesByRangeCompositeKey[bids.SellBid](stub, bids.SELL_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
 	if err != nil {
 		return fmt.Errorf("could not get sell bids: %v", err)
 	}
