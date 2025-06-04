@@ -5,6 +5,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
+	"github.com/johannww/phd-impl/chaincodes/carbon/auction"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
@@ -52,9 +53,10 @@ func (c *CarbonContract) UnlockAuctionSemaphore(ctx contractapi.TransactionConte
 	return nil
 }
 
-// TODO: implement
-func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface) error {
-	return nil
+func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.AuctionData, error) {
+	auctionData := &auction.AuctionData{}
+	err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
+	return auctionData, err
 }
 
 func (c *CarbonContract) CheckCredAttr(ctx contractapi.TransactionContextInterface, attrName string) (string, error) {
