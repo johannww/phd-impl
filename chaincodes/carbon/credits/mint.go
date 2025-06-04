@@ -30,6 +30,12 @@ func (mc *MintCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttrib
 }
 
 func (mc *MintCredit) ToWorldState(stub shim.ChaincodeStubInterface) error {
+	chunk := mc.Chunk
+	mc.Chunk = nil // avoid storing the chunk in the world state, as it is already stored in the property chunk
+	defer func() {
+		mc.Chunk = chunk // restore the chunk after storing
+	}()
+
 	if err := state.PutStateWithCompositeKey(stub, string(MINT_CREDIT_PREFIX), mc.GetID(), mc); err != nil {
 		return fmt.Errorf("could not put sellbid in state: %v", err)
 	}
