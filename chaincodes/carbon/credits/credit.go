@@ -9,6 +9,7 @@ import (
 // TODO: enhance this struct
 type Credit struct {
 	OwnerID string              `json:"owner"`
+	ChunkID []string            `json:"chunkId"`
 	Chunk   *prop.PropertyChunk `json:"chunk"`
 }
 
