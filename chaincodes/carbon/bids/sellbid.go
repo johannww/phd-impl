@@ -20,7 +20,7 @@ const (
 // TODO: review how the credit should be loaded here
 type SellBid struct {
 	SellerID     string              `json:"sellerID"`
-	CreditID     string              `json:"creditID"`
+	CreditID     []string            `json:"creditID"`
 	Timestamp    string              `json:"timestamp"`
 	Credit       *credits.MintCredit `json:"credit"`
 	AskQuantity  float64             `json:"askQuantity"`
@@ -29,7 +29,7 @@ type SellBid struct {
 
 var _ ccstate.WorldStateManager = (*SellBid)(nil)
 
-func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID string) error {
+func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID []string) error {
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
 		return err
@@ -69,8 +69,8 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID
 
 func RetractSellBid(stub shim.ChaincodeStubInterface, bidID []string) error {
 	mockBid := &SellBid{
-		CreditID:  bidID[0],
-		Timestamp: bidID[1],
+		CreditID:  bidID[0:2],
+		Timestamp: bidID[2],
 	}
 	err := mockBid.DeleteFromWorldState(stub)
 	return err
@@ -95,7 +95,10 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 	}
 
 	// TODO: load credit from world state.
-	// perhaps, check if it should be done
+	err = s.Credit.FromWorldState(stub, s.CreditID)
+	if err != nil {
+		return fmt.Errorf("could not get credit from world state: %v", err)
+	}
 
 	err = s.FetchPrivatePrice(stub)
 	if err != nil {
@@ -107,7 +110,7 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 
 // TODO: test for the bids mutex timestamp
 func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	if s.CreditID == "" {
+	if len(s.CreditID) == 0 {
 		return fmt.Errorf("creditID is not set")
 	}
 	if s.Timestamp == "" {
@@ -153,9 +156,9 @@ func (s *SellBid) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
 
 func (s *SellBid) GetID() *[][]string {
 	// TODO: possible colision with other bids
-	return &[][]string{
-		{s.CreditID, s.Timestamp},
-	}
+	id := s.CreditID
+	id = append(id, s.Timestamp)
+	return &[][]string{id}
 }
 
 func (b *SellBid) Less(b2 *SellBid) int {
