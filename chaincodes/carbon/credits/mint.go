@@ -22,7 +22,7 @@ type MintCredit struct {
 var _ state.WorldStateManager = (*MintCredit)(nil)
 
 func (mc *MintCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	err := state.GetStateWithCompositeKey(stub, string(MINT_CREDIT_PREFIX), keyAttributes, mc)
+	err := state.GetStateWithCompositeKey(stub, MINT_CREDIT_PREFIX, keyAttributes, mc)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (mc *MintCredit) ToWorldState(stub shim.ChaincodeStubInterface) error {
 		mc.Chunk = chunk // restore the chunk after storing
 	}()
 
-	if err := state.PutStateWithCompositeKey(stub, string(MINT_CREDIT_PREFIX), mc.GetID(), mc); err != nil {
+	if err := state.PutStateWithCompositeKey(stub, MINT_CREDIT_PREFIX, mc.GetID(), mc); err != nil {
 		return fmt.Errorf("could not put sellbid in state: %v", err)
 	}
 
