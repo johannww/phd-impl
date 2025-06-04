@@ -35,6 +35,21 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 		return fmt.Errorf("could not get sell bids: %v", err)
 	}
 
+	for _, buyBid := range buyBids {
+		if err := buyBid.FetchPrivatePrice(stub); err != nil {
+			return err
+		}
+	}
+
+	for _, sellBid := range sellBids {
+		if err := sellBid.FetchPrivatePrice(stub); err != nil {
+			return err
+		}
+		if err := sellBid.FetchCredit(stub); err != nil {
+			return err
+		}
+	}
+
 	err = a.CalculateHash()
 	if err != nil {
 		return fmt.Errorf("could not calculate sum: %v", err)
