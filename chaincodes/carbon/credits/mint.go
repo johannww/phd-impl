@@ -1,14 +1,20 @@
 package credits
 
 import (
+	"fmt"
+
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+)
+
+const (
+	MINT_CREDIT_PREFIX = "mintCredit"
 )
 
 // MintCredit represents a carbon credit that has been minted and
 // it is associated to mint multiplier and mint timestamp.
 type MintCredit struct {
-	Credit        Credit  `json:"credit"`
+	Credit
 	MintMult      float64 `json:"mintMult"`
 	MintTimeStamp string  `json:"mintTimestamp"`
 }
@@ -16,10 +22,19 @@ type MintCredit struct {
 var _ state.WorldStateManager = (*MintCredit)(nil)
 
 func (mc *MintCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	panic("not implemented") // TODO: Implement
+	err := state.GetStateWithCompositeKey(stub, string(MINT_CREDIT_PREFIX), keyAttributes, mc)
+	if err != nil {
+		return err
+	}
+	return nil
 }
+
 func (mc *MintCredit) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	panic("not implemented") // TODO: Implement
+	if err := state.PutStateWithCompositeKey(stub, string(MINT_CREDIT_PREFIX), mc.GetID(), mc); err != nil {
+		return fmt.Errorf("could not put sellbid in state: %v", err)
+	}
+
+	return nil
 }
 func (mc *MintCredit) GetID() *[][]string {
 	creditId := (*mc.Credit.GetID())[0]
