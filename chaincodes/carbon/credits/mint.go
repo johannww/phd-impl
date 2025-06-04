@@ -52,18 +52,26 @@ func (mc *MintCredit) GetID() *[][]string {
 	return &[][]string{creditId}
 }
 
-// TODO: finish this
-// func MintCreditForChunk(stub shim.ChaincodeStubInterface, chunkID string, mintMult float64) (*MintCredit, error) {
-// 	orsnatoie
-// 	credit := &MintCredit{
-// 		Credit: Credit{
-// 			Chunk.PropertyID
-// 		},
-// 		MintMult:      mintMult,
-// 		MintTimeStamp: uint64(stub.GetTxTimestamp().GetSeconds()),
-// 	}
-// 	if err := credit.ToWorldState(stub); err != nil {
-// 		return nil, err
-// 	}
-// 	return credit, nil
-// }
+func MintCreditForChunk(
+	stub shim.ChaincodeStubInterface,
+	ownerID string,
+	chunkID []string,
+	quantity int64,
+	RFC339Timestamp string,
+	mintMult float64,
+) (*MintCredit, error) {
+
+	credit := &MintCredit{
+		Credit: Credit{
+			OwnerID:  ownerID,
+			ChunkID:  chunkID,
+			Quantity: quantity,
+		},
+		MintMult:      mintMult,
+		MintTimeStamp: RFC339Timestamp,
+	}
+	if err := credit.ToWorldState(stub); err != nil {
+		return nil, err
+	}
+	return credit, nil
+}

@@ -8,9 +8,10 @@ import (
 // at a specific time.
 // TODO: enhance this struct
 type Credit struct {
-	OwnerID string              `json:"owner"`
-	ChunkID []string            `json:"chunkId"`
-	Chunk   *prop.PropertyChunk `json:"chunk"`
+	OwnerID  string              `json:"owner"`
+	ChunkID  []string            `json:"chunkId"`
+	Chunk    *prop.PropertyChunk `json:"chunk"`
+	Quantity int64               `json:"quantity"`
 }
 
 func (c *Credit) GetID() *[][]string {
