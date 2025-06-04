@@ -88,6 +88,14 @@ func (s *SellBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) error {
 	return nil
 }
 
+func (s *SellBid) FetchCredit(stub shim.ChaincodeStubInterface) error {
+	err := s.Credit.FromWorldState(stub, s.CreditID)
+	if err != nil {
+		return fmt.Errorf("could not get credit in state: %v", err)
+	}
+	return nil
+}
+
 func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
 	err := ccstate.GetStateWithCompositeKey(stub, SELL_BID_PREFIX, keyAttributes, s)
 	if err != nil {
