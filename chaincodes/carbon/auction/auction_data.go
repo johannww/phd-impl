@@ -40,7 +40,13 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 		return fmt.Errorf("could not calculate sum: %v", err)
 	}
 
-	return nil
+	auctionCommitment := &AuctionCommitment{
+		EndTimestamp: endRFC339Timestamp,
+		Hash:         a.Sum,
+	}
+	err = auctionCommitment.ToWorldState(stub)
+
+	return err
 
 }
 
