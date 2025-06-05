@@ -9,6 +9,8 @@ const (
 	CREDIT_WALLET_PREFIX = "creditWallet"
 )
 
+// TODO: Credit wallet will generate MVCC read conflict if multiple transactions
+// mint credits and add to the wallet. Evaluate that later.
 // CreditWallet is for networks with fungible credits
 type CreditWallet struct {
 	OwnerID  string `json:"owner"`

@@ -46,7 +46,7 @@ func GenData(
 		panic(err)
 	}
 
-	mintCredits := GenMintCredits(props, startTs, endTs, issueInterval)
+	mintCredits, creditWallets := GenMintCredits(props, startTs, endTs, issueInterval)
 
 	// TODO: Add virtual payment token
 	tokenWallets := GenTokenWallets(mockIds)
@@ -54,6 +54,7 @@ func GenData(
 	data.Identities = mockIds
 	data.Properties = props
 	data.MintCredits = mintCredits
+	data.CreditWallets = creditWallets
 	data.TokenWallets = tokenWallets
 
 	return data
@@ -119,11 +120,22 @@ func GenProperties(nChunks int, mockIds *setup.MockIdentities) []*properties.Pro
 	return props
 }
 
-func GenMintCredits(props []*properties.Property, startTs, endTs time.Time, issueInterval time.Duration) []*credits.MintCredit {
+func GenMintCredits(
+	props []*properties.Property,
+	startTs, endTs time.Time,
+	issueInterval time.Duration,
+) ([]*credits.MintCredit, []*credits.CreditWallet) {
 	nDurations := int64(endTs.Sub(startTs) / issueInterval)
 	mintCredits := []*credits.MintCredit{}
+	creditWalletsMap := map[string]*credits.CreditWallet{}
 
 	for _, prop := range props {
+		if creditWalletsMap[prop.OwnerID] == nil {
+			creditWalletsMap[prop.OwnerID] = &credits.CreditWallet{
+				OwnerID: prop.OwnerID,
+			}
+		}
+
 		for i := range prop.Chunks {
 			chunk := prop.Chunks[i]
 			for nDuration := int64(0); nDuration < nDurations; nDuration++ {
@@ -137,10 +149,18 @@ func GenMintCredits(props []*properties.Property, startTs, endTs time.Time, issu
 
 				credit := creditForChunk(chunk, prop, quantity, issueTsStr)
 				mintCredits = append(mintCredits, credit)
+				creditWalletsMap[prop.OwnerID].Quantity += quantity
 			}
 		}
 	}
-	return mintCredits
+
+	// Convert map to slice
+	creditWallets := []*credits.CreditWallet{}
+	for _, cw := range creditWalletsMap {
+		creditWallets = append(creditWallets, cw)
+	}
+
+	return mintCredits, creditWallets
 
 }
 
