@@ -11,14 +11,16 @@ import (
 // TestData holds a list as an identity map
 // The map key is a string and the value is generic interface{}
 type TestData struct {
-	Identities  *setup.MockIdentities
-	Properties  []*properties.Property
-	MintCredits []*credits.MintCredit
+	Identities   *setup.MockIdentities
+	Properties   []*properties.Property
+	MintCredits  []*credits.MintCredit
+	TokenWallets []*payment.VirtualTokenWallet
 }
 
 func (data *TestData) SaveToWorldState(stub shim.ChaincodeStubInterface) {
 	saveToWorldState(stub, data.Properties)
 	saveToWorldState(stub, data.MintCredits)
+	saveToWorldState(stub, data.TokenWallets)
 }
 
 func saveToWorldState[T state.WorldStateManager](stub shim.ChaincodeStubInterface, data []T) {

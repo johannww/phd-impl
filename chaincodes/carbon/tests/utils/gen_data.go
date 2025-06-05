@@ -10,6 +10,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/attrmgr"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
+	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
@@ -43,12 +44,14 @@ func GenData(
 	mintCredits := GenMintCredits(props, startTs, endTs, issueInterval)
 
 	// TODO: Add virtual payment token
+	tokenWallets := GenTokenWallets(mockIds)
 
 	// TODO: Add bids
 
 	data.Identities = mockIds
 	data.Properties = props
 	data.MintCredits = mintCredits
+	data.TokenWallets = tokenWallets
 
 	return data
 
@@ -135,6 +138,26 @@ func GenMintCredits(props []*properties.Property, startTs, endTs time.Time, issu
 	}
 	return mintCredits
 
+}
+
+func GenTokenWallets(mockIds *setup.MockIdentities) []*payment.VirtualTokenWallet {
+	wallets := []*payment.VirtualTokenWallet{}
+
+	for key := range *mockIds {
+		quantity := int64(0)
+		if strings.Contains(key, "company") {
+			// Companies start with a random quantity of tokens
+			quantity = 20000000
+		}
+
+		wallet := &payment.VirtualTokenWallet{
+			OwnerID:  key,
+			Quantity: quantity,
+		}
+		wallets = append(wallets, wallet)
+	}
+
+	return wallets
 }
 
 func chunkForProperty(prop *properties.Property) *properties.PropertyChunk {
