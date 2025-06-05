@@ -42,6 +42,10 @@ func GenData(
 
 	mintCredits := GenMintCredits(props, startTs, endTs, issueInterval)
 
+	// TODO: Add virtual payment token
+
+	// TODO: Add bids
+
 	data.Identities = mockIds
 	data.Properties = props
 	data.MintCredits = mintCredits
