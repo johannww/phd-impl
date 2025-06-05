@@ -39,8 +39,8 @@ func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time) {
 
 	buyerIds := testData.CompaniesIdentities()
 
-	for _, mintCredit := range testData.MintCredits {
-		issueTs := issueStart.Add(time.Duration(1 * time.Second)).UTC()
+	for i, mintCredit := range testData.MintCredits {
+		issueTs := issueStart.Add(time.Duration(time.Duration(i) * time.Second)).UTC()
 		issueTsStr := issueTs.Format(time.RFC3339)
 		sellBid := &bids.SellBid{
 			SellerID:  mintCredit.OwnerID,
