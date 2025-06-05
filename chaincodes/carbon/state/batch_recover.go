@@ -25,7 +25,7 @@ func GetStatesByRangeCompositeKey[T any](stub shim.ChaincodeStubInterface, objec
 	}
 
 	states, err := getStatesByRange[T](stub, startKey, endKey)
-	return states, nil
+	return states, err
 }
 
 func GetStatesBytesByRangeCompositeKey(stub shim.ChaincodeStubInterface, objectType string, startPrefixes, endPrefixes []string) ([][]byte, error) {
