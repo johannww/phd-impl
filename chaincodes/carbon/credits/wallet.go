@@ -11,8 +11,8 @@ const (
 
 // CreditWallet is for networks with fungible credits
 type CreditWallet struct {
-	OwnerID  string  `json:"owner"`
-	Quantity float64 `json:"quantity"`
+	OwnerID  string `json:"owner"`
+	Quantity int64  `json:"quantity"`
 }
 
 var _ state.WorldStateManager = (*CreditWallet)(nil)

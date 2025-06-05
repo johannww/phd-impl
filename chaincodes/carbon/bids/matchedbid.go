@@ -14,7 +14,7 @@ type MatchedBid struct {
 	BuyBid            *BuyBid            `json:"buyBid"`
 	SellBidID         []string           `json:"sellBidID"`
 	SellBid           *SellBid           `json:"sellBid"`
-	Quantity          float64            `json:"quantity"`
+	Quantity          int64              `json:"quantity"`
 	PrivatePrice      *PrivatePrice      `json:"privatePrice"`
 	PrivateMultiplier *PrivateMultiplier `json:"privateMultiplier"`
 }

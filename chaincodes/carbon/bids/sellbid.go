@@ -23,13 +23,13 @@ type SellBid struct {
 	CreditID     []string            `json:"creditID"`
 	Timestamp    string              `json:"timestamp"`
 	Credit       *credits.MintCredit `json:"credit"`
-	AskQuantity  float64             `json:"askQuantity"`
+	AskQuantity  int64               `json:"askQuantity"`
 	PrivatePrice *PrivatePrice       `json:"-"`
 }
 
 var _ ccstate.WorldStateManager = (*SellBid)(nil)
 
-func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID []string) error {
+func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID []string) error {
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity float64, creditID
 	bidID := *(sellBid.GetID())
 
 	privatePrice := &PrivatePrice{
-		Price: float64(price),
+		Price: int64(price),
 		BidID: bidID[0],
 	}
 	sellBid.PrivatePrice = privatePrice

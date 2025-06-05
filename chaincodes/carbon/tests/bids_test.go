@@ -100,6 +100,7 @@ func ensureAllBidsWereRetrieved(stub *mocks.MockStub, t *testing.T,
 
 	// recover private prices
 	for i, bid := range buyBids {
+		i := int64(i)
 		stub.Creator = possibleIds[identities.PriceViewer]
 		bid.FetchPrivatePrice(stub)
 		if bid.PrivatePrice == nil {
@@ -107,7 +108,7 @@ func ensureAllBidsWereRetrieved(stub *mocks.MockStub, t *testing.T,
 		}
 		// t.Logf("BuyBid %d: %v\n", i, bid)
 		// t.Logf("PrivatePrice %d: %v\n", i, bid.PrivatePrice)
-		if bid.PrivatePrice.Price != float64(i+10) {
+		if bid.PrivatePrice.Price != i+10 {
 			t.Fatalf("Expected private price %d, got %f", i+10, bid.PrivatePrice.Price)
 		}
 	}

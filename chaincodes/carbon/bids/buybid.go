@@ -23,13 +23,13 @@ type BuyBid struct {
 	// TODO: interfaces cannot be marshalled
 	BuyerID      string        `json:"buyerID"`
 	Timestamp    string        `json:"timestamp"`
-	AskQuantity  float64       `json:"askQuantity"`
+	AskQuantity  int64         `json:"askQuantity"`
 	PrivatePrice *PrivatePrice `json:"-"`
 }
 
 var _ ccstate.WorldStateManager = (*BuyBid)(nil)
 
-func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *identities.X509Identity) error {
+func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, buyerID *identities.X509Identity) error {
 	// TODO: cidID is nil when idemix
 	cidID, _ := cid.GetID(stub)
 	// TODO: enhance this
@@ -40,7 +40,7 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity float64, buyerID *
 		return err
 	}
 
-	price, err := strconv.ParseFloat(string(priceBytes), 64)
+	price, err := strconv.ParseInt(string(priceBytes), 10, 64)
 	if err != nil {
 		return fmt.Errorf("could not parse price: %v", err)
 	}
