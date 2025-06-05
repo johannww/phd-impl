@@ -27,6 +27,8 @@ func (data *TestData) SaveToWorldState(stub shim.ChaincodeStubInterface) {
 	saveToWorldState(stub, data.Properties)
 	saveToWorldState(stub, data.MintCredits)
 	saveToWorldState(stub, data.TokenWallets)
+	saveToWorldState(stub, data.SellBids)
+	saveToWorldState(stub, data.BuyBids)
 }
 
 func (data *TestData) CompaniesIdentities() (companiesIds []string) {
