@@ -16,6 +16,6 @@ type Credit struct {
 
 func (c *Credit) GetID() *[][]string {
 	creditId := []string{c.OwnerID}
-	creditId = append(creditId, (*c.Chunk.GetID())[0]...)
+	creditId = append(creditId, c.ChunkID...)
 	return &[][]string{creditId}
 }
