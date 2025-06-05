@@ -22,6 +22,18 @@ type VirtualTokenWallet struct {
 
 var _ state.WorldStateManager = (*VirtualTokenWallet)(nil)
 
+func (vtw *VirtualTokenWallet) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
+	return state.GetPvtDataWithCompositeKey(stub, VIRTUAL_TOKEN_WALLET_PREFIX, keyAttributes, state.BIDS_PVT_DATA_COLLECTION, vtw)
+}
+
+func (vtw *VirtualTokenWallet) ToWorldState(stub shim.ChaincodeStubInterface) error {
+	return state.PutPvtDataWithCompositeKey(stub, VIRTUAL_TOKEN_WALLET_PREFIX, (*vtw.GetID())[0], state.BIDS_PVT_DATA_COLLECTION, vtw)
+}
+
+func (vtw *VirtualTokenWallet) GetID() *[][]string {
+	return &[][]string{{vtw.OwnerID}}
+}
+
 func MintVirtualToken(stub shim.ChaincodeStubInterface, ownerID string, quantity float64) (*VirtualTokenWallet, error) {
 	tokenWallet := &VirtualTokenWallet{OwnerID: ownerID}
 	err := tokenWallet.FromWorldState(stub, []string{ownerID})
@@ -43,16 +55,4 @@ func MintVirtualToken(stub shim.ChaincodeStubInterface, ownerID string, quantity
 		return nil, err
 	}
 	return tokenWallet, nil
-}
-
-func (vtw *VirtualTokenWallet) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	return state.GetPvtDataWithCompositeKey(stub, VIRTUAL_TOKEN_WALLET_PREFIX, keyAttributes, state.BIDS_PVT_DATA_COLLECTION, vtw)
-}
-
-func (vtw *VirtualTokenWallet) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	return state.PutPvtDataWithCompositeKey(stub, VIRTUAL_TOKEN_WALLET_PREFIX, (*vtw.GetID())[0], state.BIDS_PVT_DATA_COLLECTION, vtw)
-}
-
-func (vtw *VirtualTokenWallet) GetID() *[][]string {
-	return &[][]string{{vtw.OwnerID}}
 }
