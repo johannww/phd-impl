@@ -9,6 +9,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	utils_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/utils"
+	"github.com/stretchr/testify/require"
 )
 
 // TODO: Finish the test
