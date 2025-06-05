@@ -109,7 +109,7 @@ func ensureAllBidsWereRetrieved(stub *mocks.MockStub, t *testing.T,
 		// t.Logf("BuyBid %d: %v\n", i, bid)
 		// t.Logf("PrivatePrice %d: %v\n", i, bid.PrivatePrice)
 		if bid.PrivatePrice.Price != i+10 {
-			t.Fatalf("Expected private price %d, got %f", i+10, bid.PrivatePrice.Price)
+			t.Fatalf("Expected private price %d, got %d", i+10, bid.PrivatePrice.Price)
 		}
 	}
 }
