@@ -23,7 +23,7 @@ type SellBid struct {
 	CreditID     []string            `json:"creditID"`
 	Timestamp    string              `json:"timestamp"`
 	Credit       *credits.MintCredit `json:"credit"`
-	AskQuantity  int64               `json:"askQuantity"`
+	Quantity     int64               `json:"askQuantity"`
 	PrivatePrice *PrivatePrice       `json:"-"`
 }
 
@@ -47,10 +47,10 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID [
 	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
 
 	sellBid := &SellBid{
-		SellerID:    identities.GetID(stub),
-		CreditID:    creditID,
-		Timestamp:   bidTSStr,
-		AskQuantity: quantity,
+		SellerID:  identities.GetID(stub),
+		CreditID:  creditID,
+		Timestamp: bidTSStr,
+		Quantity:  quantity,
 	}
 	bidID := *(sellBid.GetID())
 
@@ -124,7 +124,7 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	if s.Timestamp == "" {
 		return fmt.Errorf("timestamp is empty")
 	}
-	if s.AskQuantity <= 0 {
+	if s.Quantity <= 0 {
 		return fmt.Errorf("askQuantity is not set")
 	}
 
