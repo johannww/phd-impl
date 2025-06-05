@@ -100,6 +100,7 @@ func GenProperties(nChunks int, mockIds *setup.MockIdentities) []*properties.Pro
 		// TODO: this should be tought later to avoid collisions
 		id := mathrand.Uint64()
 
+		// TODOHP: I should get the OwnerID from the stub/cid creator
 		prop := &properties.Property{
 			OwnerID: key,
 			ID:      id,
