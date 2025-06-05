@@ -103,9 +103,12 @@ func GetPvtDataWithCompositeKey[T any](
 	if err != nil {
 		return fmt.Errorf("could not get private data: %v", err)
 	}
+	if len(stateBytes) == 0 {
+		return fmt.Errorf("private data with key %s not found in collection %s", stateKey, collectionName)
+	}
 	err = json.Unmarshal(stateBytes, pvtDataStruct)
 	if err != nil {
-		return fmt.Errorf("could not unmarshal private data: %v", err)
+		return fmt.Errorf("could not unmarshal private data %s: %v", string(stateBytes), err)
 	}
 	return nil
 }
