@@ -164,9 +164,12 @@ func (s *SellBid) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
 
 func (s *SellBid) GetID() *[][]string {
 	// TODO: possible colision with other bids
-	id := s.CreditID
-	id = append(id, s.Timestamp)
-	return &[][]string{id}
+	creditIdAsPrefix := s.CreditID
+	creditIdAsPrefix = append(creditIdAsPrefix, s.Timestamp)
+	return &[][]string{
+		{s.Timestamp, s.SellerID},
+		creditIdAsPrefix,
+	}
 }
 
 func (b *SellBid) Less(b2 *SellBid) int {
