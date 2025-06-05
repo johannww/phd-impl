@@ -17,6 +17,11 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
 )
 
+const (
+	COMPANY_PREFIX = "company"
+	OWNER_PREFIX   = "owner"
+)
+
 func GenData(
 	nOwners int,
 	nChunks int,
@@ -59,7 +64,7 @@ func GenData(
 
 func GenOwnerIDs(n int, mockIds *setup.MockIdentities) {
 	for i := 0; i < n; i++ {
-		ownerName := fmt.Sprintf("owner%d", i)
+		ownerName := fmt.Sprintf("%s%d", OWNER_PREFIX, i)
 
 		mockId := setup.GenerateHFSerializedIdentity(
 			setup.X509_TYPE,
@@ -75,7 +80,7 @@ func GenOwnerIDs(n int, mockIds *setup.MockIdentities) {
 func GenCompanyIDs(n int, mockIds *setup.MockIdentities) {
 
 	for i := 0; i < n; i++ {
-		companyName := fmt.Sprintf("company%d", i)
+		companyName := fmt.Sprintf("%s%d", COMPANY_PREFIX, i)
 
 		mockId := setup.GenerateHFSerializedIdentity(
 			setup.IDEMIX_TYPE,
@@ -93,7 +98,7 @@ func GenProperties(nChunks int, mockIds *setup.MockIdentities) []*properties.Pro
 	props := []*properties.Property{}
 
 	for key := range *mockIds {
-		if !strings.Contains(key, "owner") {
+		if !strings.Contains(key, OWNER_PREFIX) {
 			continue
 		}
 
@@ -146,7 +151,7 @@ func GenTokenWallets(mockIds *setup.MockIdentities) []*payment.VirtualTokenWalle
 
 	for key := range *mockIds {
 		quantity := int64(0)
-		if strings.Contains(key, "company") {
+		if strings.Contains(key, COMPANY_PREFIX) {
 			// Companies start with a random quantity of tokens
 			quantity = 20000000
 		}
