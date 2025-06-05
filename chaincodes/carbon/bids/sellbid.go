@@ -23,7 +23,7 @@ type SellBid struct {
 	CreditID     []string            `json:"creditID"`
 	Timestamp    string              `json:"timestamp"`
 	Credit       *credits.MintCredit `json:"credit"`
-	Quantity     int64               `json:"askQuantity"`
+	Quantity     int64               `json:"quantity"`
 	PrivatePrice *PrivatePrice       `json:"-"`
 }
 
