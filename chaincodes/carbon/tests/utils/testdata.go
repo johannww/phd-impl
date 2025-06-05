@@ -3,6 +3,7 @@ package utils_test
 import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
+	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
