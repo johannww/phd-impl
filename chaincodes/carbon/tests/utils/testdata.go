@@ -1,6 +1,8 @@
 package utils_test
 
 import (
+	"strings"
+
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
@@ -25,6 +27,15 @@ func (data *TestData) SaveToWorldState(stub shim.ChaincodeStubInterface) {
 	saveToWorldState(stub, data.Properties)
 	saveToWorldState(stub, data.MintCredits)
 	saveToWorldState(stub, data.TokenWallets)
+}
+
+func (data *TestData) CompaniesIdentities() (companiesIds []string) {
+	for ownerId := range *data.Identities {
+		if strings.Contains(ownerId, COMPANY_PREFIX) {
+			companiesIds = append(companiesIds, ownerId)
+		}
+	}
+	return companiesIds
 }
 
 func saveToWorldState[T state.WorldStateManager](stub shim.ChaincodeStubInterface, data []T) {
