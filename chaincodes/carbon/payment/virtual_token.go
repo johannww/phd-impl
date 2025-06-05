@@ -34,7 +34,7 @@ func (vtw *VirtualTokenWallet) GetID() *[][]string {
 	return &[][]string{{vtw.OwnerID}}
 }
 
-func MintVirtualToken(stub shim.ChaincodeStubInterface, ownerID string, quantity float64) (*VirtualTokenWallet, error) {
+func MintVirtualToken(stub shim.ChaincodeStubInterface, ownerID string, quantity int64) (*VirtualTokenWallet, error) {
 	tokenWallet := &VirtualTokenWallet{OwnerID: ownerID}
 	err := tokenWallet.FromWorldState(stub, []string{ownerID})
 	if cid.AssertAttributeValue(stub, identities.VirtualTokenMinter, "true") != nil {

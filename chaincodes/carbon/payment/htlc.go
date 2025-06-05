@@ -22,7 +22,7 @@ func CreateHTLC(stub shim.ChaincodeStubInterface, hash [32]byte, matchedBids []*
 
 	for _, matchedBid := range matchedBids {
 		// TODO:
-		if matchedBid.SellBid.CreditID != cID {
+		if matchedBid.SellBid.SellerID != cID {
 			panic("creator is not the seller of the matched bids")
 		}
 	}
