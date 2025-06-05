@@ -206,7 +206,14 @@ func (stub *MockStub) PutPrivateData(collection string, key string, value []byte
 
 // DelPrivateData ...
 func (stub *MockStub) DelPrivateData(collection string, key string) error {
-	return errors.New("Not Implemented")
+	// DelPrivateData ...
+	m, in := stub.PvtState[collection]
+	if !in {
+		return nil // Nothing to delete
+	}
+
+	delete(m, key)
+	return nil
 }
 
 // PurgePrivateData ...
