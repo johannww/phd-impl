@@ -10,8 +10,8 @@ import (
 func GetStateFromCache[P interface {
 	WorldStateManager
 	*T
-}, T any](stub shim.ChaincodeStubInterface, cache *map[string]P, keyAttributes []string) (P, error) {
-	key, _ := stub.CreateCompositeKey("", keyAttributes)
+}, T any](stub shim.ChaincodeStubInterface, cache *map[string]P, objectType string, keyAttributes []string) (P, error) {
+	key, _ := stub.CreateCompositeKey(objectType, keyAttributes)
 	if val, ok := (*cache)[key]; ok {
 		return val, nil
 	}
