@@ -19,7 +19,10 @@ func TestOnChainIndependentAuction(t *testing.T) {
 		"2023-01-01T00:00:00Z",
 		"2023-01-01T00:30:00Z", 30*time.Second)
 	stub := mocks.NewMockStub("carbon", &carbon.Carbon{})
-	genAllMatchedBids(testData, "2023-01-01T00:31:00Z")
+
+	issueStart, err := time.Parse(time.RFC3339, "2023-01-01T00:31:00Z")
+	require.NoError(t, err)
+	genAllMatchedBids(testData, issueStart)
 
 	stub.MockTransactionStart("tx1")
 	testData.SaveToWorldState(stub)
@@ -30,17 +33,19 @@ func TestOnChainIndependentAuction(t *testing.T) {
 }
 
 // genAllMatchedBids generates a set of bids that will be fully matched
-func genAllMatchedBids(testData *utils_test.TestData, issueTs string) {
+func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time) {
 	sellPrice := int64(1000)
 	buyPrice := int64(1200)
 
 	buyerIds := testData.CompaniesIdentities()
 
 	for _, mintCredit := range testData.MintCredits {
+		issueTs := issueStart.Add(time.Duration(1 * time.Second)).UTC()
+		issueTsStr := issueTs.Format(time.RFC3339)
 		sellBid := &bids.SellBid{
 			SellerID:  mintCredit.OwnerID,
 			CreditID:  (*mintCredit.GetID())[0],
-			Timestamp: issueTs,
+			Timestamp: issueTsStr,
 			PrivatePrice: &bids.PrivatePrice{
 				Price: sellPrice,
 			},
@@ -55,7 +60,7 @@ func genAllMatchedBids(testData *utils_test.TestData, issueTs string) {
 		buyBid := &bids.BuyBid{
 			BuyerID:     buyerIds[buyerIdIndex],
 			AskQuantity: mintCredit.Quantity,
-			Timestamp:   issueTs,
+			Timestamp:   issueTsStr,
 			PrivatePrice: &bids.PrivatePrice{
 				Price: buyPrice,
 			},
