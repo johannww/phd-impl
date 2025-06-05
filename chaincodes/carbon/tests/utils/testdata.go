@@ -3,6 +3,7 @@ package utils_test
 import (
 	"strings"
 
+	"encoding/json"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
@@ -40,6 +41,13 @@ func (data *TestData) CompaniesIdentities() (companiesIds []string) {
 	return companiesIds
 }
 
+func (data *TestData) String() string {
+	bytes, err := json.MarshalIndent(data, "", " ")
+	if err != nil {
+		return "error marshalling TestData: " + err.Error()
+	}
+	return string(bytes)
+}
 func saveToWorldState[T state.WorldStateManager](stub shim.ChaincodeStubInterface, data []T) {
 	for _, item := range data {
 		if err := item.ToWorldState(stub); err != nil {
