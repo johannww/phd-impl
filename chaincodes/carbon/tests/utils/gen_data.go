@@ -100,7 +100,7 @@ func GenProperties(nChunks int, mockIds *setup.MockIdentities) []*properties.Pro
 		props = append(props, prop)
 
 		for range nChunks {
-			chunk := chunkForProperty(prop, id)
+			chunk := chunkForProperty(prop)
 			prop.Chunks = append(prop.Chunks, chunk)
 		}
 	}
@@ -116,10 +116,15 @@ func GenMintCredits(props []*properties.Property, startTs, endTs time.Time, issu
 		for i := range prop.Chunks {
 			chunk := prop.Chunks[i]
 			for nDuration := int64(0); nDuration < nDurations; nDuration++ {
+				lastIssue := startTs.Add(time.Duration(nDuration-1) * issueInterval)
 				issueTs := startTs.Add(time.Duration(nDuration) * issueInterval)
 				issueTsStr := issueTs.Format(time.RFC3339)
 
-				credit := creditForChunk(chunk, prop, issueTsStr)
+				estimator := policies.Estimator{}
+				quantity, err := estimator.Estimate(chunk, lastIssue, issueTs)
+				panicOnError(err)
+
+				credit := creditForChunk(chunk, prop, quantity, issueTsStr)
 				mintCredits = append(mintCredits, credit)
 			}
 		}
@@ -144,14 +149,25 @@ func chunkForProperty(prop *properties.Property) *properties.PropertyChunk {
 	return chunk
 }
 
-func creditForChunk(chunk *properties.PropertyChunk, prop *properties.Property, issueTsStr string) *credits.MintCredit {
+func creditForChunk(chunk *properties.PropertyChunk,
+	prop *properties.Property,
+	quantity int64,
+	issueTsStr string) *credits.MintCredit {
 	credit := &credits.MintCredit{
 		Credit: credits.Credit{
-			OwnerID: prop.OwnerID,
-			Chunk:   chunk,
+			OwnerID:  prop.OwnerID,
+			ChunkID:  (*chunk.GetID())[0],
+			Chunk:    chunk,
+			Quantity: quantity,
 		},
 		MintMult:      policies.MintIndependentMult(chunk),
 		MintTimeStamp: issueTsStr,
 	}
 	return credit
+}
+
+func panicOnError(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
