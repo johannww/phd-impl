@@ -51,8 +51,6 @@ func GenData(
 	// TODO: Add virtual payment token
 	tokenWallets := GenTokenWallets(mockIds)
 
-	// TODO: Add bids
-
 	data.Identities = mockIds
 	data.Properties = props
 	data.MintCredits = mintCredits
