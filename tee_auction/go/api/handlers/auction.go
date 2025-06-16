@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/ed25519"
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
@@ -8,7 +9,7 @@ import (
 	"github.com/johannww/phd-impl/tee_auction/auction"
 )
 
-func Auction(c *gin.Context) {
+func Auction(c *gin.Context, privateKey ed25519.PrivateKey) {
 	// Get the user name and value from the request body
 	dataBytes, err := c.GetRawData()
 	if err != nil {
@@ -23,7 +24,7 @@ func Auction(c *gin.Context) {
 		return
 	}
 
-	auctionResult, err := auction.RunTEEAuction(&serializedAD)
+	auctionResult, err := auction.RunTEEAuction(&serializedAD, privateKey)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to run auction: " + err.Error()})
 		return

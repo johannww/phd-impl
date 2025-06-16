@@ -45,7 +45,7 @@ func main() {
 	auctionServer := &api.AuctionServer{
 		ReportBytes: reportBytes,
 	}
-	router := auctionServer.SetupRouter()
+	router := auctionServer.SetupRouter(priv)
 	http.ListenAndServe(":8080", router)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to start server: %v", err))

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"crypto/ed25519"
+	"encoding/base64"
 	"net/http"
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
@@ -16,7 +18,7 @@ type AuctionServer struct {
 
 var db = map[string]string{}
 
-func (server *AuctionServer) SetupRouter() *gin.Engine {
+func (server *AuctionServer) SetupRouter(privateKey ed25519.PrivateKey) *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.Default()
@@ -45,7 +47,9 @@ func (server *AuctionServer) SetupRouter() *gin.Engine {
 		c.JSON(http.StatusOK, b64Str)
 	})
 
-	r.POST("/auction", handlers.Auction)
+	r.POST("/auction", func(c *gin.Context) {
+		handlers.Auction(c, privateKey)
+	})
 
 	// Get user value
 	r.GET("/user/:name", func(c *gin.Context) {
