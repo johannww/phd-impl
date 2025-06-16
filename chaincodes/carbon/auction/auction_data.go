@@ -15,7 +15,8 @@ import (
 type AuctionData struct {
 	SellBidsBytes [][]byte
 	BuyBidsBytes  [][]byte
-	Sum           []byte // SHA256 sum of bytes
+	Sum           []byte // SHA256 sum of bytes of above fields
+	Coupled       bool
 }
 
 // TODO: ensure that all data is fetched
