@@ -5,7 +5,7 @@ go 1.24.3
 require (
 	github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250521161531-e3e00a1a216a
 	github.com/gin-gonic/gin v1.10.0
-	github.com/johannww/phd-impl/chaincodes/carbon v0.0.0-20250616204548-7ed02b7db394
+	github.com/johannww/phd-impl/chaincodes/carbon v0.0.0-20250616214325-7ee2a7b80f6b
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 )
@@ -60,6 +60,8 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/johannww/phd-impl/chaincodes/carbon v0.0.0-20250616214325-7ee2a7b80f6b => ../../chaincodes/carbon
 
 // NOTE: This is temporary until microsoft fixes serialization
 replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250521161531-e3e00a1a216a => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91
