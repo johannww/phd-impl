@@ -53,8 +53,8 @@ func (c *CarbonContract) UnlockAuctionSemaphore(ctx contractapi.TransactionConte
 	return nil
 }
 
-func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.AuctionData, error) {
-	auctionData := &auction.AuctionData{}
+func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.SerializedAuctionData, error) {
+	auctionData := &auction.SerializedAuctionData{}
 	err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
 	return auctionData, err
 }

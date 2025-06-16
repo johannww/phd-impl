@@ -1,11 +1,11 @@
 package auction
 
 // TODO: implement
-func RunIndependent(data *AuctionData) {
+func RunIndependent(data *SerializedAuctionData) {
 
 }
 
 // TODO: implement
-func RunCoupled(data *AuctionData) {
+func RunCoupled(data *SerializedAuctionData) {
 
 }

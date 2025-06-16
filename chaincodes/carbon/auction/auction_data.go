@@ -1,8 +1,7 @@
 package auction
 
 import (
-	"bytes"
-	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
@@ -13,37 +12,35 @@ import (
 )
 
 type AuctionData struct {
-	SellBidsBytes [][]byte
-	BuyBidsBytes  [][]byte
-	Sum           []byte // SHA256 sum of bytes of above fields
-	Coupled       bool
+	SellBids []*bids.SellBid `json:"sellBids"`
+	BuyBids  []*bids.BuyBid  `json:"buyBids"`
+	Coupled  bool            `json:"coupled"`
 }
 
 // TODO: ensure that all data is fetched
 func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Timestamp string) error {
-
 	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") != nil {
 		return fmt.Errorf("caller does not have the %s attribute, which is required to get prices", identities.PriceViewer)
 	}
 
 	var err error
-	buyBids, err := state.GetStatesByRangeCompositeKey[bids.BuyBid](stub, bids.BUY_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
+	a.BuyBids, err = state.GetStatesByRangeCompositeKey[bids.BuyBid](stub, bids.BUY_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
 	if err != nil {
 		return fmt.Errorf("could not get buy bids: %v", err)
 	}
 
-	sellBids, err := state.GetStatesByRangeCompositeKey[bids.SellBid](stub, bids.SELL_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
+	a.SellBids, err = state.GetStatesByRangeCompositeKey[bids.SellBid](stub, bids.SELL_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
 	if err != nil {
 		return fmt.Errorf("could not get sell bids: %v", err)
 	}
 
-	for _, buyBid := range buyBids {
+	for _, buyBid := range a.BuyBids {
 		if err := buyBid.FetchPrivatePrice(stub); err != nil {
 			return err
 		}
 	}
 
-	for _, sellBid := range sellBids {
+	for _, sellBid := range a.SellBids {
 		if err := sellBid.FetchPrivatePrice(stub); err != nil {
 			return err
 		}
@@ -52,55 +49,25 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 		}
 	}
 
-	err = a.CalculateHash()
-	if err != nil {
-		return fmt.Errorf("could not calculate sum: %v", err)
-	}
-
-	auctionCommitment := &AuctionCommitment{
-		EndTimestamp: endRFC339Timestamp,
-		Hash:         a.Sum,
-	}
-	err = auctionCommitment.ToWorldState(stub)
-
 	return err
 
 }
 
-func (a *AuctionData) CalculateHash() error {
-	sum, err := a.calculateHash()
+func (a *AuctionData) ToSerializedAuctionData() (*SerializedAuctionData, error) {
+	serializedAuctionData := &SerializedAuctionData{}
+	var err error
+
+	serializedAuctionData.SellBidsBytes, err = json.Marshal(a.SellBids)
 	if err != nil {
-		return fmt.Errorf("could not calculate auction data hash: %v", err)
+		return nil, fmt.Errorf("could not marshal sell bids: %v", err)
 	}
 
-	a.Sum = sum
-	return nil
-}
-
-func (a *AuctionData) calculateHash() ([]byte, error) {
-	hash := sha256.New()
-	for _, b := range a.BuyBidsBytes {
-		_, err := hash.Write(b)
-		if err != nil {
-			return nil, fmt.Errorf("could not write sell bid bytes to hash: %v", err)
-		}
+	serializedAuctionData.BuyBidsBytes, err = json.Marshal(a.BuyBids)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal buy bids: %v", err)
 	}
 
-	for _, s := range a.SellBidsBytes {
-		_, err := hash.Write(s)
-		if err != nil {
-			return nil, fmt.Errorf("could not write sell bid bytes to hash: %v", err)
-		}
-	}
+	serializedAuctionData.Coupled = a.Coupled
 
-	return hash.Sum(nil), nil
-}
-
-func (a *AuctionData) ValidateHash() bool {
-	if a.Sum == nil {
-		return false
-	}
-
-	calculatedSum, err := a.calculateHash()
-	return err == nil && bytes.Equal(a.Sum, calculatedSum)
+	return serializedAuctionData, nil
 }
