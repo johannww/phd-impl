@@ -24,6 +24,11 @@ func RunTEEAuction(auctionData *cc_auction.AuctionData) (*SerializedAuctionResul
 	result := &SerializedAuctionResultTEE{}
 
 	// Validate data commtiment
+	if !auctionData.ValidateHash() {
+		return nil, fmt.Errorf("Auction data commitment does not match the expected hash")
+	}
+
+	// Run the auction
 
 	// get report on the results
 	err := result.setHardwareSignature()
