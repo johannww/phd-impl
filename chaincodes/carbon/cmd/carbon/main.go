@@ -54,9 +54,19 @@ func (c *CarbonContract) UnlockAuctionSemaphore(ctx contractapi.TransactionConte
 }
 
 func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.SerializedAuctionData, error) {
-	auctionData := &auction.SerializedAuctionData{}
+	auctionData := &auction.AuctionData{}
 	err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
-	return auctionData, err
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve auction data: %v", err)
+	}
+
+	serializedAD, err := auctionData.ToSerializedAuctionData()
+	if err != nil {
+		return nil, fmt.Errorf("could not serialize auction data: %v", err)
+	}
+
+	err = serializedAD.CommitmentToWorldState(ctx.GetStub(), endRFC339Timestamp)
+	return serializedAD, err
 }
 
 func (c *CarbonContract) CheckCredAttr(ctx contractapi.TransactionContextInterface, attrName string) (string, error) {
