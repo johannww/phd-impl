@@ -5,6 +5,7 @@ import (
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
 	"github.com/gin-gonic/gin"
+	"github.com/johannww/phd-impl/tee_auction/api/handlers"
 	"github.com/johannww/phd-impl/tee_auction/report"
 )
 
@@ -43,6 +44,8 @@ func (server *AuctionServer) SetupRouter() *gin.Engine {
 		b64Str := base64.StdEncoding.EncodeToString(server.ReportBytes)
 		c.JSON(http.StatusOK, b64Str)
 	})
+
+	r.POST("/auction", handlers.Auction)
 
 	// Get user value
 	r.GET("/user/:name", func(c *gin.Context) {
