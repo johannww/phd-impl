@@ -20,19 +20,19 @@ type SerializedAuctionResultTEE struct {
 }
 
 // TODOHP: finish auction running on tee
-func RunTEEAuction(auctionData *cc_auction.AuctionData) (*SerializedAuctionResultTEE, error) {
+func RunTEEAuction(serializedAD *cc_auction.SerializedAuctionData) (*SerializedAuctionResultTEE, error) {
 	result := &SerializedAuctionResultTEE{}
 
 	// Validate data commtiment
-	if !auctionData.ValidateHash() {
+	if !serializedAD.ValidateHash() {
 		return nil, fmt.Errorf("Auction data commitment does not match the expected hash")
 	}
 
 	// Run the auction
-	if auctionData.Coupled {
-		cc_auction.RunCoupled(auctionData)
+	if serializedAD.Coupled {
+		cc_auction.RunCoupled(serializedAD)
 	} else {
-		cc_auction.RunIndependent(auctionData)
+		cc_auction.RunIndependent(serializedAD)
 	}
 
 	// get report on the results

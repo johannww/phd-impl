@@ -16,14 +16,14 @@ func Auction(c *gin.Context) {
 		return
 	}
 
-	var auctionData cc_auction.AuctionData
-	err = json.Unmarshal(dataBytes, &auctionData)
+	var serializedAD cc_auction.SerializedAuctionData
+	err = json.Unmarshal(dataBytes, &serializedAD)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Invalid auction data"})
 		return
 	}
 
-	auctionResult, err := auction.RunTEEAuction(&auctionData)
+	auctionResult, err := auction.RunTEEAuction(&serializedAD)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to run auction: " + err.Error()})
 		return
