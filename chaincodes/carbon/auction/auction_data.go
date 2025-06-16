@@ -1,6 +1,7 @@
 package auction
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 
@@ -66,21 +67,39 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 }
 
 func (a *AuctionData) CalculateHash() error {
+	sum, err := a.calculateHash()
+	if err != nil {
+		return fmt.Errorf("could not calculate auction data hash: %v", err)
+	}
+
+	a.Sum = sum
+	return nil
+}
+
+func (a *AuctionData) calculateHash() ([]byte, error) {
 	hash := sha256.New()
 	for _, b := range a.BuyBidsBytes {
 		_, err := hash.Write(b)
 		if err != nil {
-			return fmt.Errorf("could not write sell bid bytes to hash: %v", err)
+			return nil, fmt.Errorf("could not write sell bid bytes to hash: %v", err)
 		}
 	}
 
 	for _, s := range a.SellBidsBytes {
 		_, err := hash.Write(s)
 		if err != nil {
-			return fmt.Errorf("could not write sell bid bytes to hash: %v", err)
+			return nil, fmt.Errorf("could not write sell bid bytes to hash: %v", err)
 		}
 	}
 
-	a.Sum = hash.Sum(nil)
-	return nil
+	return hash.Sum(nil), nil
+}
+
+func (a *AuctionData) ValidateHash() bool {
+	if a.Sum == nil {
+		return false
+	}
+
+	calculatedSum, err := a.calculateHash()
+	return err == nil && bytes.Equal(a.Sum, calculatedSum)
 }

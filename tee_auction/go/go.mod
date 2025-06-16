@@ -5,6 +5,7 @@ go 1.24.3
 require (
 	github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250521161531-e3e00a1a216a
 	github.com/gin-gonic/gin v1.10.0
+	github.com/johannww/phd-impl/chaincodes/carbon v0.0.0-20250605194813-8a16a9eea5fe
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 )
