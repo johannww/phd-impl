@@ -29,6 +29,11 @@ func RunTEEAuction(auctionData *cc_auction.AuctionData) (*SerializedAuctionResul
 	}
 
 	// Run the auction
+	if auctionData.Coupled {
+		cc_auction.RunCoupled(auctionData)
+	} else {
+		cc_auction.RunIndependent(auctionData)
+	}
 
 	// get report on the results
 	err := result.setHardwareSignature()
