@@ -12,7 +12,7 @@ require (
 	github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0
 	github.com/hyperledger/fabric-gateway v1.7.1
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6
-	github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200035-a7550fb28291
+	github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
