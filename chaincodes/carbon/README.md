@@ -4,6 +4,10 @@
 - [X] use the contract api for faster development
 - [X] create a config for the test-network including idemix orgs
 - [X] GATEWAY: Make the Idemix Identity create the pseudonym key and make the signer fetch it from the Idemix Identity
+- [] verify that the confidential containers is running the expected ccePolicy
+  - file tee/azure.go
+  - This video explains: https://www.youtube.com/watch?v=H9DP5CMqGac
+  - Test the coded solution
 
 
 # Testing

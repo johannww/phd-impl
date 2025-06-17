@@ -106,3 +106,7 @@ az confcom acipolicygen -a ./azure/arm_template.json
 cd ./go
 go run ./cmd/report_verifier --reportJsonPath ../report.json
 ```
+
+# Verifying that the ccePolicy is included in the report
+
+This video explains: https://www.youtube.com/watch?v=H9DP5CMqGac
