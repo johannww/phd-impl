@@ -9,6 +9,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 )
 
 type CarbonContract struct {
@@ -55,8 +56,8 @@ func (c *CarbonContract) UnlockAuctionSemaphore(ctx contractapi.TransactionConte
 
 // PublishInitialTEEReport stores the initial TEE report containing the
 // confidential container's public key for communication and verification
-func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionContextInterface, report *attest.SNPAttestationReport) error {
-	return tee.InitialReportToWorldState(ctx.GetStub(), report)
+func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionContextInterface, reportJsonBytes []byte) error {
+	return tee.InitialReportToWorldState(ctx.GetStub(), reportJsonBytes)
 }
 
 func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.SerializedAuctionData, error) {
