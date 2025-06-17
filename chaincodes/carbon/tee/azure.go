@@ -1,6 +1,8 @@
 package tee
 
 import (
+	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -14,12 +16,6 @@ const (
 )
 
 func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes []byte) error {
-	report := attest.SNPAttestationReport{}
-	err := json.Unmarshal(reportJsonBytes, &report)
-	if err != nil {
-		return fmt.Errorf("could not unmarshal TEE report: %v", err)
-	}
-
 	verifies, err := report_verifier.VerifyReportSignatureJsonBytes(reportJsonBytes)
 	if err != nil || !verifies {
 		return fmt.Errorf("could not verify TEE report signature: %v", err)
@@ -31,4 +27,30 @@ func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes
 	}
 
 	return nil
+}
+
+func VerifyAuctionResultReportSignature(
+	auctionReportJsonBytes []byte,
+	expectedResultHash []byte) (bool, error) {
+	report := attest.SNPAttestationReport{}
+	err := json.Unmarshal(auctionReportJsonBytes, &report)
+	if err != nil {
+		return false, fmt.Errorf("could not unmarshal auction report: %v", err)
+	}
+
+	reportDataBytes, err := hex.DecodeString(report.ReportData)
+	if err != nil {
+		return false, fmt.Errorf("could not decode report data string as hex: %v", err)
+	}
+
+	if bytes.Compare(reportDataBytes, expectedResultHash) != 0 {
+		return false, fmt.Errorf("report data does not match expected result hash")
+	}
+
+	verifies, err := report_verifier.VerifyReportSignatureJsonBytes(auctionReportJsonBytes)
+	if err != nil || !verifies {
+		return false, fmt.Errorf("could not verify TEE report signature: %v", err)
+	}
+
+	return true, nil
 }
