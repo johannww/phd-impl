@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/johannww/phd-impl/tee_auction/api"
-	"github.com/johannww/phd-impl/tee_auction/report"
+	"github.com/johannww/phd-impl/tee_auction/go/api"
+	"github.com/johannww/phd-impl/tee_auction/go/report"
 )
 
 // TODO: This program will execute the auction on an

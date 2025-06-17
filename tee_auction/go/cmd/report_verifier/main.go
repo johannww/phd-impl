@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/johannww/phd-impl/tee_auction/report"
+	"github.com/johannww/phd-impl/tee_auction/go/report"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )

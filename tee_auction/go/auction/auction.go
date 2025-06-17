@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	cc_auction "github.com/johannww/phd-impl/chaincodes/carbon/auction"
-	"github.com/johannww/phd-impl/tee_auction/report"
+	"github.com/johannww/phd-impl/tee_auction/go/report"
 )
 
 type AuctionResultTEE struct {

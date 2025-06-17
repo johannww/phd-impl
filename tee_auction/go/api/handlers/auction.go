@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	cc_auction "github.com/johannww/phd-impl/chaincodes/carbon/auction"
-	"github.com/johannww/phd-impl/tee_auction/auction"
+	"github.com/johannww/phd-impl/tee_auction/go/auction"
 )
 
 func Auction(c *gin.Context, privateKey ed25519.PrivateKey) {

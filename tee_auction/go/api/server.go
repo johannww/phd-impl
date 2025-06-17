@@ -7,8 +7,8 @@ import (
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
 	"github.com/gin-gonic/gin"
-	"github.com/johannww/phd-impl/tee_auction/api/handlers"
-	"github.com/johannww/phd-impl/tee_auction/report"
+	"github.com/johannww/phd-impl/tee_auction/go/api/handlers"
+	"github.com/johannww/phd-impl/tee_auction/go/report"
 )
 
 type AuctionServer struct {
