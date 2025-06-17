@@ -14,13 +14,7 @@ import (
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
 )
 
-func VerifyReportSignature(reportJsonBytes []byte) (bool, error) {
-	report := attest.SNPAttestationReport{}
-	err := json.Unmarshal(reportJsonBytes, &report)
-	if err != nil {
-		return false, fmt.Errorf("Failed to unmarshal attestation report: %v", err)
-	}
-
+func VerifyReportSignature(report *attest.SNPAttestationReport) (bool, error) {
 	certFetcher := attest.DefaultAMDMilanCertFetcherNew()
 	chain, anInt, error := certFetcher.GetCertChain(report.ChipID, report.ReportedTCB)
 	if error != nil {
@@ -74,6 +68,17 @@ func VerifyReportSignature(reportJsonBytes []byte) (bool, error) {
 	fmt.Printf("sigValid: %t\n", sigValid)
 
 	return sigValid, nil
+
+}
+
+func VerifyReportSignatureJsonBytes(reportJsonBytes []byte) (bool, error) {
+	report := attest.SNPAttestationReport{}
+	err := json.Unmarshal(reportJsonBytes, &report)
+	if err != nil {
+		return false, fmt.Errorf("Failed to unmarshal attestation report: %v", err)
+	}
+
+	return VerifyReportSignature(&report)
 
 }
 

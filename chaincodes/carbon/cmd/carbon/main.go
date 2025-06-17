@@ -53,6 +53,12 @@ func (c *CarbonContract) UnlockAuctionSemaphore(ctx contractapi.TransactionConte
 	return nil
 }
 
+// PublishInitialTEEReport stores the initial TEE report containing the
+// confidential container's public key for communication and verification
+func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionContextInterface, report *attest.SNPAttestationReport) error {
+	return tee.InitialReportToWorldState(ctx.GetStub(), report)
+}
+
 func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.SerializedAuctionData, error) {
 	auctionData := &auction.AuctionData{}
 	err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)

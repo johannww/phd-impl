@@ -22,7 +22,7 @@ func main() {
 		panic(fmt.Sprintf("Failed to read report JSON file: %v", err))
 	}
 
-	verify, err := report.VerifyReportSignature(reportJsonBytes)
+	verify, err := report.VerifyReportSignatureJsonBytes(reportJsonBytes)
 	// verify, err := report.VerifyReportSignatureBase64(reportJsonBytes)
 
 	if err != nil {
