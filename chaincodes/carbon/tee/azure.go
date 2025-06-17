@@ -20,7 +20,7 @@ func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes
 		return fmt.Errorf("could not unmarshal TEE report: %v", err)
 	}
 
-	verifies, err := report_verifier.VerifyReportSignature(reportJsonBytes)
+	verifies, err := report_verifier.VerifyReportSignatureJsonBytes(reportJsonBytes)
 	if err != nil || !verifies {
 		return fmt.Errorf("could not verify TEE report signature: %v", err)
 	}
