@@ -26,6 +26,8 @@ jobs:
           go-version: 1.23
 
       - name: Build carbon chaincode
+        env:
+          GOPRIVATE: github.com/johannww
         run: go mod tidy && go mod vendor && go build -o carbon ./cmd/carbon/main.go
 
       - name: Run the tests
