@@ -40,6 +40,8 @@ jobs:
 
   # I had to grant package access in: https://github.com/johannww?tab=packages
   docker-chaincode-build:
+    env:
+      GOPRIVATE: github.com/${{ github.repository }}
     needs: build-test-chaincode
     runs-on: ubuntu-latest
     permissions:
@@ -65,6 +67,15 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ghcr.io/${{ github.repository }}/carbon
+
+      - name: Configure git for private modules
+        env:
+          TOKEN: ${{ github.token }}
+        run: git config --global url."https://user:${TOKEN}@github.com".insteadOf "https://github.com"
+
+      - name: Vendor outside the container
+        working-directory: chaincodes/carbon
+        run: go mod tidy && go mod vendor
 
       - name: Build and push
         uses: docker/build-push-action@v6
