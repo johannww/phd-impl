@@ -12,6 +12,8 @@ on:
 
 jobs:
   build-test-chaincode:
+    env:
+      GOPRIVATE: github.com/${{ github.repository }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,9 +27,12 @@ jobs:
         with:
           go-version: 1.24
 
-      - name: Build carbon chaincode
+      - name: Configure git for private modules
         env:
-          GOPRIVATE: github.com/johannww
+          TOKEN: ${{ github.token }}
+        run: git config --global url."https://user:${TOKEN}@github.com".insteadOf "https://github.com"
+
+      - name: Build carbon chaincode
         run: go mod tidy && go mod vendor && go build -o carbon ./cmd/carbon/main.go
 
       - name: Run the tests
