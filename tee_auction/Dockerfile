@@ -6,7 +6,7 @@ FROM golang:1.24.3 AS builder
 COPY ./go /tee_auction/go
 WORKDIR /tee_auction/go
 RUN if [ ! -d "vendor" ]; then go mod tidy && go mod vendor; fi
-RUN go build -o auction ./cmd/auction/main.go
+RUN go build -o tee_auction ./cmd/auction/main.go
 
 FROM ubuntu:22.04
 
@@ -16,8 +16,8 @@ FROM ubuntu:22.04
 # See initLocal() in: golang/1.23.1/go/src/time/zoneinfo_unix.go
 ENV TZ=UTC
 
-COPY --from=builder /tee_auction/go/auction /usr/local/bin/auction
-ENTRYPOINT ["/usr/local/bin/auction"]
+COPY --from=builder /tee_auction/go/tee_auction /usr/local/bin/tee_auction
+ENTRYPOINT ["/usr/local/bin/tee_auction"]
 EXPOSE 80
 EXPOSE 443
 
