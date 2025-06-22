@@ -6,8 +6,6 @@ github.com/IBM/idemix/bccsp/types v0.0.0-20241220065751-dc7206770307 h1:cbwi2EIy
 github.com/IBM/idemix/bccsp/types v0.0.0-20241220065751-dc7206770307/go.mod h1:Pi1QIuIZ+1OXIbnYe27vNwJOnSq2WvkHRT/sfweTw8E=
 github.com/IBM/mathlib v0.0.3-0.20241219051532-81539b287cf5 h1:wfksZZMeYfPeqsXwiotUsbnOqGGpth6t8Ij4tJ/91kw=
 github.com/IBM/mathlib v0.0.3-0.20241219051532-81539b287cf5/go.mod h1:Tco9QzE3fQzjMS7nPbHDeFfydAzctStf1Pa8hsh6Hjs=
-github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-989d452c4c7e h1:rPne5m+5thAP1qiFMFIWnhDKi4r5Mrvghlr5bWlOkBE=
-github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-989d452c4c7e/go.mod h1:XAvutBFr1dDqM7fOAtb29uGHfU7Lp4g0ct7A3Eh0UwA=
 github.com/bits-and-blooms/bitset v1.13.0 h1:bAQ9OPNFYbGHV6Nez0tmNI0RiEu7/hxlYJRUA0wFAVE=
 github.com/bits-and-blooms/bitset v1.13.0/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
 github.com/consensys/bavard v0.1.13 h1:oLhMLOFGTLdlda/kma4VOJazblc7IM5y5QPd2A/YjhQ=
@@ -56,6 +54,8 @@ github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0 h1:rmUoBmciB0GL/miqcbJmJ
 github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0/go.mod h1:FeWeO/jwGjiME7ak3GufqKIcwkejtzrDG4QxbfKydWs=
 github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6 h1:IMpCMJCFktzPLWepq/V48vZJ8VY5rY7gX220aBdBbKQ=
 github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6/go.mod h1:bJnwzfv03oZQeCc863pdGTDgf5nmCy6Za3RAE7d2XsQ=
+github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91 h1:Jb7oB062lJ2aBT14Xu2fjxmBd32+HCfOUs4Ir6mdWXM=
+github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91/go.mod h1:VUoD7yo4HGTTf5rLMYWmMiWE2OM8pmdxBoKyBZKPkpM=
 github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20250520213033-d967d6ea1875 h1:vA+pnVjgETHFIwZemJrB+EEgXdr2x1lc45MPUqR/UkA=
 github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20250520213033-d967d6ea1875/go.mod h1:PHHaFffjw7p7n9bmCfcm7RqDqYdivNEsJdiNIKZo5Lk=
 github.com/johannww/fabric-gateway v0.0.0-20250527175102-91efdaca92d8 h1:GDgX5LFJUyTODHSveIAJ/akWYVfZ900WAv30k0hrhtI=

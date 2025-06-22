@@ -80,3 +80,6 @@ replace github.com/hyperledger/fabric-chaincode-go/v2 v2.0.0 => github.com/johan
 // replace github.com/hyperledger/fabric-gateway v1.7.1 => /home/johann/prj/dtr/fabric-repos/fabric-gateway/
 
 replace github.com/hyperledger/fabric-gateway v1.7.1 => github.com/johannww/fabric-gateway v0.0.0-20250527175102-91efdaca92d8
+
+// NOTE: This is temporary until microsoft fixes serialization
+replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-989d452c4c7e => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91

@@ -69,7 +69,6 @@ func VerifyAuctionResultReportSignature(
 	return true, nil
 }
 
-// TODO: test this
 func verifyCCEPolicy(stub shim.ChaincodeStubInterface, report attest.SNPAttestationReport) error {
 	ccePolicyBase64, err := GetCCEPolicy(stub)
 	if err != nil {
