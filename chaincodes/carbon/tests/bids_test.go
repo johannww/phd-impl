@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
-	"github.com/johannww/phd-impl/chaincodes/carbon"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
@@ -17,7 +16,7 @@ import (
 )
 
 func TestBid(t *testing.T) {
-	stub := mocks.NewMockStub("carbon", &carbon.Carbon{})
+	stub := mocks.NewMockStub("carbon", nil)
 	possibleIds := setup.SetupIdentities(stub)
 	stub.Creator = possibleIds[setup.REGULAR_ID]
 
@@ -57,7 +56,7 @@ func TestBid(t *testing.T) {
 }
 
 func TestBidBatchRecover(t *testing.T) {
-	stub := mocks.NewMockStub("carbon", &carbon.Carbon{})
+	stub := mocks.NewMockStub("carbon", nil)
 	possibleIds := setup.SetupIdentities(stub)
 	stub.Creator = possibleIds[setup.REGULAR_ID]
 

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/johannww/phd-impl/chaincodes/carbon"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	utils_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/utils"
@@ -18,7 +17,7 @@ func TestOnChainIndependentAuction(t *testing.T) {
 		10, 3, 5,
 		"2023-01-01T00:00:00Z",
 		"2023-01-01T00:30:00Z", 30*time.Second)
-	stub := mocks.NewMockStub("carbon", &carbon.Carbon{})
+	stub := mocks.NewMockStub("carbon", nil)
 
 	issueStart, err := time.Parse(time.RFC3339, "2023-01-01T00:31:00Z")
 	require.NoError(t, err)
