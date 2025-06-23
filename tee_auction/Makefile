@@ -24,3 +24,17 @@ deploy:
 
 cleanup:
 	az container delete --resource-group carbon --name carbon-auction-container --yes
+
+verify-policy-image-layers:
+	cd azure ; \
+	if [ ! -d integrity-vhd ]; then \
+		git clone https://github.com/microsoft/integrity-vhd/; \
+	fi; \
+	cd integrity-vhd; \
+	touch .nosync; \
+	echo ""; \
+	echo "Local image FS layers:"; \
+	go run cmd/dmverity-vhd/main.go -d roothash -i $(REGISTRY)/carbon_auction:latest; \
+	cd ../..; \
+	echo "Policy FS layers:"; \
+	az confcom acipolicygen -a ./azure/arm_template.json --outraw-pretty-print 2>/dev/null | grep -A 3 "layers"
