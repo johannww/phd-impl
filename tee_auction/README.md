@@ -94,6 +94,7 @@ echo $REPORT | jq '.host_data'
 ```
 
 We can also re-check that we this policy was the same as generated and posseses the desired container layers:
+([This video explains](https://www.youtube.com/watch?v=H9DP5CMqGac))
 
 ```bash
 az confcom acipolicygen -a ./azure/arm_template.json --outraw-pretty-print
@@ -107,6 +108,8 @@ cd ./go
 go run ./cmd/report_verifier --reportJsonPath ../report.json
 ```
 
-# Verifying that the ccePolicy is included in the report
+## Verifying that the image layers on ceePolicy match the image
 
-This video explains: https://www.youtube.com/watch?v=H9DP5CMqGac
+```bash
+make verify-policy-image-layers
+```
