@@ -9,6 +9,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 )
 
@@ -92,4 +93,25 @@ func (c *CarbonContract) CheckCredAttr(ctx contractapi.TransactionContextInterfa
 	}
 
 	return attrValue, nil
+}
+
+// SetActivePolicies sets the list of active policies in the world state
+func (c *CarbonContract) SetActivePolicies(ctx contractapi.TransactionContextInterface, activePolicies []policies.Name) error {
+	stub := ctx.GetStub()
+	err := policies.SetActivePolicies(stub, activePolicies)
+	return err
+}
+
+// AppendActivePolicy adds a new policy to the list of active policies in the world state
+func (c *CarbonContract) AppendActivePolicy(ctx contractapi.TransactionContextInterface, policy policies.Name) error {
+	stub := ctx.GetStub()
+	err := policies.AppendActivePolicy(stub, policies.Name(policy))
+	return err
+}
+
+// DeleteActivePolicy removes a policy from the list of active policies in the world state
+func (c *CarbonContract) DeleteActivePolicy(ctx contractapi.TransactionContextInterface, policy policies.Name) error {
+	stub := ctx.GetStub()
+	err := policies.DeleteActivePolicy(stub, policies.Name(policy))
+	return err
 }
