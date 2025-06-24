@@ -8,13 +8,15 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
 type AuctionData struct {
-	SellBids []*bids.SellBid `json:"sellBids"`
-	BuyBids  []*bids.BuyBid  `json:"buyBids"`
-	Coupled  bool            `json:"coupled"`
+	SellBids       []*bids.SellBid `json:"sellBids"`
+	BuyBids        []*bids.BuyBid  `json:"buyBids"`
+	ActivePolicies []policies.Name `json:"activePolicies"`
+	Coupled        bool            `json:"coupled"`
 }
 
 // TODO: ensure that all data is fetched
