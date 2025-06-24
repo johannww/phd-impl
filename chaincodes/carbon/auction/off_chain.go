@@ -1,7 +1,6 @@
 package auction
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
 
@@ -13,20 +12,11 @@ type OffChainAuctionResult struct {
 }
 
 // TODO: test
-func RunIndependent(data *SerializedAuctionData) (*OffChainAuctionResult, error) {
+func RunIndependent(data *AuctionData) (*OffChainAuctionResult, error) {
 	matchedBids := make([]*bids.MatchedBid, 0)
 
-	var buyBids []*bids.BuyBid
-	err := json.Unmarshal(data.BuyBidsBytes, &buyBids)
-	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal buy bids: %v", err)
-	}
-
-	var sellBids []*bids.SellBid
-	err = json.Unmarshal(data.SellBidsBytes, &sellBids)
-	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal sell bids: %v", err)
-	}
+	sellBids := data.SellBids
+	buyBids := data.BuyBids
 
 	slices.SortFunc(sellBids, func(a, b *bids.SellBid) int {
 		return a.Less(b)
@@ -78,6 +68,6 @@ func RunIndependent(data *SerializedAuctionData) (*OffChainAuctionResult, error)
 }
 
 // TODO: implement
-func RunCoupled(data *SerializedAuctionData) {
+func RunCoupled(data *AuctionData) {
 
 }

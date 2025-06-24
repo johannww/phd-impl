@@ -10,10 +10,8 @@ import (
 )
 
 type SerializedAuctionData struct {
-	SellBidsBytes []byte // bids.SellBid slice bytes
-	BuyBidsBytes  []byte // bids.BuyBid slice bytes
-	Sum           []byte // SHA256 sum of bytes of above fields
-	Coupled       bool
+	AuctionDataBytes []byte // JSON Serialized AuctionData
+	Sum              []byte // SHA256 sum of bytes of above fields
 }
 
 func (s *SerializedAuctionData) CommitmentToWorldState(stub shim.ChaincodeStubInterface, endRFC339Timestamp string) error {
@@ -42,12 +40,7 @@ func (s *SerializedAuctionData) CalculateHash() error {
 
 func (s *SerializedAuctionData) calculateHash() ([]byte, error) {
 	hash := sha256.New()
-	_, err := hash.Write(s.SellBidsBytes)
-	if err != nil {
-		return nil, fmt.Errorf("could not write sell bid bytes to hash: %v", err)
-	}
-
-	_, err = hash.Write(s.BuyBidsBytes)
+	_, err := hash.Write(s.AuctionDataBytes)
 	if err != nil {
 		return nil, fmt.Errorf("could not write sell bid bytes to hash: %v", err)
 	}
@@ -67,16 +60,10 @@ func (s *SerializedAuctionData) ValidateHash() bool {
 func (s *SerializedAuctionData) ToAuctionData() (*AuctionData, error) {
 	auctionData := &AuctionData{}
 
-	err := json.Unmarshal(s.SellBidsBytes, &auctionData.SellBids)
+	err := json.Unmarshal(s.AuctionDataBytes, auctionData)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal sell bids: %v", err)
 	}
 
-	err = json.Unmarshal(s.BuyBidsBytes, &auctionData.BuyBids)
-	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal buy bids: %v", err)
-	}
-
-	auctionData.Coupled = s.Coupled
 	return auctionData, nil
 }

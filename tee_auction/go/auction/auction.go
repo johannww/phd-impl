@@ -34,15 +34,20 @@ func RunTEEAuction(
 		return nil, fmt.Errorf("Auction data commitment does not match the expected hash")
 	}
 
+	auctionData, err := serializedAD.ToAuctionData()
+	if err != nil {
+		return nil, fmt.Errorf("could not convert serialized auction data to auction data: %v", err)
+	}
+
 	// Run the auction
-	if serializedAD.Coupled {
-		cc_auction.RunCoupled(serializedAD)
+	if auctionData.Coupled {
+		cc_auction.RunCoupled(auctionData)
 	} else {
-		cc_auction.RunIndependent(serializedAD)
+		cc_auction.RunIndependent(auctionData)
 	}
 
 	// get report on the results
-	err := result.setHardwareSignature()
+	err = result.setHardwareSignature()
 	if err != nil {
 		return nil, err
 	}
