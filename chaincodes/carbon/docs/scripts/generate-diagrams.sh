@@ -3,11 +3,11 @@
 mkdir -p ./docs/diagrams
 
 # TODO: add more folders
-dirs="bids,credits,properties"
+dirs="auction,bids,companies,credits,data,identities,payment,properties,state,tee,vegetation"
 
 go-plantuml generate \
     -d "${dirs}" \
     -o ./docs/diagrams/diagram.puml
 
-plantuml -d ./docs/diagrams/diagram.puml
+plantuml -d ./docs/diagrams/diagram.puml -tsvg
 

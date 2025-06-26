@@ -1,3 +1,5 @@
+.PHONY: cc cc-docker app test test-no-cache docs
+
 cc:
 	go build -o /dev/null ./cmd/carbon/main.go
 	
@@ -12,3 +14,6 @@ test:
 
 test-no-cache:
 	go test -count=1 ./tests
+
+docs:
+	./docs/scripts/generate-diagrams.sh
