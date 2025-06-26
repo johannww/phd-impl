@@ -29,7 +29,7 @@ type Coordinate struct {
 type PropertyChunk struct {
 	PropertyID       uint64                `json:"propertyId"`
 	Coordinates      []Coordinate          `json:"coordinates"`
-	VegetationsProps []*v.VegetationProps  `json:"vegetationsProps"`
+	VegetationsProps *v.VegetationProps    `json:"vegetationsProps"`
 	ValidationProps  *data.ValidationProps `json:"validationProps"`
 }
 

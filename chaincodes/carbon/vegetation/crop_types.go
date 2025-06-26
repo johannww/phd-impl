@@ -1,7 +1,9 @@
 package vegetation
 
+type CropType int
+
 const (
-	Soybean int = iota
+	Soybean CropType = iota
 	Corn
 	Coffee
 	Sugarcane
@@ -26,7 +28,7 @@ const (
 	BananaStr    = "Banana"
 )
 
-var CropTypeMap = map[int]string{
+var CropTypeMap = map[CropType]string{
 	Soybean:   SoybeanStr,
 	Corn:      CornStr,
 	Coffee:    CoffeeStr,
@@ -39,7 +41,7 @@ var CropTypeMap = map[int]string{
 	Banana:    BananaStr,
 }
 
-var CropTypeReverseMap = map[string]int{
+var CropTypeReverseMap = map[string]CropType{
 	SoybeanStr:   Soybean,
 	CornStr:      Corn,
 	CoffeeStr:    Coffee,

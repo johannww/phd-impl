@@ -1,7 +1,9 @@
 package vegetation
 
+type ForestType int
+
 const (
-	AmazonRainforest int = iota
+	AmazonRainforest ForestType = iota
 	AtlanticForest
 	Caatinga
 	Cerrado
@@ -24,7 +26,7 @@ const (
 	RestingaStr         = "Restinga"
 )
 
-var ForestTypeMap = map[int]string{
+var ForestTypeMap = map[ForestType]string{
 	AmazonRainforest: AmazonRainforestStr,
 	AtlanticForest:   AtlanticForestStr,
 	Caatinga:         CaatingaStr,
@@ -36,7 +38,7 @@ var ForestTypeMap = map[int]string{
 	Restinga:         RestingaStr,
 }
 
-var ForestTypeReverseMap = map[string]int{
+var ForestTypeReverseMap = map[string]ForestType{
 	AmazonRainforestStr: AmazonRainforest,
 	AtlanticForestStr:   AtlanticForest,
 	CaatingaStr:         Caatinga,
