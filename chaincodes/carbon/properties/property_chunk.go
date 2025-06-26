@@ -15,8 +15,7 @@ const (
 	COORDINATES_PREFIX    = "coords"
 )
 
-// TODO: we may use ints to better represent the coordinates
-// to avoid floating point errors
+// Coordinate represents a geographical coordinate in the floating point format.
 type Coordinate struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`

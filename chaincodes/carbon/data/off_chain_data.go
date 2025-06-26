@@ -44,8 +44,11 @@ func (ocd *OffChainData) loadDataFromUri() error {
 		return fmt.Errorf("hash is nil")
 	}
 
-	// TODO: load from uri using http
-	ocd.DataBytes = []byte{}
+	var err error
+	ocd.DataBytes, err = GetBytesFromUri(ocd.Uri, ocd.Method)
+	if err != nil {
+		return fmt.Errorf("could not get data from uri: %v", err)
+	}
 
 	calcHash := sha256.Sum256(ocd.DataBytes)
 	result := bytes.Compare(calcHash[:], ocd.Hash[:])
@@ -57,9 +60,11 @@ func (ocd *OffChainData) loadDataFromUri() error {
 }
 
 func (ocd *OffChainData) FromJson() (any, error) {
-	err := ocd.loadDataFromUri()
-	if err != nil {
-		return nil, fmt.Errorf("could not load data from uri: %v", err)
+	if ocd.DataBytes == nil {
+		err := ocd.loadDataFromUri()
+		if err != nil {
+			return nil, fmt.Errorf("could not load data from uri: %v", err)
+		}
 	}
 
 	reflectType, ok := ReflectToTypes[ocd.ReflectType]
@@ -67,7 +72,7 @@ func (ocd *OffChainData) FromJson() (any, error) {
 		return nil, fmt.Errorf("could not find reflect type for %s", ocd.ReflectType)
 	}
 	reflectValue := reflect.New(reflectType).Interface()
-	err = json.Unmarshal(ocd.DataBytes, &reflectValue)
+	err := json.Unmarshal(ocd.DataBytes, &reflectValue)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal data bytes: %v", err)
 	}
