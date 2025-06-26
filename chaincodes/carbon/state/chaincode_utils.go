@@ -141,6 +141,31 @@ func GetStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectTyp
 	return nil
 }
 
+// TODO: test it
+func GetStateWithCompositeKeyWithSecondaryIndex[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, stateStruct T) error {
+	secondaryIndexKey, err := stub.CreateCompositeKey(SECONDARY_INDEX_OBJ_TYPE, keyAttributes)
+	if err != nil {
+		return fmt.Errorf("could not create composite key for secondary index: %v", err)
+	}
+	marshalledPrimaryKey, err := stub.GetState(secondaryIndexKey)
+	if err != nil {
+		return fmt.Errorf("could not primary key from secondary index: %v", err)
+	}
+
+	var primaryCompositeKey []string
+	err = json.Unmarshal(marshalledPrimaryKey, &primaryCompositeKey)
+	if err != nil {
+		return fmt.Errorf("could not unmarshal primary key: %v", err)
+	}
+
+	err = GetStateWithCompositeKey(stub, objectType, primaryCompositeKey, stateStruct)
+	if err != nil {
+		return fmt.Errorf("could not get state with composite key: %v", err)
+	}
+
+	return nil
+}
+
 func DeletePvtDataWithCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string, collectionName string) error {
 	pvtDataKey, err := stub.CreateCompositeKey(objectType, keyAttributes)
 	if err != nil {
