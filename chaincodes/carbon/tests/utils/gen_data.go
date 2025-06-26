@@ -208,8 +208,11 @@ func chunkForProperty(prop *properties.Property) *properties.PropertyChunk {
 				Longitude: mathrand.Float64()*360 - 180,
 			},
 		},
-		VegetationsProps: []vegetation.VegetationProps{},
-		ValidationProps:  []data.ValidationProps{},
+		VegetationsProps: []*vegetation.VegetationProps{},
+		ValidationProps: &data.ValidationProps{
+			// assuming satellite validation for simplicity
+			Methods: []data.ValidationMethod{data.ValidationMethodSattelite},
+		},
 	}
 	return chunk
 }

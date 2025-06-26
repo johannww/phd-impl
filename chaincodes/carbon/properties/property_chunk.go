@@ -27,10 +27,10 @@ type Coordinate struct {
 // property struct---it could generate MVCC_READ_CONFLICT errors.
 // See: https://github.com/hyperledger/fabric/issues/3748
 type PropertyChunk struct {
-	PropertyID       uint64                 `json:"propertyId"`
-	Coordinates      []Coordinate           `json:"coordinates"`
-	VegetationsProps []v.VegetationProps    `json:"vegetationsProps"`
-	ValidationProps  []data.ValidationProps `json:"validationProps"`
+	PropertyID       uint64                `json:"propertyId"`
+	Coordinates      []Coordinate          `json:"coordinates"`
+	VegetationsProps []*v.VegetationProps  `json:"vegetationsProps"`
+	ValidationProps  *data.ValidationProps `json:"validationProps"`
 }
 
 var _ state.WorldStateManager = (*PropertyChunk)(nil)
