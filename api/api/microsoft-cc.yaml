@@ -1,0 +1,4 @@
+components:
+  schemas:
+    SNPAttestationReport:
+      x-go-type: attest.SNPAttestationReport

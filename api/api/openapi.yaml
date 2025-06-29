@@ -1,0 +1,33 @@
+openapi: 3.0.4
+info:
+  title: Carbon API
+  version: 1.0.0
+paths:
+  /chain/registerProperty:
+    post:
+      summary: Register a new property
+      description: Register a new property in the carbon chain.
+  /tee/setIp:
+    post:
+      summary: Set IP for TEE
+      description: Set the IP address for the Trusted Execution Environment (TEE).
+      parameters:
+        - name: ip
+          in: query
+          required: true
+          schema:
+            type: string
+            format: ipv4
+          description: The IP address to set for the TEE.
+  /tee/report:
+    get:
+      summary: Report TEE report containing a ed25519 public key in the  REPORT_DATA field
+      description: Retrieve the TEE report containing an ed25519 public key in the header.
+      responses:
+        '200':
+          description: Successful response containing the TEE report.
+          content:
+            application/json:
+              schema:
+                $ref: microsoft-cc.yaml#/components/schemas/SNPAttestationReport
+# components:

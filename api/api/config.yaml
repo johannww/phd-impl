@@ -1,0 +1,9 @@
+output:
+  openapi.gen.go
+package: api
+generate:
+  models: true
+  gin-server: true
+  # client: true
+import-mapping:
+  microsoft-cc.yaml: github.com/johannww/confidential-sidecar-containers
