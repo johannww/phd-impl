@@ -55,6 +55,13 @@ func (c *CarbonContract) UnlockAuctionSemaphore(ctx contractapi.TransactionConte
 	return nil
 }
 
+func (c *CarbonContract) SetAuctionType(
+	ctx contractapi.TransactionContextInterface,
+	auctionType auction.AuctionType,
+) error {
+	return auctionType.ToWorldState(ctx.GetStub())
+}
+
 func (c *CarbonContract) PublishExpectedCCEPolicy(ctx contractapi.TransactionContextInterface, base64CcePolicy string) error {
 	return tee.CCEPolicyToWorldState(ctx.GetStub(), base64CcePolicy)
 }

@@ -51,6 +51,13 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 		}
 	}
 
+	var auctionType AuctionType = ""
+	err = auctionType.FromWorldState(stub, []string{})
+	if err != nil {
+		return fmt.Errorf("could not get auction type: %v", err)
+	}
+	a.Coupled = auctionType == AUCTION_COUPLED
+
 	return err
 
 }
