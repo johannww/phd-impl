@@ -25,7 +25,7 @@ func (t *TeeHandler) PostTeeSetIp(c *gin.Context, params api.PostTeeSetIpParams)
 func (t *TeeHandler) GetTeeReport(c *gin.Context) {
 	log.Default().Println("TEE Report requested")
 
-	resp, err := http.Get(fmt.Sprintf("http://%s/report", t.TeeIP))
+	resp, err := http.Get(fmt.Sprintf("http://%s:8080/report", t.TeeIP))
 	if err != nil {
 		log.Default().Printf("Failed to get TEE report: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get TEE report"})
