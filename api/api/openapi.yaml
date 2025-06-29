@@ -21,7 +21,7 @@ paths:
           description: The IP address to set for the TEE.
   /tee/report:
     get:
-      summary: Report TEE report containing a ed25519 public key in the  REPORT_DATA field
+      summary: TEE report containing a ed25519 public key in the  REPORT_DATA field
       description: Retrieve the TEE report containing an ed25519 public key in the header.
       responses:
         '200':
@@ -30,4 +30,17 @@ paths:
             application/json:
               schema:
                 $ref: microsoft-cc.yaml#/components/schemas/SNPAttestationReport
+  /tee/reportb64:
+    get:
+      summary: Base64 TEE report containing a ed25519 public key in the REPORT_DATA field
+      description: Retrieve the base64 TEE report containing an ed25519 public key in the header.
+      responses:
+        '200':
+          description: Successful response containing the TEE report.
+          content:
+            application/json:
+              schema:
+                type: string
+                format: base64
+                description: Base64 encoded TEE report containing an ed25519 public key in the REPORT_DATA field.
 # components:

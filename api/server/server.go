@@ -25,6 +25,11 @@ func (s *CarbonAPIServer) GetTeeReport(c *gin.Context) {
 	s.TeeHandler.GetTeeReport(c)
 }
 
+// GetTeeReportb64 implements api.ServerInterface.
+func (s *CarbonAPIServer) GetTeeReportb64(c *gin.Context) {
+	s.TeeHandler.GetTeeReportB64(c)
+}
+
 // PostChainRegisterProperty implements api.ServerInterface.
 func (s *CarbonAPIServer) PostChainRegisterProperty(c *gin.Context) {
 	s.ChainHandler.PostChainRegisterProperty(c)
