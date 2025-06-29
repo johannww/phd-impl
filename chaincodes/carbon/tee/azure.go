@@ -87,7 +87,7 @@ func verifyCCEPolicy(stub shim.ChaincodeStubInterface, report attest.SNPAttestat
 		return fmt.Errorf("could not unmarshal CCE policy: %v", err)
 	}
 
-	if bytes.Compare(ccePolicySha256HashFromReport, ccePolciySha256FromWorldState[:]) != 0 {
+	if !bytes.Equal(ccePolicySha256HashFromReport, ccePolciySha256FromWorldState[:]) {
 		return fmt.Errorf("CCE policy hash from report does not match the expected CCE policy hash")
 	}
 
