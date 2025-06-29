@@ -3,6 +3,8 @@
 REGISTRY_NAME=carbonchain
 REGISTRY=carbonchain.azurecr.io
 
+all: registry docker policy deploy verify-policy-image-layers
+
 registry:
 	az group create --name carbon --location eastus
 	az acr create --resource-group carbon --name $(REGISTRY_NAME) --sku Basic --admin-enabled true
