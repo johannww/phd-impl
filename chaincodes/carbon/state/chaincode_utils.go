@@ -113,7 +113,7 @@ func GetPvtDataWithCompositeKey[T any](
 	return nil
 }
 
-func GetState[T any](stub shim.ChaincodeStubInterface, objectType string, key string, stateStruct T) error {
+func GetState[T any](stub shim.ChaincodeStubInterface, key string, stateStruct T) error {
 	stateBytes, err := stub.GetState(key)
 	if err != nil {
 		return fmt.Errorf("could not get state: %v", err)
