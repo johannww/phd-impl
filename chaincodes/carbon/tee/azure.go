@@ -94,7 +94,7 @@ func verifyCCEPolicy(stub shim.ChaincodeStubInterface, report attest.SNPAttestat
 	return nil
 }
 
-func CCEPolicyToWorldState(stub shim.ChaincodeStubInterface, base64CcePolicy string) error {
+func ExpectedCCEPolicyToWorldState(stub shim.ChaincodeStubInterface, base64CcePolicy string) error {
 	if err := stub.PutState(CCE_POLICY, []byte(base64CcePolicy)); err != nil {
 
 		return fmt.Errorf("could not store CCE policy: %v", err)

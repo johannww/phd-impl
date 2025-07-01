@@ -63,7 +63,7 @@ func (c *CarbonContract) SetAuctionType(
 }
 
 func (c *CarbonContract) PublishExpectedCCEPolicy(ctx contractapi.TransactionContextInterface, base64CcePolicy string) error {
-	return tee.CCEPolicyToWorldState(ctx.GetStub(), base64CcePolicy)
+	return tee.ExpectedCCEPolicyToWorldState(ctx.GetStub(), base64CcePolicy)
 }
 
 // PublishInitialTEEReport stores the initial TEE report containing the

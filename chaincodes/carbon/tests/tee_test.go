@@ -29,7 +29,7 @@ func TestAzureCEEPolicyVerification(t *testing.T) {
 	stub := mocks.NewMockStub("carbon", nil)
 	stub.MockTransactionStart("tx1")
 
-	err = tee.CCEPolicyToWorldState(stub, ccePolicyB64)
+	err = tee.ExpectedCCEPolicyToWorldState(stub, ccePolicyB64)
 	require.NoError(t, err, "Failed to store CCE policy in world state")
 
 	err = tee.InitialReportToWorldState(stub, reportJsonBytes)
