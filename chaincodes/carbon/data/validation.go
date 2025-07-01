@@ -1,7 +1,7 @@
 package data
 
 // ValidationMethod defines the method used for validation.
-type ValidationMethod uint
+type ValidationMethod int
 
 const (
 	ValidationMethodSattelite ValidationMethod = iota
@@ -17,7 +17,6 @@ func (vm ValidationMethod) IsValid() bool {
 		return false
 	}
 }
-
 
 type ValidationProps struct {
 	Methods []ValidationMethod
