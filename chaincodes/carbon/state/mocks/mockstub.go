@@ -3,10 +3,6 @@
 
 // Package shimtest provides a mock of the ChaincodeStubInterface for
 // unit testing chaincode.
-//
-// Deprecated: ShimTest will be  removed in a future release.
-// Future development should make use of the ChaincodeStub Interface
-// for generating mocks
 package mocks
 
 import (
