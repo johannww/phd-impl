@@ -9,7 +9,9 @@ const (
 	PVT_PRICE_PREFIX = "privatePrice"
 )
 
-// PrivatePrice is an for-the-government-only price encoded as a base64 string.
+// PrivatePrice is an for-the-government-only price.
+// It uses fixed-point arithmetic to avoid floating point issues.
+// Price might be dollars, cents, millidollars, etc.
 type PrivatePrice struct {
 	Price int64    `json:"price"`
 	BidID []string `json:"bidID"` // This could be (Sell|Buy)bid or also MatchedBid
