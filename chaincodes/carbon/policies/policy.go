@@ -32,6 +32,7 @@ const (
 	TEMPERATURE  Name = "temperature"
 )
 
+// TODO: add the actual implementations of the policies
 var DefinedPolicies = map[Name](func(*PolicyInput) float64){
 	DISTANCE:       nil,
 	WIND_DIRECTION: nil,
@@ -43,6 +44,41 @@ var DefinedPolicies = map[Name](func(*PolicyInput) float64){
 // TODO: implement this
 func MintIndependentMult(chunk *properties.PropertyChunk) float64 {
 	return 1.0
+}
+
+// TODO: Review
+func MintCoupledMult(input *PolicyInput, activePolicies []Name) (float64, error) {
+	mult := 1.0
+	for _, policy := range activePolicies {
+		if !isCoupledPolicy(policy) {
+			continue // skip independent policies
+		}
+
+		if policyFunc, exists := DefinedPolicies[policy]; exists {
+			if policyFunc == nil {
+				return 0, fmt.Errorf("policy %s is not implemented", policy)
+			}
+			mult *= policyFunc(input)
+		} else {
+			return 0, fmt.Errorf("policy %s is not defined", policy)
+		}
+
+	}
+
+	return mult, nil
+}
+
+func isCoupledPolicy(policy Name) bool {
+	return policy == DISTANCE || policy == WIND_DIRECTION
+}
+
+func boundMult(mult float64) float64 {
+	if mult < 0.1 {
+		return 0.1
+	} else if mult > 2.0 {
+		return 2.0
+	}
+	return mult
 }
 
 func SetActivePolicies(stub shim.ChaincodeStubInterface, activePolicies []Name) error {
