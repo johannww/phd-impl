@@ -28,6 +28,13 @@ func (s *SerializedAuctionData) CommitmentToWorldState(stub shim.ChaincodeStubIn
 	return err
 }
 
+func (s *SerializedAuctionData) CommitmentFromWorldState(stub shim.ChaincodeStubInterface, endRFC339Timestamp string) error {
+	auctionCommitment := &AuctionCommitment{}
+	err := auctionCommitment.FromWorldState(stub, []string{endRFC339Timestamp})
+	s.Sum = auctionCommitment.Hash
+	return err
+}
+
 func (s *SerializedAuctionData) CalculateHash() error {
 	sum, err := s.calculateHash()
 	if err != nil {

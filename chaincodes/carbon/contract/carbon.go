@@ -72,8 +72,29 @@ func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionCont
 	return tee.InitialReportToWorldState(ctx.GetStub(), reportJsonBytes)
 }
 
-// TODO: Ensure that the returned data is private
-func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.SerializedAuctionData, error) {
+// CommitDataForTEEAuction commits the auction data to the world state
+// Since it is a write operation, it should not return the serialized auction data.
+// Thus, private data is not shared with the world state.
+// To retrieve the auction data, use RetrieveDataForTEEAuction instead.
+func (c *CarbonContract) CommitDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) error {
+	auctionData := &auction.AuctionData{}
+	err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
+	if err != nil {
+		return fmt.Errorf("could not retrieve auction data: %v", err)
+	}
+
+	serializedAD, err := auctionData.ToSerializedAuctionData()
+	if err != nil {
+		return fmt.Errorf("could not serialize auction data: %v", err)
+	}
+
+	err = serializedAD.CommitmentToWorldState(ctx.GetStub(), endRFC339Timestamp)
+	return err
+}
+
+// RetrieveDataForTEEAuction retrieves the auction data from the world state.
+// WARN: CALL THIS AS READ-ONLY OPERATION not to expose private data.
+func (c *CarbonContract) RetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.SerializedAuctionData, error) {
 	auctionData := &auction.AuctionData{}
 	err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
 	if err != nil {
@@ -85,7 +106,12 @@ func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.Tran
 		return nil, fmt.Errorf("could not serialize auction data: %v", err)
 	}
 
-	err = serializedAD.CommitmentToWorldState(ctx.GetStub(), endRFC339Timestamp)
+	// Verify the commitment to the world state
+	err = serializedAD.CommitmentFromWorldState(ctx.GetStub(), endRFC339Timestamp)
+	if !serializedAD.ValidateHash() {
+		return nil, fmt.Errorf("auction data hash does not match the commitment in the world state")
+	}
+
 	return serializedAD, err
 }
 
