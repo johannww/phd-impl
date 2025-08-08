@@ -128,10 +128,11 @@ func calculateClearingPriceAndQuantity(
 	if buyBid.AskQuantity >= acquirableQuantity {
 		toBeAcquired = quantity
 	} else {
-		// TODO: check this in face
 		// toBeAcquired = buyBid.AskQuantity / (1 + mult)
 		// toBeAcquired + toBeAcquired*(mult/MULTPLIER_SCALE) = buyBid.AskQuantity
-		toBeAcquired = buyBid.AskQuantity - toBeAcquired*policies.MULTPLIER_SCALE/mult
+		// toBeAcquired = buyBid.AskQuantity / (1 + mult/policies.MULTPLIER_SCALE)
+		// Re-writing the denominator:
+		toBeAcquired = buyBid.AskQuantity * policies.MULTPLIER_SCALE / (policies.MULTPLIER_SCALE + mult)
 	}
 
 	nominalQuantity := toBeAcquired
