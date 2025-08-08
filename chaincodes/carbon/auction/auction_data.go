@@ -14,11 +14,11 @@ import (
 )
 
 type AuctionData struct {
-	SellBids       []*bids.SellBid      `json:"sellBids"`
-	BuyBids        []*bids.BuyBid       `json:"buyBids"`
-	ActivePolicies []policies.Name      `json:"activePolicies"`
-	CompaniesPvt   []*companies.Company `json:"buyingCompanies"`
-	Coupled        bool                 `json:"coupled"`
+	SellBids       []*bids.SellBid               `json:"sellBids"`
+	BuyBids        []*bids.BuyBid                `json:"buyBids"`
+	ActivePolicies []policies.Name               `json:"activePolicies"`
+	CompaniesPvt   map[string]*companies.Company `json:"buyingCompanies"`
+	Coupled        bool                          `json:"coupled"`
 }
 
 // TODO: ensure that all data is fetched
@@ -38,10 +38,30 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 		return fmt.Errorf("could not get sell bids: %v", err)
 	}
 
+	a.CompaniesPvt = make(map[string]*companies.Company)
+
 	for _, buyBid := range a.BuyBids {
 		if err := buyBid.FetchPrivatePrice(stub); err != nil {
 			return err
 		}
+
+		if a.CompaniesPvt[buyBid.BuyerID] != nil {
+			continue // already fetched
+		}
+
+		CompanyID, err := companies.GetCompanyIDByPsedonym(stub, buyBid.BuyerID)
+		if err != nil {
+			return err
+		}
+
+		company := &companies.Company{}
+		err = company.FromWorldState(stub, []string{CompanyID})
+		if err != nil {
+			return fmt.Errorf("could not get company %s: %v", CompanyID, err)
+		}
+
+		a.CompaniesPvt[buyBid.BuyerID] = company
+
 	}
 
 	for _, sellBid := range a.SellBids {

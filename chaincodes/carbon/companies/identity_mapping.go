@@ -29,3 +29,24 @@ func (p *PsedonymToCompanyID) ToWorldState(stub shim.ChaincodeStubInterface) err
 	firstID := (*p.GetID())[0]
 	return state.PutPvtDataWithCompositeKey(stub, PSEDONYM_TO_COMPANY_ID_PREFIX, firstID, state.BIDS_PVT_DATA_COLLECTION, p)
 }
+
+// CreatePsedonymToCompanyID creates a new mapping and saves it to the world state.
+func CreatePsedonymToCompanyID(stub shim.ChaincodeStubInterface, psedonym, companyID string) error {
+	psedonymToCompanyID := &PsedonymToCompanyID{
+		Psedonym:  psedonym,
+		CompanyID: companyID,
+	}
+	return psedonymToCompanyID.ToWorldState(stub)
+}
+
+// GetCompanyIDByPsedonym returns the company ID for a given pseudonym.
+func GetCompanyIDByPsedonym(stub shim.ChaincodeStubInterface, psedonym string) (string, error) {
+	psedonymToCompanyID := &PsedonymToCompanyID{}
+	err := psedonymToCompanyID.FromWorldState(stub, []string{psedonym})
+	if err != nil {
+		return "", err
+	}
+	return psedonymToCompanyID.CompanyID, nil
+}
+
+
