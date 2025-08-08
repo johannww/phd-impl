@@ -15,8 +15,8 @@ const (
 // it is associated to mint multiplier and mint timestamp.
 type MintCredit struct {
 	Credit
-	MintMult      float64 `json:"mintMult"`
-	MintTimeStamp string  `json:"mintTimestamp"`
+	MintMult      int64  `json:"mintMult"`
+	MintTimeStamp string `json:"mintTimestamp"`
 }
 
 var _ state.WorldStateManager = (*MintCredit)(nil)
@@ -58,7 +58,7 @@ func MintCreditForChunk(
 	chunkID []string,
 	quantity int64,
 	RFC339Timestamp string,
-	mintMult float64,
+	mintMult int64,
 ) (*MintCredit, error) {
 
 	credit := &MintCredit{

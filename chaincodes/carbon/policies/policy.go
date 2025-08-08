@@ -11,6 +11,9 @@ import (
 
 const (
 	ACTIVE_POL_PREFIX = "activePolicies"
+	MULTPLIER_SCALE   = 1000 // Scale for multipliers to avoid floating point precision issues
+	MULTIPLIER_MIN    = 100  // Minimum multiplier value adjusted to the scale
+	MULTIPLIER_MAX    = 2000 // Maximum multiplier value adjusted to the scale
 )
 
 type IndependentPolicy interface {
@@ -33,7 +36,7 @@ const (
 )
 
 // TODO: add the actual implementations of the policies
-var DefinedPolicies = map[Name](func(*PolicyInput) float64){
+var DefinedPolicies = map[Name](func(*PolicyInput) int64){
 	DISTANCE:       nil,
 	WIND_DIRECTION: nil,
 	VEGETATION:     nil,
@@ -42,13 +45,13 @@ var DefinedPolicies = map[Name](func(*PolicyInput) float64){
 }
 
 // TODO: implement this
-func MintIndependentMult(chunk *properties.PropertyChunk) float64 {
+func MintIndependentMult(chunk *properties.PropertyChunk) int64 {
 	return 1.0
 }
 
 // TODO: Review
-func MintCoupledMult(input *PolicyInput, activePolicies []Name) (float64, error) {
-	mult := 1.0
+func MintCoupledMult(input *PolicyInput, activePolicies []Name) (int64, error) {
+	mult := int64(1)
 	for _, policy := range activePolicies {
 		if !isCoupledPolicy(policy) {
 			continue // skip independent policies
@@ -73,13 +76,8 @@ func isCoupledPolicy(policy Name) bool {
 	return policy == DISTANCE || policy == WIND_DIRECTION
 }
 
-func boundMult(mult float64) float64 {
-	if mult < 0.1 {
-		return 0.1
-	} else if mult > 2.0 {
-		return 2.0
-	}
-	return mult
+func boundMult(mult int64) int64 {
+	return min(max(mult, MULTIPLIER_MIN), MULTIPLIER_MAX)
 }
 
 func SetActivePolicies(stub shim.ChaincodeStubInterface, activePolicies []Name) error {
