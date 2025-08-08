@@ -139,7 +139,7 @@ func calculateClearingPriceAndQuantity(
 	// trueQuantity := nominalQuantity + nominalQuantity*mult
 
 	// Buyer pays both for the nominal quantity and for the seller's extra credits
-	buyerIsWillingToPayTotal := buyBid.PrivatePrice.Price * (nominalQuantity + nominalQuantity*mult/2)
+	buyerIsWillingToPayTotal := buyBid.PrivatePrice.Price * (nominalQuantity + nominalQuantity*(mult/policies.MULTPLIER_SCALE)/2)
 
 	// How much the seller receives for the nominal quantity
 	buyerIsWillingToPayPerNominalQuantity := buyerIsWillingToPayTotal / nominalQuantity
