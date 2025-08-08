@@ -72,6 +72,7 @@ func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionCont
 	return tee.InitialReportToWorldState(ctx.GetStub(), reportJsonBytes)
 }
 
+// TODO: Ensure that the returned data is private
 func (c *CarbonContract) CommitAndRetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.SerializedAuctionData, error) {
 	auctionData := &auction.AuctionData{}
 	err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
