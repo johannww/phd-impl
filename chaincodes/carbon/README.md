@@ -8,6 +8,8 @@
   - file tee/azure.go
   - This video explains: https://www.youtube.com/watch?v=H9DP5CMqGac
   - Test the coded solution
+- [] Handle the private multiplier
+    - How can the TEE export it in a way that it is not exposed to every on on-chain?
 
 
 # Testing
