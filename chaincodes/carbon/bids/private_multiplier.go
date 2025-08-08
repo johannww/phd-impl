@@ -11,7 +11,10 @@ const (
 
 // TODO: this may be a float64 passed to the chaincode via transient data
 // PrivateMultiplier is an for-the-government-only price encoded as a base64 string.
-type PrivateMultiplier struct{}
+type PrivateMultiplier struct {
+	Scale int64 `json:"scale"`      // The scale factor for the multiplier
+	Value int64 `json:"multiplier"` // The multiplier value, scaled by MULTPLIER_SCALE
+}
 
 var _ state.WorldStateManagerWithExtraPrefix = (*PrivateMultiplier)(nil)
 
