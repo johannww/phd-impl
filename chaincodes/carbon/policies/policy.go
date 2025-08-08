@@ -12,7 +12,7 @@ import (
 const (
 	ACTIVE_POL_PREFIX = "activePolicies"
 	MULTPLIER_SCALE   = 1000 // Scale for multipliers to avoid floating point precision issues
-	MULTIPLIER_MIN    = 100  // Minimum multiplier value adjusted to the scale
+	MULTIPLIER_MIN    = 0    // Minimum multiplier value adjusted to the scale
 	MULTIPLIER_MAX    = 2000 // Maximum multiplier value adjusted to the scale
 )
 
