@@ -7,12 +7,12 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 )
 
-type OffChainAuctionResult struct {
+type OffChainIndepAuctionResult struct {
 	MatchedBids []*bids.MatchedBid `json:"matchedBids"`
 }
 
 // TODO: test
-func RunIndependent(data *AuctionData) (*OffChainAuctionResult, error) {
+func RunIndependent(data *AuctionData) (*OffChainIndepAuctionResult, error) {
 	matchedBids := make([]*bids.MatchedBid, 0)
 
 	sellBids := data.SellBids
@@ -62,12 +62,8 @@ func RunIndependent(data *AuctionData) (*OffChainAuctionResult, error) {
 		matchedBid.PrivatePrice.BidID = (*matchedBid.GetID())[0]
 	}
 
-	return &OffChainAuctionResult{
+	return &OffChainIndepAuctionResult{
 		MatchedBids: matchedBids,
 	}, nil
 }
 
-// TODO: implement
-func RunCoupled(data *AuctionData) {
-
-}
