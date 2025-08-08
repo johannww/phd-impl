@@ -10,6 +10,8 @@
   - Test the coded solution
 - [] Handle the private multiplier
     - How can the TEE export it in a way that it is not exposed to every on on-chain?
+    - I may export the private prices as a separate map that can be referenced by some ID.
+        - Thus, the TEE invoker can publish the multiplier as transient data.
 
 
 # Testing
