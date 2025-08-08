@@ -4,8 +4,12 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 )
 
+// OffChainCoupledAuctionResult holds the result of an off-chain coupled auction.
+// It contains the public and private part of the matched bids.
+// WARN: MatchedBidsPrivate must be sent as TransientData to avoid leaking private information.
 type OffChainCoupledAuctionResult struct {
-	MatchedBids []*bids.MatchedBid `json:"matchedBids"`
+	MatchedBidsPublic  []*bids.MatchedBid `json:"matchedBidsPublic"`
+	MatchedBidsPrivate []*bids.MatchedBid `json:"matchedBidsPrivate"`
 }
 
 type Multiplier struct {

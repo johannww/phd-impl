@@ -66,4 +66,3 @@ func RunIndependent(data *AuctionData) (*OffChainIndepAuctionResult, error) {
 		MatchedBids: matchedBids,
 	}, nil
 }
-
