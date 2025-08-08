@@ -59,6 +59,7 @@ func MintCoupledMult(input *PolicyInput, activePolicies []Name) (float64, error)
 				return 0, fmt.Errorf("policy %s is not implemented", policy)
 			}
 			mult *= policyFunc(input)
+			mult = boundMult(mult)
 		} else {
 			return 0, fmt.Errorf("policy %s is not defined", policy)
 		}
