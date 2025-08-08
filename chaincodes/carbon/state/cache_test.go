@@ -20,12 +20,12 @@ func TestGetStateFromCache(t *testing.T) {
 	}
 
 	cache := map[string]*worldStateObject{}
-	cachedValue, err := GetStateFromCache(stub, &cache, (*mockObject.GetID())[0])
+	cachedValue, err := GetStateFromCache(stub, &cache, MOCK_OBJECT_PREFIX, (*mockObject.GetID())[0])
 	if err != nil {
 		t.Fatalf("Failed to get state from cache: %v", err)
 	}
 
-	mustBeCachedValue, err := GetStateFromCache(stub, &cache, (*mockObject.GetID())[0])
+	mustBeCachedValue, err := GetStateFromCache(stub, &cache, MOCK_OBJECT_PREFIX, (*mockObject.GetID())[0])
 	if err != nil {
 		t.Fatalf("Failed to get state from cache: %v", err)
 	}
