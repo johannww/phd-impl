@@ -12,20 +12,24 @@ const (
 // TODO: this may be a float64 passed to the chaincode via transient data
 // PrivateMultiplier is an for-the-government-only price encoded as a base64 string.
 type PrivateMultiplier struct {
-	Scale int64 `json:"scale"`      // The scale factor for the multiplier
-	Value int64 `json:"multiplier"` // The multiplier value, scaled by MULTPLIER_SCALE
+	MatchingID []string `json:"matchingID"` // This could be (Sell|Buy)bid or also MatchedBid
+	Scale      int64    `json:"scale"`      // The scale factor for the multiplier
+	Value      int64    `json:"multiplier"` // The multiplier value, scaled by MULTPLIER_SCALE
 }
 
-var _ state.WorldStateManagerWithExtraPrefix = (*PrivateMultiplier)(nil)
+var _ state.WorldStateManager = (*PrivateMultiplier)(nil)
 
-func (privPrice *PrivateMultiplier) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string, extraPrefix string) error {
-	panic("not implemented")
+func (privMultiplier *PrivateMultiplier) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
+	err := state.GetPvtDataWithCompositeKey(stub, PVT_MULTIPLIER_PREFIX, keyAttributes, state.BIDS_PVT_DATA_COLLECTION, privMultiplier)
+	return err
 }
 
-func (privPrice *PrivateMultiplier) ToWorldState(stub shim.ChaincodeStubInterface, extraPrefix string) error {
-	panic("not implemented")
+func (privMultiplier *PrivateMultiplier) ToWorldState(stub shim.ChaincodeStubInterface) error {
+	multiplierID := (*privMultiplier.GetID())[0]
+	err := state.PutPvtDataWithCompositeKey(stub, PVT_MULTIPLIER_PREFIX, multiplierID, state.BIDS_PVT_DATA_COLLECTION, privMultiplier)
+	return err
 }
 
-func (privPrice *PrivateMultiplier) GetID() *[][]string {
-	panic("not implemented")
+func (privMultiplier *PrivateMultiplier) GetID() *[][]string {
+	return &[][]string{privMultiplier.MatchingID}
 }

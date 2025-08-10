@@ -90,12 +90,12 @@ func RunCoupled(data *AuctionData) (*OffChainCoupledAuctionResult, error) {
 		matchedBidPrivate := &bids.MatchedBid{
 			PrivatePrice: &bids.PrivatePrice{
 				Price: matchPrice,
-				// TODOHP: which id will I use here?
-				BidID: (*buyBid.GetID())[0],
+				BidID: (*matchedBidPublic.GetID())[0],
 			},
 			PrivateMultiplier: &bids.PrivateMultiplier{
-				Scale: policies.MULTPLIER_SCALE,
-				Value: mult.Value,
+				MatchingID: (*matchedBidPublic.GetID())[0],
+				Scale:      policies.MULTPLIER_SCALE,
+				Value:      mult.Value,
 			},
 		}
 
