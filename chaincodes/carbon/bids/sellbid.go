@@ -24,7 +24,7 @@ type SellBid struct {
 	Timestamp    string              `json:"timestamp"`
 	Credit       *credits.MintCredit `json:"credit"`
 	Quantity     int64               `json:"quantity"`
-	PrivatePrice *PrivatePrice       `json:"-"`
+	PrivatePrice *PrivatePrice       `json:"privatePrice,omitempty"`
 }
 
 var _ ccstate.WorldStateManager = (*SellBid)(nil)
@@ -135,6 +135,7 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 		}
 	}
 
+	// TODOHP: This must change because I need to export it for the private auction in the TEE
 	if s.PrivatePrice != nil {
 		err := s.PrivatePrice.ToWorldState(stub, SELL_BID_PVT)
 		if err != nil {

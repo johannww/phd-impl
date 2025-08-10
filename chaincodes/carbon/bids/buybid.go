@@ -24,7 +24,7 @@ type BuyBid struct {
 	BuyerID      string        `json:"buyerID"`
 	Timestamp    string        `json:"timestamp"`
 	AskQuantity  int64         `json:"askQuantity"`
-	PrivatePrice *PrivatePrice `json:"-"`
+	PrivatePrice *PrivatePrice `json:"privatePrice,omitempty"`
 }
 
 var _ ccstate.WorldStateManager = (*BuyBid)(nil)
@@ -118,6 +118,7 @@ func (b *BuyBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	if b.AskQuantity <= 0 {
 		return fmt.Errorf("ask quantity is invalid")
 	}
+	// TODOHP: This must change because I need to export it for the private auction in the TEE
 	if b.PrivatePrice != nil {
 		err := b.PrivatePrice.ToWorldState(stub, BUY_BID_PVT)
 		if err != nil {
