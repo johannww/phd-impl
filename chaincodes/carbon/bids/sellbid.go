@@ -134,8 +134,6 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 			return fmt.Errorf("could not put credit in state: %v", err)
 		}
 	}
-
-	// TODOHP: This must change because I need to export it for the private auction in the TEE
 	if s.PrivatePrice != nil {
 		err := s.PrivatePrice.ToWorldState(stub, SELL_BID_PVT)
 		if err != nil {
