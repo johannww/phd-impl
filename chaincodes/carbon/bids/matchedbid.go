@@ -3,7 +3,9 @@ package bids
 import (
 	"fmt"
 
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
@@ -87,18 +89,24 @@ func (mb *MatchedBid) GetID() *[][]string {
 
 func (mb *MatchedBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) (err error) {
 	privatePrice := &PrivatePrice{}
-	if err := privatePrice.FromWorldState(stub, (*mb.GetID())[0], MATCHED_BID_PVT); err == nil {
-		mb.PrivatePrice = privatePrice
-		return nil
+	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
+		if err := privatePrice.FromWorldState(stub, (*mb.GetID())[0], MATCHED_BID_PVT); err == nil {
+			mb.PrivatePrice = privatePrice
+			return nil
+		}
+		return fmt.Errorf("could not get private price from world state: %v", err)
 	}
-	return fmt.Errorf("could not get private price from world state: %v", err)
+	return nil
 }
 
 func (mb *MatchedBid) FetchPrivateMultiplier(stub shim.ChaincodeStubInterface) (err error) {
 	privateMultiplier := &PrivateMultiplier{}
-	if err := privateMultiplier.FromWorldState(stub, (*mb.GetID())[0]); err == nil {
-		mb.PrivateMultiplier = privateMultiplier
-		return nil
+	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
+		if err := privateMultiplier.FromWorldState(stub, (*mb.GetID())[0]); err == nil {
+			mb.PrivateMultiplier = privateMultiplier
+			return nil
+		}
+		return fmt.Errorf("could not get private multiplier from world state: %v", err)
 	}
-	return fmt.Errorf("could not get private multiplier from world state: %v", err)
+	return nil
 }
