@@ -143,11 +143,17 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 		}
 	}
 
-	if err := ccstate.PutStateWithCompositeKey(stub, SELL_BID_PREFIX, s.GetID(), s); err != nil {
-		return fmt.Errorf("could not put sellbid in state: %v", err)
+	tempPrice := s.PrivatePrice
+	s.PrivatePrice = nil // avoid storing the private price in the world state, as it is
+
+	var err error
+	if err = ccstate.PutStateWithCompositeKey(stub, SELL_BID_PREFIX, s.GetID(), s); err != nil {
+		err = fmt.Errorf("could not put sellbid in state: %v", err)
 	}
 
-	return nil
+	s.PrivatePrice = tempPrice // restore the private price after storing
+
+	return err
 }
 
 func (s *SellBid) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
