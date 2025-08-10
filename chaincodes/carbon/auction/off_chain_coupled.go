@@ -80,11 +80,9 @@ func RunCoupled(data *AuctionData) (*OffChainCoupledAuctionResult, error) {
 		buyBid.AskQuantity -= matchQuantity
 
 		matchedBidPublic := &bids.MatchedBid{
-			BuyBidID:  (*buyBid.GetID())[0],
-			BuyBid:    buyBid,
-			SellBidID: (*sellBid.GetID())[0],
-			SellBid:   sellBid,
-			Quantity:  matchQuantity,
+			BuyBid:   buyBid,
+			SellBid:  sellBid,
+			Quantity: matchQuantity,
 		}
 
 		matchedBidPrivate := &bids.MatchedBid{

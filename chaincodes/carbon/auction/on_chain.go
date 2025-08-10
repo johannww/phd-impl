@@ -134,11 +134,9 @@ func matchBidsIndependent(
 		buyBids[j].AskQuantity -= matchQuantity
 
 		matchedBid := &bids.MatchedBid{
-			BuyBidID:  (*buyBids[j].GetID())[0],
-			BuyBid:    buyBids[j],
-			SellBidID: (*sellBids[i].GetID())[0],
-			SellBid:   sellBids[i],
-			Quantity:  matchQuantity,
+			BuyBid:   buyBids[j],
+			SellBid:  sellBids[i],
+			Quantity: matchQuantity,
 		}
 
 		creditChan <- matchedBid
