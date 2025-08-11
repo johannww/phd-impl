@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/johannww/phd-impl/chaincodes/carbon/auction"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	utils_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/utils"
 	"github.com/stretchr/testify/require"
