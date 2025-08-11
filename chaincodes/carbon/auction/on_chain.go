@@ -128,7 +128,7 @@ func matchBidsIndependent(
 	i, j := 0, len(buyBids)-1
 	lastMatch := [2]int{-1, -1}
 	hasCuttingPrice := buyBids[j].PrivatePrice.Price >= sellBids[i].PrivatePrice.Price
-	for buyBids[j].PrivatePrice.Price > sellBids[i].PrivatePrice.Price {
+	for (i >= len(buyBids) || j < 0) && buyBids[j].PrivatePrice.Price > sellBids[i].PrivatePrice.Price {
 		matchQuantity := min(sellBids[i].Quantity, buyBids[j].AskQuantity)
 		sellBids[i].Quantity -= matchQuantity
 		buyBids[j].AskQuantity -= matchQuantity
@@ -157,10 +157,6 @@ func matchBidsIndependent(
 
 		if err != nil {
 			return nil, fmt.Errorf("could not delete bid from world state: %v", err)
-		}
-
-		if i >= len(buyBids) || j < 0 {
-			break
 		}
 	}
 
