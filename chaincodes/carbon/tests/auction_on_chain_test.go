@@ -42,6 +42,9 @@ func TestOnChainIndependentAuction(t *testing.T) {
 	stub.MockTransactionEnd("tx2")
 	require.NoError(t, err, "RunOnChainAuction should not return an error")
 
+	stub.MockTransactionStart("tx3")
+	mintCreditsEqualMatchedCredits(t, stub, testData.MintCredits)
+	stub.MockTransactionEnd("tx3")
 }
 
 // genAllMatchedBids generates a set of bids that will be fully matched
@@ -82,4 +85,23 @@ func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time) {
 		testData.BuyBids = append(testData.BuyBids, buyBid)
 	}
 
+}
+
+// mintCreditsEqualMatchedCredits checks that there are no bids in the world state.
+// They should all be deleted after their matched bids are created.
+func mintCreditsEqualMatchedCredits(t *testing.T, stub *mocks.MockStub, mintCredits []*credits.MintCredit) {
+	mintCreditsTotal := int64(0)
+	mintCreditsFromBids := int64(0)
+
+	for _, mintCredit := range mintCredits {
+		mintCreditsTotal += mintCredit.Quantity
+	}
+
+	matchedBids, err := state.GetStatesByPartialCompositeKey[bids.MatchedBid](stub, bids.MATCHED_BID_PREFIX, nil)
+	require.NoError(t, err, "GetStatesByPartialCompositeKey should not return an error")
+
+	for _, matchedBid := range matchedBids {
+		mintCreditsFromBids += matchedBid.Quantity
+	}
+	require.Equal(t, mintCreditsTotal, mintCreditsFromBids, "Mint credits total should be equal to the sum of all bids' quantities")
 }
