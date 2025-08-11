@@ -118,10 +118,17 @@ func matchBidsIndependent(
 
 	creditChan := make(chan *bids.MatchedBid, PAYMENT_CHAN_SIZE)
 	paymentTokenChan := make(chan *bids.MatchedBid, PAYMENT_CHAN_SIZE)
-	defer close(creditChan)
+	defer func() {
+		_, chanOpen := <-creditChan
+		if chanOpen {
+			close(creditChan)
+		}
+	}()
 	defer close(paymentTokenChan)
 
-	go transferCredits(stub, creditChan)
+	transferCreditsWg := sync.WaitGroup{}
+	transferCreditsWg.Add(1)
+	go transferCredits(stub, creditChan, &transferCreditsWg)
 
 	matchedBids := []*bids.MatchedBid{}
 
@@ -177,6 +184,9 @@ func matchBidsIndependent(
 
 	cuttingPrice := (buyBids[lastMatch[0]].PrivatePrice.Price + sellBids[lastMatch[1]].PrivatePrice.Price) / 2
 
+	close(creditChan)
+	transferCreditsWg.Wait()
+
 	go transferPaymentToken(stub, paymentTokenChan)
 
 	for _, matchedBid := range matchedBids {
@@ -194,7 +204,11 @@ func matchBidsIndependent(
 	return nil, nil
 }
 
-func transferCredits(stub shim.ChaincodeStubInterface, matchedChan chan *bids.MatchedBid) {
+func transferCredits(
+	stub shim.ChaincodeStubInterface,
+	matchedChan chan *bids.MatchedBid,
+	transferCreditsWg *sync.WaitGroup,
+) {
 	creditWalletCache := map[string]*credits.CreditWallet{}
 
 	for matchedBid := range matchedChan {
@@ -223,6 +237,7 @@ func transferCredits(stub shim.ChaincodeStubInterface, matchedChan chan *bids.Ma
 			panic("could not put credit wallet in world state: " + err.Error())
 		}
 	}
+	transferCreditsWg.Done()
 }
 
 func transferPaymentToken(stub shim.ChaincodeStubInterface, matchedChan chan *bids.MatchedBid) {
