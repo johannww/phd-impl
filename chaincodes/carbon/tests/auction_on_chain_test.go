@@ -13,10 +13,16 @@ import (
 
 // TODO: Finish the test
 func TestOnChainIndependentAuction(t *testing.T) {
+	nOwners := 10
+	nChunks := 3
+	nCompanies := 5
+	startTimestamp := "2023-01-01T00:00:00Z"
+	endTimestamp := "2023-01-01T00:30:00Z"
+	issueInterval := 30 * time.Second
 	testData := utils_test.GenData(
-		10, 3, 5,
-		"2023-01-01T00:00:00Z",
-		"2023-01-01T00:30:00Z", 30*time.Second)
+		nOwners, nChunks, nCompanies,
+		startTimestamp, endTimestamp, issueInterval,
+	)
 	stub := mocks.NewMockStub("carbon", nil)
 
 	issueStart, err := time.Parse(time.RFC3339, "2023-01-01T00:31:00Z")
@@ -28,6 +34,11 @@ func TestOnChainIndependentAuction(t *testing.T) {
 	stub.MockTransactionEnd("tx1")
 
 	// t.Fail()
+	stub.MockTransactionStart("tx2")
+	stub.Creator = (*testData.Identities)[identities.PriceViewer]
+	err = auction.RunOnChainAuction(stub)
+	stub.MockTransactionEnd("tx2")
+	require.NoError(t, err, "RunOnChainAuction should not return an error")
 
 }
 

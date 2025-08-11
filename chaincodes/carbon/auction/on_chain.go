@@ -129,6 +129,16 @@ func matchBidsIndependent(
 	lastMatch := [2]int{-1, -1}
 	hasCuttingPrice := buyBids[j].PrivatePrice.Price >= sellBids[i].PrivatePrice.Price
 	for (i >= len(buyBids) || j < 0) && buyBids[j].PrivatePrice.Price > sellBids[i].PrivatePrice.Price {
+
+		// Skip exhausted bids
+		if buyBids[j].AskQuantity == 0 {
+			j--
+			continue
+		} else if sellBids[i].Quantity == 0 {
+			i++
+			continue
+		}
+
 		matchQuantity := min(sellBids[i].Quantity, buyBids[j].AskQuantity)
 		sellBids[i].Quantity -= matchQuantity
 		buyBids[j].AskQuantity -= matchQuantity
