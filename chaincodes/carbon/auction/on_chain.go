@@ -173,8 +173,10 @@ func matchBidsIndependent(
 	go transferPaymentToken(stub, paymentTokenChan)
 
 	for _, matchedBid := range matchedBids {
-		matchedBid.PrivatePrice.Price = cuttingPrice
-		matchedBid.PrivatePrice.BidID = (*matchedBid.GetID())[0]
+		matchedBid.PrivatePrice = &bids.PrivatePrice{
+			Price: cuttingPrice,
+			BidID: (*matchedBid.GetID())[0],
+		}
 		paymentTokenChan <- matchedBid
 		err := matchedBid.ToWorldState(stub)
 		if err != nil {
