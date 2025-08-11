@@ -48,16 +48,15 @@ func (mb *MatchedBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	if mb.PrivatePrice == nil {
 		return fmt.Errorf("PrivatePrice is nil")
 	}
-	if mb.PrivateMultiplier == nil {
-		return fmt.Errorf("PrivateMultiplier is nil")
-	}
 
 	if err := mb.PrivatePrice.ToWorldState(stub, MATCHED_BID_PVT); err != nil {
 		return err
 	}
 
-	if err := mb.PrivateMultiplier.ToWorldState(stub); err != nil {
-		return err
+	if mb.PrivateMultiplier != nil {
+		if err := mb.PrivateMultiplier.ToWorldState(stub); err != nil {
+			return err
+		}
 	}
 
 	// Temporarily unset PrivatePrice and PrivateMultiplier not to store them in the public world state
