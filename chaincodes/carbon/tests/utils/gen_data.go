@@ -32,7 +32,8 @@ func GenData(
 ) *TestData {
 	data := &TestData{}
 
-	mockIds := &setup.MockIdentities{}
+	defaultIdentities := (setup.SetupIdentities(nil))
+	mockIds := &defaultIdentities
 	GenOwnerIDs(nOwners, mockIds)
 	GenCompanyIDs(nCompanies, mockIds)
 	props := GenProperties(nChunks, mockIds)
