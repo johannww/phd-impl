@@ -128,7 +128,8 @@ func matchBidsIndependent(
 	i, j := 0, len(buyBids)-1
 	lastMatch := [2]int{-1, -1}
 	hasCuttingPrice := buyBids[j].PrivatePrice.Price >= sellBids[i].PrivatePrice.Price
-	for (i >= len(buyBids) || j < 0) && buyBids[j].PrivatePrice.Price > sellBids[i].PrivatePrice.Price {
+	for (i < len(sellBids) && j >= 0) &&
+		buyBids[j].PrivatePrice.Price >= sellBids[i].PrivatePrice.Price {
 
 		// Skip exhausted bids
 		if buyBids[j].AskQuantity == 0 {
