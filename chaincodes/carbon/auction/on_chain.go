@@ -123,7 +123,7 @@ func matchBidsIndependent(
 
 	go transferCredits(stub, creditChan)
 
-	matchedBids := make([]*bids.MatchedBid, 0)
+	matchedBids := []*bids.MatchedBid{}
 
 	i, j := 0, len(buyBids)-1
 	lastMatch := [2]int{-1, -1}
