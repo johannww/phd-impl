@@ -39,17 +39,15 @@ func (property *Property) FromWorldState(stub shim.ChaincodeStubInterface, keyAt
 }
 
 func (property *Property) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	chunks := property.Chunks
-	property.Chunks = nil // do not marshal chunks in the property struct
+	copyProperty := *property // create a copy to avoid modifying the original object
+	copyProperty.Chunks = nil // avoid storing the chunks in the world state, as they are
 
-	err := state.PutStateWithCompositeKey(stub, PROPERTY_PREFIX, property.GetID(), property)
+	err := state.PutStateWithCompositeKey(stub, PROPERTY_PREFIX, copyProperty.GetID(), &copyProperty)
 
-	for _, chunk := range chunks {
+	for _, chunk := range property.Chunks {
 		chunk.ToWorldState(stub)
 	}
 
-	// reset property chunks
-	property.Chunks = chunks
 	return err
 }
 

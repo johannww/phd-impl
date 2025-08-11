@@ -125,15 +125,13 @@ func (b *BuyBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 		}
 	}
 
-	tempPrice := b.PrivatePrice
-	b.PrivatePrice = nil // avoid storing the private price in the world state, as it is
+	copyB := *b              // Create a copy of BuyBid to avoid modifying the original
+	copyB.PrivatePrice = nil // Temporarily unset PrivatePrice to avoid storing it in the public world state
 
 	var err error
-	if err = ccstate.PutStateWithCompositeKey(stub, BUY_BID_PREFIX, b.GetID(), b); err != nil {
+	if err = ccstate.PutStateWithCompositeKey(stub, BUY_BID_PREFIX, copyB.GetID(), copyB); err != nil {
 		err = fmt.Errorf("could put buybid in state: %v", err)
 	}
-
-	b.PrivatePrice = tempPrice // restore the private price after storing
 
 	return err
 }
