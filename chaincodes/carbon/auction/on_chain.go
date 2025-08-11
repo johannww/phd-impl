@@ -175,7 +175,7 @@ func matchBidsIndependent(
 		return nil, fmt.Errorf("no cutting price found")
 	}
 
-	cuttingPrice := buyBids[lastMatch[0]].PrivatePrice.Price + sellBids[lastMatch[1]].PrivatePrice.Price/2
+	cuttingPrice := (buyBids[lastMatch[0]].PrivatePrice.Price + sellBids[lastMatch[1]].PrivatePrice.Price) / 2
 
 	go transferPaymentToken(stub, paymentTokenChan)
 
