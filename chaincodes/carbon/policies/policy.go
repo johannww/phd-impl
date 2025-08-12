@@ -24,6 +24,8 @@ type CoupledPolicy interface {
 
 type Name string
 
+type PolicyFunc func(*PolicyInput) int64
+
 const (
 	// Coupled policy names
 	DISTANCE       Name = "distance"
@@ -36,7 +38,7 @@ const (
 )
 
 // TODO: add the actual implementations of the policies
-var DefinedPolicies = map[Name](func(*PolicyInput) int64){
+var DefinedPolicies = map[Name]PolicyFunc{
 	DISTANCE:       nil,
 	WIND_DIRECTION: nil,
 	VEGETATION:     nil,
