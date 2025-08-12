@@ -89,6 +89,7 @@ func (s *SellBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) error {
 }
 
 func (s *SellBid) FetchCredit(stub shim.ChaincodeStubInterface) error {
+	s.Credit = &credits.MintCredit{}
 	err := s.Credit.FromWorldState(stub, s.CreditID)
 	if err != nil {
 		return fmt.Errorf("could not get credit in state: %v", err)
@@ -102,10 +103,9 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 		return err
 	}
 
-	// TODO: load credit from world state.
-	err = s.Credit.FromWorldState(stub, s.CreditID)
+	err = s.FetchCredit(stub)
 	if err != nil {
-		return fmt.Errorf("could not get credit from world state: %v", err)
+		return err
 	}
 
 	err = s.FetchPrivatePrice(stub)
