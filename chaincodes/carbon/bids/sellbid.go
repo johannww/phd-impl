@@ -154,7 +154,7 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 
 func (s *SellBid) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
 	bidID := s.GetID()
-	err := ccstate.DeleteStateWithCompositeKey(stub, BUY_BID_PREFIX, bidID)
+	err := ccstate.DeleteStateWithCompositeKey(stub, SELL_BID_PREFIX, bidID)
 	if err != nil {
 		return fmt.Errorf("could not delete sel bid: %v", err)
 	}
