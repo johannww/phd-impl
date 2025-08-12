@@ -46,6 +46,10 @@ func TestOnChainIndependentAuction(t *testing.T) {
 	stub.MockTransactionStart("tx3")
 	mintCreditsEqualMatchedCredits(t, stub, testData.MintCredits)
 	stub.MockTransactionEnd("tx3")
+
+	stub.MockTransactionStart("tx4")
+	buyBidsAndSellBidsAreDeletedFromWorldState(t, stub, testData.BuyBids, testData.SellBids)
+	stub.MockTransactionEnd("tx4")
 }
 
 // genAllMatchedBids generates a set of bids that will be fully matched
