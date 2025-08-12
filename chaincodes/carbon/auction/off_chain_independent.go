@@ -68,8 +68,10 @@ func RunIndependent(data *AuctionData) (*OffChainIndepAuctionResult, error) {
 	cuttingPrice := (buyBids[lastMatch[0]].PrivatePrice.Price + sellBids[lastMatch[1]].PrivatePrice.Price) / 2
 
 	for _, matchedBid := range matchedBids {
-		matchedBid.PrivatePrice.Price = cuttingPrice
-		matchedBid.PrivatePrice.BidID = (*matchedBid.GetID())[0]
+		matchedBid.PrivatePrice = &bids.PrivatePrice{
+			Price: cuttingPrice,
+			BidID: (*matchedBid.GetID())[0],
+		}
 	}
 
 	return &OffChainIndepAuctionResult{
