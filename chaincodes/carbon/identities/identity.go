@@ -31,19 +31,24 @@ func GetID(stub shim.ChaincodeStubInterface) string {
 			panic("idemix identity creator is nil")
 		}
 
-		sid := &msp.SerializedIdentity{}
-		err := proto.Unmarshal(creator, sid)
-		if err != nil {
-			panic(fmt.Sprintf("failed to unmarshal SerializedIdentity: %s", err))
-		}
-		idemixID := &msp.SerializedIdemixIdentity{}
-		err = proto.Unmarshal(sid.IdBytes, idemixID)
-		if err != nil {
-			panic(fmt.Sprintf("failed to unmarshal SerializedIdemixIdentity: %s", err))
-		}
-
-		return fmt.Sprintf("%x%x", idemixID.NymX[0:8], idemixID.NymY[8:16])
+		return PseudonymStrFromID(creator)
 	}
 
 	return id
+}
+
+func PseudonymStrFromID(idemixSerializedIdentity []byte) string {
+	// idemix identity
+	sid := &msp.SerializedIdentity{}
+	err := proto.Unmarshal(idemixSerializedIdentity, sid)
+	if err != nil {
+		panic(fmt.Sprintf("failed to unmarshal SerializedIdentity: %s", err))
+	}
+	idemixID := &msp.SerializedIdemixIdentity{}
+	err = proto.Unmarshal(sid.IdBytes, idemixID)
+	if err != nil {
+		panic(fmt.Sprintf("failed to unmarshal SerializedIdemixIdentity: %s", err))
+	}
+
+	return fmt.Sprintf("%x%x", idemixID.NymX[0:8], idemixID.NymY[8:16])
 }
