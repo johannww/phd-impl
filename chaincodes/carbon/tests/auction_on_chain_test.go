@@ -105,3 +105,21 @@ func mintCreditsEqualMatchedCredits(t *testing.T, stub *mocks.MockStub, mintCred
 	}
 	require.Equal(t, mintCreditsTotal, mintCreditsFromBids, "Mint credits total should be equal to the sum of all bids' quantities")
 }
+
+func buyBidsAndSellBidsAreDeletedFromWorldState(t *testing.T, stub *mocks.MockStub, buyBid []*bids.BuyBid, sellBid []*bids.SellBid) {
+	buyBids, err := state.GetStatesByPartialCompositeKey[bids.BuyBid](stub, bids.BUY_BID_PREFIX, nil)
+	require.NoError(t, err, "GetStatesByPartialCompositeKey should not return an error")
+	sellBids, err := state.GetStatesByPartialCompositeKey[bids.SellBid](stub, bids.SELL_BID_PREFIX, nil)
+	require.NoError(t, err, "GetStatesByPartialCompositeKey should not return an error")
+
+	for _, bid := range buyBids {
+		t.Logf("BuyBid: %+v\n", *bid)
+	}
+	for _, bid := range sellBids {
+		t.Logf("SellBid: %+v\n", *bid)
+	}
+
+	require.Len(t, buyBids, 0, "Buy bids should be deleted from the world state")
+	require.Len(t, sellBids, 0, "Sell bids should be deleted from the world state")
+
+}

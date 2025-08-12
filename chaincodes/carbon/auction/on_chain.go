@@ -159,17 +159,18 @@ func matchBidsIndependent(
 		lastMatch[0] = i
 		lastMatch[1] = j
 
-		var err error
+		var errSell, errBuy error
 		if sellBids[i].Quantity == 0 {
-			err = sellBids[i].DeleteFromWorldState(stub)
+			errSell = sellBids[i].DeleteFromWorldState(stub)
 			i++
-		} else {
-			err = buyBids[j].DeleteFromWorldState(stub)
+		}
+		if buyBids[j].AskQuantity == 0 {
+			errBuy = buyBids[j].DeleteFromWorldState(stub)
 			j--
 		}
 
-		if err != nil {
-			return nil, fmt.Errorf("could not delete bid from world state: %v", err)
+		if errSell != nil || errBuy != nil {
+			return nil, fmt.Errorf("could not delete bid from world state")
 		}
 	}
 
