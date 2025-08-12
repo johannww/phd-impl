@@ -18,13 +18,13 @@ import (
 // TestData holds a list as an identity map
 // The map key is a string and the value is generic interface{}
 type TestData struct {
-	Identities    *setup.MockIdentities
-	Properties    []*properties.Property
-	MintCredits   []*credits.MintCredit
-	CreditWallets []*credits.CreditWallet
-	TokenWallets  []*payment.VirtualTokenWallet
-	SellBids      []*bids.SellBid
-	BuyBids       []*bids.BuyBid
+	Identities       *setup.MockIdentities
+	Properties       []*properties.Property
+	MintCredits      []*credits.MintCredit
+	CreditWallets    []*credits.CreditWallet
+	TokenWallets     []*payment.VirtualTokenWallet
+	SellBids         []*bids.SellBid
+	BuyBids          []*bids.BuyBid
 	Policies         []policies.Name
 	PoliciesMockFunc map[policies.Name]policies.PolicyFunc
 }
