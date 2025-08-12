@@ -57,7 +57,7 @@ func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time) (las
 	sellPrice := int64(1000)
 	buyPrice := int64(1200)
 
-	buyerIds := testData.CompaniesIdentities()
+	buyerIds := testData.PseudonymMap
 
 	var issueTsStr string
 	for i, mintCredit := range testData.MintCredits {
@@ -79,7 +79,7 @@ func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time) (las
 		buyerIdIndex := rand.Intn(len(buyerIds))
 
 		buyBid := &bids.BuyBid{
-			BuyerID:     buyerIds[buyerIdIndex],
+			BuyerID:     buyerIds[buyerIdIndex].Pseudonym,
 			AskQuantity: mintCredit.Quantity,
 			Timestamp:   issueTsStr,
 			PrivatePrice: &bids.PrivatePrice{
