@@ -89,7 +89,7 @@ func GenOwnerIDs(n int, mockIds *setup.MockIdentities) {
 
 func GenCompanyIDs(n int, mockIds *setup.MockIdentities) {
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		companyName := fmt.Sprintf("%s%d", COMPANY_PREFIX, i)
 
 		mockId := setup.GenerateHFSerializedIdentity(
