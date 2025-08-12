@@ -22,6 +22,7 @@ type TestData struct {
 	Identities       *setup.MockIdentities
 	Properties       []*properties.Property
 	Companies        []*companies.Company
+	PseudonymMap     []*companies.PsedonymToCompanyID // Mapping of pseudonyms to company IDs
 	MintCredits      []*credits.MintCredit
 	CreditWallets    []*credits.CreditWallet
 	TokenWallets     []*payment.VirtualTokenWallet
@@ -33,6 +34,8 @@ type TestData struct {
 
 func (data *TestData) SaveToWorldState(stub shim.ChaincodeStubInterface) {
 	saveToWorldState(stub, data.Properties)
+	saveToWorldState(stub, data.Companies)
+	saveToWorldState(stub, data.PseudonymMap)
 	saveToWorldState(stub, data.MintCredits)
 	saveToWorldState(stub, data.CreditWallets)
 	saveToWorldState(stub, data.TokenWallets)
