@@ -186,7 +186,7 @@ func GenTokenWallets(mockIds *setup.MockIdentities) []*payment.VirtualTokenWalle
 		quantity := int64(0)
 		if strings.Contains(key, COMPANY_PREFIX) {
 			// Companies start with a random quantity of tokens
-			quantity = 20000000
+			quantity = 200000000000000
 		}
 
 		wallet := &payment.VirtualTokenWallet{
