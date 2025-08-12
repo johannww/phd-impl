@@ -7,6 +7,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
+	"github.com/johannww/phd-impl/chaincodes/carbon/companies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
@@ -20,6 +21,7 @@ import (
 type TestData struct {
 	Identities       *setup.MockIdentities
 	Properties       []*properties.Property
+	Companies        []*companies.Company
 	MintCredits      []*credits.MintCredit
 	CreditWallets    []*credits.CreditWallet
 	TokenWallets     []*payment.VirtualTokenWallet

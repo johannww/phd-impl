@@ -62,6 +62,8 @@ func GenData(
 
 	data.Identities = mockIds
 	data.Properties = props
+	// TODOHP: Generate companies information
+	data.Companies = companies
 	data.MintCredits = mintCredits
 	data.CreditWallets = creditWallets
 	data.TokenWallets = tokenWallets
