@@ -53,15 +53,16 @@ func TestOnChainIndependentAuction(t *testing.T) {
 }
 
 // genAllMatchedBids generates a set of bids that will be fully matched
-func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time) {
+func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time) (lastIssueRFC339Ts string) {
 	sellPrice := int64(1000)
 	buyPrice := int64(1200)
 
 	buyerIds := testData.CompaniesIdentities()
 
+	var issueTsStr string
 	for i, mintCredit := range testData.MintCredits {
 		issueTs := issueStart.Add(time.Duration(time.Duration(i) * time.Second)).UTC()
-		issueTsStr := issueTs.Format(time.RFC3339)
+		issueTsStr = issueTs.Format(time.RFC3339)
 		sellBid := &bids.SellBid{
 			SellerID:  mintCredit.OwnerID,
 			CreditID:  (*mintCredit.GetID())[0],
@@ -90,6 +91,7 @@ func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time) {
 		testData.BuyBids = append(testData.BuyBids, buyBid)
 	}
 
+	return issueTsStr
 }
 
 // mintCreditsEqualMatchedCredits checks that there are no bids in the world state.
