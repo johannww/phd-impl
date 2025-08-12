@@ -49,7 +49,7 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 			continue // already fetched
 		}
 
-		CompanyID, err := companies.GetCompanyIDByPsedonym(stub, buyBid.BuyerID)
+		CompanyID, err := companies.GetCompanyIDByPseudonym(stub, buyBid.BuyerID)
 		if err != nil {
 			return err
 		}

@@ -22,7 +22,7 @@ type TestData struct {
 	Identities       *setup.MockIdentities
 	Properties       []*properties.Property
 	Companies        []*companies.Company
-	PseudonymMap     []*companies.PsedonymToCompanyID // Mapping of pseudonyms to company IDs
+	PseudonymMap     []*companies.PseudonymToCompanyID // Mapping of pseudonyms to company IDs
 	MintCredits      []*credits.MintCredit
 	CreditWallets    []*credits.CreditWallet
 	TokenWallets     []*payment.VirtualTokenWallet
