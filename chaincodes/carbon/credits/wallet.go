@@ -12,6 +12,7 @@ const (
 // TODO: Credit wallet will generate MVCC read conflict if multiple transactions
 // mint credits and add to the wallet. Evaluate that later.
 // CreditWallet is for networks with fungible credits
+// TODOHP: should not this credit wallet be public??
 type CreditWallet struct {
 	OwnerID  string `json:"owner"`
 	Quantity int64  `json:"quantity"`
