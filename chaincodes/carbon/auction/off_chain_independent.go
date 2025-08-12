@@ -7,11 +7,16 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 )
 
+// OffChainIndepAuctionResult holds the result of an independent auction run off-chain.
+// It contains matched bids and adjusted sell and buy bids.
+// This will be consumed by the chaincode to update the world state.
 type OffChainIndepAuctionResult struct {
-	MatchedBids []*bids.MatchedBid `json:"matchedBids"`
+	MatchedBids     []*bids.MatchedBid `json:"matchedBids"`
+	AdustedSellBids []*bids.SellBid    `json:"adjustedSellBids"`
+	AdustedBuyBids  []*bids.BuyBid     `json:"adjustedBuyBids"`
 }
 
-// TODO: test
+// TODOHP: test TEE independent auction
 func RunIndependent(data *AuctionData) (*OffChainIndepAuctionResult, error) {
 	matchedBids := make([]*bids.MatchedBid, 0)
 
@@ -27,8 +32,19 @@ func RunIndependent(data *AuctionData) (*OffChainIndepAuctionResult, error) {
 
 	i, j := 0, len(buyBids)-1
 	lastMatch := [2]int{-1, -1}
-	hasCuttingPrice := buyBids[j].PrivatePrice.Price < sellBids[i].PrivatePrice.Price
-	for buyBids[j].PrivatePrice.Price > sellBids[i].PrivatePrice.Price {
+	hasCuttingPrice := buyBids[j].PrivatePrice.Price >= sellBids[i].PrivatePrice.Price
+	for (i < len(sellBids) && j >= 0) &&
+		buyBids[j].PrivatePrice.Price >= sellBids[i].PrivatePrice.Price {
+
+		// Skip exhausted bids
+		if buyBids[j].AskQuantity == 0 {
+			j--
+			continue
+		} else if sellBids[i].Quantity == 0 {
+			i++
+			continue
+		}
+
 		matchQuantity := min(sellBids[i].Quantity, buyBids[j].AskQuantity)
 		sellBids[i].Quantity -= matchQuantity
 		buyBids[j].AskQuantity -= matchQuantity
@@ -43,17 +59,13 @@ func RunIndependent(data *AuctionData) (*OffChainIndepAuctionResult, error) {
 
 		lastMatch[0] = i
 		lastMatch[1] = j
-
-		if i >= len(buyBids) || j < 0 {
-			break
-		}
 	}
 
 	if !hasCuttingPrice {
 		return nil, fmt.Errorf("no cutting price found")
 	}
 
-	cuttingPrice := buyBids[lastMatch[0]].PrivatePrice.Price + sellBids[lastMatch[1]].PrivatePrice.Price/2
+	cuttingPrice := (buyBids[lastMatch[0]].PrivatePrice.Price + sellBids[lastMatch[1]].PrivatePrice.Price) / 2
 
 	for _, matchedBid := range matchedBids {
 		matchedBid.PrivatePrice.Price = cuttingPrice
@@ -61,6 +73,8 @@ func RunIndependent(data *AuctionData) (*OffChainIndepAuctionResult, error) {
 	}
 
 	return &OffChainIndepAuctionResult{
-		MatchedBids: matchedBids,
+		MatchedBids:     matchedBids,
+		AdustedSellBids: sellBids[:lastMatch[0]+1],
+		AdustedBuyBids:  buyBids[:lastMatch[1]+1],
 	}, nil
 }
