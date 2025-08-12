@@ -36,7 +36,7 @@ type PropertyChunk struct {
 var _ state.WorldStateManager = (*PropertyChunk)(nil)
 
 func (propertychunk *PropertyChunk) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	if len(keyAttributes) != 2 {
+	if len(keyAttributes) != CHUNK_KEY_LENGTH {
 		return fmt.Errorf("invalid number of key attributes: %d", len(keyAttributes))
 	}
 

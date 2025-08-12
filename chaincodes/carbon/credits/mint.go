@@ -27,6 +27,7 @@ func (mc *MintCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttrib
 		return err
 	}
 
+	mc.Chunk = &properties.PropertyChunk{}
 	if err := mc.Chunk.FromWorldState(stub, mc.ChunkID); err != nil {
 		return fmt.Errorf("could not put property chunk in state: %v", err)
 	}
