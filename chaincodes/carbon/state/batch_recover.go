@@ -100,6 +100,30 @@ func GetStatesByPartialCompositeKey[T any](stub shim.ChaincodeStubInterface, obj
 	return states, err
 }
 
+func GetStateByPartialSecondaryIndex[T any](stub shim.ChaincodeStubInterface, objectType string, prefixes []string) ([]*T, error) {
+	prefixes = append([]string{objectType}, prefixes...)
+
+	// Get primary keys using secondary index
+	primaryKeys, err := GetStatesByPartialCompositeKey[[]string](stub, SECONDARY_INDEX_OBJ_TYPE, prefixes)
+	if err != nil {
+		return nil, fmt.Errorf("could not get primary keys by secondary index: %v", err)
+	}
+
+	// Get states using primary keys
+	objects := make([]*T, len(primaryKeys))
+	for i, primaryKey := range primaryKeys {
+		var object T
+		err := GetStateWithCompositeKey[T](stub, objectType, *primaryKey, object)
+		if err != nil {
+			return nil, fmt.Errorf("could not get state with composite key (%v) using partial secondary index", err)
+		}
+
+		objects[i] = &object
+	}
+
+	return objects, nil
+}
+
 func getStatesByRange[T any](stub shim.ChaincodeStubInterface, startKey, endKey string) ([]*T, error) {
 	states := []*T{}
 

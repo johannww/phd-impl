@@ -149,3 +149,9 @@ func (c *CarbonContract) DeleteActivePolicy(ctx contractapi.TransactionContextIn
 	err := policies.DeleteActivePolicy(stub, policies.Name(policy))
 	return err
 }
+
+// GetActivePolicies retrieves the list of caller's matched bids.
+// It uses cid.GetID function to determine the id
+func (c *CarbonContract) GetCallerMatchedBids(ctx contractapi.TransactionContextInterface) ([]*bids.MatchedBid, error) {
+	return bids.GetCallerMatchedBids(ctx.GetStub())
+}

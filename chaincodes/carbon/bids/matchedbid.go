@@ -110,3 +110,16 @@ func (mb *MatchedBid) FetchPrivateMultiplier(stub shim.ChaincodeStubInterface) (
 	}
 	return nil
 }
+
+func GetCallerMatchedBids(stub shim.ChaincodeStubInterface) ([]*MatchedBid, error) {
+	callerID, err := cid.GetID(stub)
+	if err != nil {
+		return nil, fmt.Errorf("could not get caller ID: %v", err)
+	}
+
+	matchedBids, err := state.GetStateByPartialSecondaryIndex[MatchedBid](stub, MATCHED_BID_PREFIX, []string{callerID})
+	if err != nil {
+		return nil, fmt.Errorf("could not get matched bids for caller %s: %v", callerID, err)
+	}
+	return matchedBids, nil
+}
