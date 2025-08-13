@@ -21,8 +21,12 @@ pushd $TEST_NETWORK_DIR
 git checkout 5fa5abbbcf
 git apply ../../config/idemix-patch.diff
 
+HAS_PEER_BIN=$(ls -l ../bin/peer | wc -l)
+PEER_VER_MATCHES=$(../bin/peer version | grep $FABRIC_VER | wc -l)
+CA_VER_MATCHES=$(../bin/cryptogen version | grep $FABRIC_CA_VER | wc -l)
+
 # Install fabric binaries and images
-if [[ $DOWNLOAD_PREREQ == "prereq" ]]; then
+if [[ $((HAS_PEER_BIN+PEER_VER_MATCHES+CA_VER_MATCHES)) -ne 3 ]] || [[ $DOWNLOAD_PREREQ != "true" ]]; then
     ./network.sh prereq -i $FABRIC_VER -cai $FABRIC_CA_VER
 fi
 
