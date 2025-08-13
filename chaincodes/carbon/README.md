@@ -11,6 +11,7 @@
         - The settlement service will debit a value <= than the buy price and >= than the sell price.
 - [] Handle fungibility of tokens for independent auctions
     - They are minted as non-fungible, and become fungible after the auction.
+    - IDEA: allow the owner to transfer the non-fungible to the wallet as a fungible token.
 
 
 # Testing
