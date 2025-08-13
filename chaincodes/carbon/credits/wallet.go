@@ -28,6 +28,7 @@ func (cw *CreditWallet) FromWorldState(stub shim.ChaincodeStubInterface, keyAttr
 	}
 	return nil
 }
+
 func (cw *CreditWallet) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	// NOTE: We are using the same private collection as the one used for the private price
 	return state.PutPvtDataWithCompositeKey(
@@ -35,6 +36,7 @@ func (cw *CreditWallet) ToWorldState(stub shim.ChaincodeStubInterface) error {
 		(*cw.GetID())[0],
 		state.BIDS_PVT_DATA_COLLECTION, cw)
 }
+
 func (cw *CreditWallet) GetID() *[][]string {
 	return &[][]string{{cw.OwnerID}}
 }
