@@ -9,6 +9,8 @@
     - How can the parties involved in the get the price?
         - They trust the settlement service to transfer the tokens.
         - The settlement service will debit a value <= than the buy price and >= than the sell price.
+- [] Handle fungibility of tokens for independent auctions
+    - They are minted as non-fungible, and become fungible after the auction.
 
 
 # Testing
