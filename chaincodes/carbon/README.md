@@ -5,10 +5,7 @@
 - [X] create a config for the test-network including idemix orgs
 - [X] GATEWAY: Make the Idemix Identity create the pseudonym key and make the signer fetch it from the Idemix Identity
 - [X] verify that the confidential containers is running the expected ccePolicy
-- [] Handle the private multiplier
-    - How can the TEE export it in a way that it is not exposed to every on on-chain?
-    - I may export the private prices as a separate map that can be referenced by some ID.
-        - Thus, the TEE invoker can publish the multiplier as transient data.
+- [] Handle the private multiplier: we have a private part of MatchedBid
     - How can the parties involved in the get the price?
         - They trust the settlement service to transfer the tokens.
         - The settlement service will debit a value <= than the buy price and >= than the sell price.
