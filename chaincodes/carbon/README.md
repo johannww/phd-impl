@@ -9,9 +9,14 @@
     - How can the parties involved in the get the price?
         - They trust the settlement service to transfer the tokens.
         - The settlement service will debit a value <= than the buy price and >= than the sell price.
+        - They can request the price for the matched bid they are involved in.
 - [] Handle fungibility of tokens for independent auctions
     - They are minted as non-fungible, and become fungible after the auction.
     - IDEA: allow the owner to transfer the non-fungible to the wallet as a fungible token.
+    - Create separate bid types:
+        - SellBidFromCredit: with credit, non-fungible bid
+        - SellBidFromWallet: with wallet, fungible bid
+- [] Create test for getting state from partial secondary index
 
 
 # Testing
