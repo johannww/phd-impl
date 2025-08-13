@@ -121,5 +121,18 @@ func GetCallerMatchedBids(stub shim.ChaincodeStubInterface) ([]*MatchedBid, erro
 	if err != nil {
 		return nil, fmt.Errorf("could not get matched bids for caller %s: %v", callerID, err)
 	}
+
+	// Load private data for each matched bid
+	for _, mb := range matchedBids {
+		if err := mb.FetchPrivatePrice(stub); err != nil {
+			return nil, fmt.Errorf("could not fetch private price for matched bid: %v",
+				err)
+		}
+
+		if err := mb.FetchPrivateMultiplier(stub); err != nil {
+			return nil, fmt.Errorf("could not fetch private multiplier for matched bid: %v", err)
+		}
+	}
+
 	return matchedBids, nil
 }
