@@ -113,7 +113,7 @@ func GetStateByPartialSecondaryIndex[T any](stub shim.ChaincodeStubInterface, ob
 	objects := make([]*T, len(primaryKeys))
 	for i, primaryKey := range primaryKeys {
 		var object T
-		err := GetStateWithCompositeKey[T](stub, objectType, *primaryKey, object)
+		err := GetStateWithCompositeKey(stub, objectType, *primaryKey, &object)
 		if err != nil {
 			return nil, fmt.Errorf("could not get state with composite key (%v) using partial secondary index", err)
 		}
