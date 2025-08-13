@@ -29,6 +29,8 @@ type SellBid struct {
 
 var _ ccstate.WorldStateManager = (*SellBid)(nil)
 
+// TODOHP: check if credit has quantity and control how much announced quantity exist against a credit.
+// This applies when they are non-fungible credits.
 func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID []string) error {
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
