@@ -54,16 +54,21 @@ func putSecondaryIndexes(stub shim.ChaincodeStubInterface, keyAttributes *[][]st
 	}
 
 	for i := 1; i < len(*keyAttributes); i++ {
-		attributes := append([]string{objectType}, (*keyAttributes)[i]...)
-		stateKey, err := stub.CreateCompositeKey(SECONDARY_INDEX_OBJ_TYPE, attributes)
+		stateKey, err := createSecondaryIndexCompositeKey(stub, objectType, (*keyAttributes)[i])
 		if err != nil {
-			return fmt.Errorf("could not create composite key for state: %v", err)
+			return fmt.Errorf("could not create composite key for state (secondary index): %v", err)
 		}
 		if err := stub.PutState(stateKey, marshalledPrimaryKey); err != nil {
 			return fmt.Errorf("could not put secondary key: %v", err)
 		}
 	}
 	return nil
+}
+
+func createSecondaryIndexCompositeKey(stub shim.ChaincodeStubInterface, objectType string, keyAttributes []string) (string, error) {
+	attributes := append([]string{objectType}, keyAttributes...)
+	stateKey, err := stub.CreateCompositeKey(SECONDARY_INDEX_OBJ_TYPE, attributes)
+	return stateKey, err
 }
 
 func PutStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectType string, keyAttributes *[][]string, stateStruct T) error {
