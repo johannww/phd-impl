@@ -22,20 +22,9 @@ func TestOffChainIndependentAuction(t *testing.T) {
 	testData.SaveToWorldState(stub)
 	stub.MockTransactionEnd("tx1")
 
-	// Set AuctionType
-	stub.MockTransactionStart("tx11")
-	var auctionType auction.AuctionType = auction.AUCTION_INDEPENDENT
-	err = auctionType.ToWorldState(stub)
-	stub.MockTransactionEnd("tx11")
-	require.NoError(t, err, "Failed to set auction type in world state")
+	setAuctionType(t, stub, "tx2")
 
-	// Get off-chain auction data from world state
-	stub.MockTransactionStart("tx2")
-	stub.Creator = (*testData.Identities)[identities.PriceViewer]
-	auctionData := &auction.AuctionData{}
-	err = auctionData.RetrieveData(stub, issueEnd)
-	stub.MockTransactionEnd("tx2")
-	require.NoError(t, err, "Failed to retrieve auction data")
+	auctionData := retriveAuctionDataFromWorldState(t, stub, issueEnd, testData, "tx3")
 
 	var totalBuyBidQuantity int64 = 0
 	for _, bid := range auctionData.BuyBids {
@@ -47,7 +36,6 @@ func TestOffChainIndependentAuction(t *testing.T) {
 	require.NoError(t, err, "Failed to run independent auction")
 
 	verifyBidsQuantityConsistency(t, totalBuyBidQuantity, auctionResult)
-
 }
 
 // verifyBidsQuantityConsistency verifies that the sum of quantities of matched bids and adjusted bids equals total bids quantity
@@ -84,4 +72,26 @@ func genTestDataAndStub() (*mocks.MockStub, *utils_test.TestData) {
 	)
 	stub := mocks.NewMockStub("carbon", nil)
 	return stub, testData
+}
+
+func setAuctionType(t *testing.T, stub *mocks.MockStub, txID string) {
+	stub.MockTransactionStart(txID)
+	var auctionType auction.AuctionType = auction.AUCTION_INDEPENDENT
+	err := auctionType.ToWorldState(stub)
+	stub.MockTransactionEnd(txID)
+	require.NoError(t, err, "Failed to set auction type in world state")
+}
+
+func retriveAuctionDataFromWorldState(
+	t *testing.T, stub *mocks.MockStub, issueEnd string,
+	testData *utils_test.TestData,
+	txID string,
+) *auction.AuctionData {
+	stub.MockTransactionStart(txID)
+	stub.Creator = (*testData.Identities)[identities.PriceViewer]
+	auctionData := &auction.AuctionData{}
+	err := auctionData.RetrieveData(stub, issueEnd)
+	stub.MockTransactionEnd(txID)
+	require.NoError(t, err, "Failed to retrieve auction data")
+	return auctionData
 }
