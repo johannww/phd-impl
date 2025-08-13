@@ -13,6 +13,7 @@ import (
 const (
 	PROPERTY_CHUNK_PREFIX = "propertyChunk"
 	COORDINATES_PREFIX    = "coords"
+	CHUNK_KEY_LENGTH      = 3 // PropertyID, Latitude, Longitude
 )
 
 // Coordinate represents a geographical coordinate in the floating point format.
