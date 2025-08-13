@@ -33,7 +33,7 @@ func (m *MockObjectWithSecondaryIndex) FromWorldState(stub shim.ChaincodeStubInt
 func (m *MockObjectWithSecondaryIndex) GetID() *[][]string {
 	return &[][]string{
 		{m.MockAttr, "1"},
-		{m.MockAttr, "2"},
+		{"secondary", m.MockAttr, "2"},
 	}
 }
 
