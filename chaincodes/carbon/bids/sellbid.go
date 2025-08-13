@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	SELL_BID_PREFIX = "sellBid"
-	SELL_BID_PVT    = "sellBidPvt"
+	SELL_BID_PREFIX              = "sellBid"
+	SELL_BID_PVT                 = "sellBidPvt"
+	SELL_BID_ID_SELLER_AS_PREFIX = 1
+	SELL_BID_ID_CREDIT_AS_PREFIX = 2
 )
 
 // TODO: review how the credit should be loaded here
@@ -173,6 +175,7 @@ func (s *SellBid) GetID() *[][]string {
 	creditIdAsPrefix = append(creditIdAsPrefix, s.Timestamp)
 	return &[][]string{
 		{s.Timestamp, s.SellerID},
+		{s.SellerID, s.Timestamp},
 		creditIdAsPrefix,
 	}
 }

@@ -76,9 +76,15 @@ func (mb *MatchedBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 }
 
 func (mb *MatchedBid) GetID() *[][]string {
-	buyBidFirstID := append((*mb.BuyBid.GetID())[0], (*mb.SellBid.GetID())[0]...)
-	sellBidFirstID := append((*mb.SellBid.GetID())[0], (*mb.BuyBid.GetID())[0]...)
-	return &[][]string{buyBidFirstID, sellBidFirstID}
+	buyBidIDs := *mb.BuyBid.GetID()
+	sellBidIDs := *mb.SellBid.GetID()
+
+	buyBidFirstID := append(buyBidIDs[0], sellBidIDs[0]...)
+	sellBidFirstID := append(sellBidIDs[0], buyBidIDs[0]...)
+	buyerIDPrefix := buyBidIDs[BUY_BID_ID_BUYER_AS_PREFIX]
+	sellerIDPrefix := sellBidIDs[SELL_BID_ID_SELLER_AS_PREFIX]
+
+	return &[][]string{buyBidFirstID, sellBidFirstID, buyerIDPrefix, sellerIDPrefix}
 }
 
 func (mb *MatchedBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) (err error) {

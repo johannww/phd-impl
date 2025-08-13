@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	BUY_BID_PREFIX = "buyBid"
-	BUY_BID_PVT    = "buyBidPvt"
+	BUY_BID_PREFIX             = "buyBid"
+	BUY_BID_PVT                = "buyBidPvt"
+	BUY_BID_ID_BUYER_AS_PREFIX = 1
 )
 
 // BuyBid represents an ask from a buyer.
