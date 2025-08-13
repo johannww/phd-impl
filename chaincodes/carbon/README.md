@@ -16,7 +16,6 @@
     - Create separate bid types:
         - SellBidFromCredit: with credit, non-fungible bid
         - SellBidFromWallet: with wallet, fungible bid
-- [] Create test for getting state from partial secondary index
 
 
 # Testing
