@@ -1,8 +1,7 @@
-package mocks
+package state
 
 import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
-	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
 const (
@@ -15,15 +14,15 @@ type MockObjectWithSecondaryIndex struct {
 	MockPvt  string `json:"mockPvtAttr"`
 }
 
-var _ state.WorldStateManager = (*MockObjectWithSecondaryIndex)(nil)
+var _ WorldStateManager = (*MockObjectWithSecondaryIndex)(nil)
 
 // FromWorldState implements WorldStateManager.
 func (m *MockObjectWithSecondaryIndex) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	if err := state.GetStateWithCompositeKey(stub, MOCK_OBJECT_PREFIX, keyAttributes, m); err != nil {
+	if err := GetStateWithCompositeKey(stub, MOCK_OBJECT_PREFIX, keyAttributes, m); err != nil {
 		return err
 	}
 
-	if err := state.GetPvtDataWithCompositeKey(stub, MOCK_OBJECT_PREFIX, keyAttributes, MOCK_OBJECT_PVT, m); err != nil {
+	if err := GetPvtDataWithCompositeKey(stub, MOCK_OBJECT_PREFIX, keyAttributes, MOCK_OBJECT_PVT, m); err != nil {
 		return err
 	}
 
@@ -42,7 +41,7 @@ func (m *MockObjectWithSecondaryIndex) GetID() *[][]string {
 func (m *MockObjectWithSecondaryIndex) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	copyMock := *m
 	copyMock.MockPvt = "" // Temporarily unset MockPvt to avoid storing it in the public world state
-	if err := state.PutStateWithCompositeKey(stub, MOCK_OBJECT_PREFIX, m.GetID(), &copyMock); err != nil {
+	if err := PutStateWithCompositeKey(stub, MOCK_OBJECT_PREFIX, m.GetID(), &copyMock); err != nil {
 		return err
 	}
 
@@ -50,7 +49,7 @@ func (m *MockObjectWithSecondaryIndex) ToWorldState(stub shim.ChaincodeStubInter
 		return nil // No private data to store
 	}
 
-	if err := state.PutPvtDataWithCompositeKey(stub, MOCK_OBJECT_PREFIX, (*m.GetID())[0], MOCK_OBJECT_PVT, &m); err != nil {
+	if err := PutPvtDataWithCompositeKey(stub, MOCK_OBJECT_PREFIX, (*m.GetID())[0], MOCK_OBJECT_PVT, &m); err != nil {
 		return err
 	}
 

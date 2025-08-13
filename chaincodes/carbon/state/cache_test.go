@@ -36,9 +36,6 @@ func TestGetStateFromCache(t *testing.T) {
 
 }
 
-const MOCK_OBJECT_PREFIX = "mockObject"
-const MOCK_OBJECT_PVT = "mockObjectPvt"
-
 // worldStateObject is a base struct implementing WorldStateManager interface.
 // It can be embedded in other structs to provide default implementations.
 type worldStateObject struct {
