@@ -16,6 +16,8 @@
     - Create separate bid types:
         - SellBidFromCredit: with credit, non-fungible bid
         - SellBidFromWallet: with wallet, fungible bid
+- [X] How multiplier ways down? Negative multiplier? 
+    - For now, the multiplier is always positive.
 
 
 # Testing

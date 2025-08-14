@@ -117,6 +117,11 @@ func calculateClearingPriceAndQuantity(
 	buyBid *bids.BuyBid,
 	mult int64) (Cp int64, Cq int64, hasClearingPrice bool) {
 
+	// For now, multiplier must be positive.
+	if mult <= 0 {
+		return 0, 0, false
+	}
+
 	quantity := min(sellBid.Quantity, buyBid.AskQuantity)
 	maxExtraQuantity := quantity * mult / policies.MULTPLIER_SCALE
 
