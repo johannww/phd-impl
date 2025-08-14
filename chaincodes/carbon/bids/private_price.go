@@ -1,12 +1,15 @@
 package bids
 
 import (
+	"fmt"
+
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
 const (
 	PVT_PRICE_PREFIX = "privatePrice"
+	PRICE_SCALE      = 1000 // Scale for prices to avoid floating point precision issues
 )
 
 // PrivatePrice is an for-the-government-only price.
@@ -45,4 +48,11 @@ func (privPrice *PrivatePrice) DeleteFromWorldState(stub shim.ChaincodeStubInter
 
 func (privPrice *PrivatePrice) GetID() *[][]string {
 	return &[][]string{privPrice.BidID}
+}
+
+// String returns a string representation of the PrivatePrice.
+// It considers the price scale to format as floating point number.
+func (privPrice *PrivatePrice) String() string {
+	priceFloat := float64(privPrice.Price) / float64(PRICE_SCALE)
+	return fmt.Sprintf("PrivatePrice{Price: %.3f, BidID: %v}", priceFloat, privPrice.BidID)
 }
