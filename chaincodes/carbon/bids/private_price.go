@@ -54,5 +54,5 @@ func (privPrice *PrivatePrice) GetID() *[][]string {
 // It considers the price scale to format as floating point number.
 func (privPrice *PrivatePrice) String() string {
 	priceFloat := float64(privPrice.Price) / float64(PRICE_SCALE)
-	return fmt.Sprintf("PrivatePrice{Price: %.3f, BidID: %v}", priceFloat, privPrice.BidID)
+	return fmt.Sprintf("PrivatePrice{Price: %.2f, BidID: %v}", priceFloat, privPrice.BidID)
 }
