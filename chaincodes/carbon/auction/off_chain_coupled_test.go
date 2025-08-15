@@ -74,7 +74,6 @@ func calculateClearingPriceAndQuantityFloat(
 	// trueQuantity := nominalQuantity + nominalQuantity*mult
 
 	// Buyer pays both for the nominal quantity and for the seller's extra credits
-	// TODOHP: review the code below
 	buyerIsWillingToPayTotal := float64(buyBid.PrivatePrice.Price) * (nominalQuantity + nominalQuantity*mult/2)
 
 	// How much the seller receives for the nominal quantity
