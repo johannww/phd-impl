@@ -108,7 +108,6 @@ func RunCoupled(data *AuctionData) (*OffChainCoupledAuctionResult, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-// TODOHP: continue here
 // calculateClearingPriceAndQuantity calculates the clearing price and quantity for a pair of bids.
 // It considers the amount of extra credits the seller can provide based on the multiplier.
 // This is implemented according to the model described on our paper.
