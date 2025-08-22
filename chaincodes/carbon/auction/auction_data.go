@@ -85,6 +85,12 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 	}
 	a.Coupled = auctionType == AUCTION_COUPLED
 
+	//Get Policies
+	a.ActivePolicies, err = policies.GetActivePolicies(stub)
+	if err != nil && auctionType == AUCTION_COUPLED {
+		return fmt.Errorf("could not get active policies: %v", err)
+	}
+
 	// Get AuctionID
 	auctionIDBytes, err := stub.GetState(AUCTION_ID_KEY)
 	if err != nil || len(auctionIDBytes) == 0 {

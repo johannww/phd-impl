@@ -101,6 +101,24 @@ func SetActivePolicies(stub shim.ChaincodeStubInterface, activePolicies []Name) 
 	return stub.PutState(ACTIVE_POL_PREFIX, policyBytes)
 }
 
+func GetActivePolicies(stub shim.ChaincodeStubInterface) ([]Name, error) {
+	policyBytes, err := stub.GetState(ACTIVE_POL_PREFIX)
+	if err != nil {
+		return nil, fmt.Errorf("could not get active policies: %v", err)
+	}
+
+	if policyBytes == nil {
+		return nil, fmt.Errorf("no active policies found")
+	}
+
+	var activePolicies []Name
+	if err := json.Unmarshal(policyBytes, &activePolicies); err != nil {
+		return nil, fmt.Errorf("could not unmarshal active policies: %v", err)
+	}
+
+	return activePolicies, nil
+}
+
 func AppendActivePolicy(stub shim.ChaincodeStubInterface, policy Name) error {
 	if _, exists := DefinedPolicies[policy]; !exists {
 		return fmt.Errorf("policy %s is not coded in this chaincode", policy)
