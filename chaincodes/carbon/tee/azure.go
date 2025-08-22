@@ -2,10 +2,12 @@ package tee
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
@@ -64,6 +66,54 @@ func VerifyAuctionResultReportSignature(
 	verifies, err := report_verifier.VerifyReportSignatureJsonBytes(auctionReportJsonBytes)
 	if err != nil || !verifies {
 		return false, fmt.Errorf("could not verify TEE report signature: %v", err)
+	}
+
+	return true, nil
+}
+
+// TODO: Test
+func VerifyAuctionAppSignature(
+	stub shim.ChaincodeStubInterface,
+	resultBytes []byte,
+	signatureBytes []byte,
+	certificatePEM []byte,
+) (bool, error) {
+	pemBlock, _ := pem.Decode(certificatePEM) // decode the PEM certificate
+
+	if pemBlock.Type != "CERTIFICATE" || len(pemBlock.Headers) != 0 {
+		return false, fmt.Errorf("failed to decode PEM block containing certificate")
+	}
+
+	initialReportBytes, err := stub.GetState(INITIAL_TEE_REPORT)
+	if err != nil {
+		return false, fmt.Errorf("could not get initial TEE report: %v", err)
+	}
+	report := attest.SNPAttestationReport{}
+	err = json.Unmarshal(initialReportBytes, &report)
+	if err != nil {
+		return false, fmt.Errorf("could not unmarshal initial report: %v", err)
+	}
+
+	reportDataBytes, err := hex.DecodeString(report.ReportData)
+	if err != nil {
+		return false, fmt.Errorf("could not decode report data string as hex: %v", err)
+	}
+
+	if bytes.Compare(reportDataBytes, pemBlock.Bytes) != 0 {
+		return false, fmt.Errorf("report data does not match SHA512 of the provided certificate")
+	}
+
+	cert, err := x509.ParseCertificate(pemBlock.Bytes)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse certificate: %v", err)
+	}
+
+	verifies := ed25519.Verify(
+		cert.PublicKey.(ed25519.PublicKey),
+		resultBytes,
+		signatureBytes)
+	if !verifies {
+		return false, fmt.Errorf("could not verify TEE Application signature: %v", err)
 	}
 
 	return true, nil
