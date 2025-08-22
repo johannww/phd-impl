@@ -113,7 +113,7 @@ func RunCoupled(data *AuctionData) (*OffChainCoupledAuctionResult, error) {
 
 	}
 
-	return nil, fmt.Errorf("not implemented")
+	return result, nil
 }
 
 // calculateClearingPriceAndQuantity calculates the clearing price and quantity for a pair of bids.
