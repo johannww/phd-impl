@@ -13,7 +13,12 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
+const (
+	AUCTION_ID_KEY = "auctionID"
+)
+
 type AuctionData struct {
+	AuctionID      uint64                        `json:"auctionID"`
 	SellBids       []*bids.SellBid               `json:"sellBids"`
 	BuyBids        []*bids.BuyBid                `json:"buyBids"`
 	ActivePolicies []policies.Name               `json:"activePolicies"`
@@ -80,6 +85,15 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 	}
 	a.Coupled = auctionType == AUCTION_COUPLED
 
+	// Get AuctionID
+	auctionIDBytes, err := stub.GetState(AUCTION_ID_KEY)
+	if err != nil || len(auctionIDBytes) == 0 {
+		return fmt.Errorf("could not get auction ID: %v", err)
+	}
+	if err = json.Unmarshal(auctionIDBytes, &a.AuctionID); err != nil {
+		return fmt.Errorf("could not unmarshal auction ID: %v", err)
+	}
+
 	return err
 
 }
@@ -96,4 +110,32 @@ func (a *AuctionData) ToSerializedAuctionData() (*SerializedAuctionData, error) 
 	serializedAuctionData.AuctionDataBytes = auctionDataBytes
 
 	return serializedAuctionData, nil
+}
+
+func IncrementAuctionID(stub shim.ChaincodeStubInterface) (uint64, error) {
+	var auctionID uint64 = 0
+
+	auctionIDBytes, err := stub.GetState(AUCTION_ID_KEY)
+	if err != nil {
+		return 0, fmt.Errorf("could not get auction ID: %v", err)
+	}
+
+	if len(auctionIDBytes) > 0 {
+		if err = json.Unmarshal(auctionIDBytes, &auctionID); err != nil {
+			return 0, fmt.Errorf("could not unmarshal auction ID: %v", err)
+		}
+	}
+
+	auctionID++
+
+	auctionIDBytes, err = json.Marshal(auctionID)
+	if err != nil {
+		return 0, fmt.Errorf("could not marshal new auction ID: %v", err)
+	}
+
+	if err = stub.PutState(AUCTION_ID_KEY, auctionIDBytes); err != nil {
+		return 0, fmt.Errorf("could not put new auction ID: %v", err)
+	}
+
+	return auctionID, nil
 }

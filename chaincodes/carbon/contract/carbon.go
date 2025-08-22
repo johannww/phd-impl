@@ -77,11 +77,18 @@ func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionCont
 // Thus, private data is not shared with the world state.
 // To retrieve the auction data, use RetrieveDataForTEEAuction instead.
 func (c *CarbonContract) CommitDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) error {
+	auctionID, err := auction.IncrementAuctionID(ctx.GetStub())
+	if err != nil {
+		return fmt.Errorf("could not increment auction ID: %v", err)
+	}
+
 	auctionData := &auction.AuctionData{}
-	err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
+	err = auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
 	if err != nil {
 		return fmt.Errorf("could not retrieve auction data: %v", err)
 	}
+
+	auctionData.AuctionID = auctionID
 
 	serializedAD, err := auctionData.ToSerializedAuctionData()
 	if err != nil {
