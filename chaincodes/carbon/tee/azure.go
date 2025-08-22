@@ -61,7 +61,7 @@ func VerifyAuctionResultReportSignature(
 		return false, fmt.Errorf("could not decode report data string as hex: %v", err)
 	}
 
-	if bytes.Compare(reportDataBytes, expectedResultHash[:]) != 0 {
+	if bytes.Equal(reportDataBytes, expectedResultHash[:]) {
 		return false, fmt.Errorf("report data does not match expected result hash")
 	}
 
@@ -96,7 +96,7 @@ func VerifyAuctionAppSignature(
 	}
 
 	certHash := sha512.Sum512(certDer)
-	if bytes.Compare(reportDataBytes, certHash[:]) != 0 {
+	if bytes.Equal(reportDataBytes, certHash[:]) {
 		return false, fmt.Errorf("report data does not match SHA512 of the provided certificate")
 	}
 
