@@ -11,6 +11,7 @@ import (
 // It contains matched bids and adjusted sell and buy bids.
 // This will be consumed by the chaincode to update the world state.
 type OffChainIndepAuctionResult struct {
+	AuctionID       uint64             `json:"auctionID"`
 	MatchedBids     []*bids.MatchedBid `json:"matchedBids"`
 	AdustedSellBids []*bids.SellBid    `json:"adjustedSellBids"`
 	AdustedBuyBids  []*bids.BuyBid     `json:"adjustedBuyBids"`
@@ -75,6 +76,7 @@ func RunIndependent(data *AuctionData) (*OffChainIndepAuctionResult, error) {
 	}
 
 	return &OffChainIndepAuctionResult{
+		AuctionID:       data.AuctionID,
 		MatchedBids:     matchedBids,
 		AdustedSellBids: sellBids[:lastMatch[0]+1],
 		AdustedBuyBids:  buyBids[:lastMatch[1]+1],

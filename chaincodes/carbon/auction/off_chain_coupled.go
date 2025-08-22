@@ -12,6 +12,7 @@ import (
 // It contains the public and private part of the matched bids.
 // WARN: MatchedBidsPrivate must be sent as TransientData to avoid leaking private information.
 type OffChainCoupledAuctionResult struct {
+	AuctionID          uint64             `json:"auctionID"`
 	MatchedBidsPublic  []*bids.MatchedBid `json:"matchedBidsPublic"`
 	MatchedBidsPrivate []*bids.MatchedBid `json:"matchedBidsPrivate"`
 }
@@ -28,7 +29,9 @@ type Multiplier struct {
 // TODO: implement
 func RunCoupled(data *AuctionData) (*OffChainCoupledAuctionResult, error) {
 
-	result := &OffChainCoupledAuctionResult{}
+	result := &OffChainCoupledAuctionResult{
+		AuctionID: data.AuctionID,
+	}
 
 	// Based on the model from the paper
 	// 1. Calculate multipliers for all bid pairs
