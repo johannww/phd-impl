@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
