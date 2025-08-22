@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/ed25519"
 	"crypto/sha256"
+	"crypto/sha512"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -47,7 +49,8 @@ func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes
 
 func VerifyAuctionResultReportSignature(
 	auctionReportJsonBytes []byte,
-	expectedResultHash []byte) (bool, error) {
+	expectedResult []byte) (bool, error) {
+	expectedResultHash := sha512.Sum512(expectedResult)
 	report := attest.SNPAttestationReport{}
 	err := json.Unmarshal(auctionReportJsonBytes, &report)
 	if err != nil {
@@ -59,7 +62,7 @@ func VerifyAuctionResultReportSignature(
 		return false, fmt.Errorf("could not decode report data string as hex: %v", err)
 	}
 
-	if bytes.Compare(reportDataBytes, expectedResultHash) != 0 {
+	if bytes.Compare(reportDataBytes, expectedResultHash[:]) != 0 {
 		return false, fmt.Errorf("report data does not match expected result hash")
 	}
 
