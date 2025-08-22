@@ -3,6 +3,7 @@ package auction
 import (
 	"crypto/ed25519"
 	"crypto/sha512"
+	"encoding/json"
 	"fmt"
 
 	cc_auction "github.com/johannww/phd-impl/chaincodes/carbon/auction"
@@ -14,7 +15,8 @@ type AuctionResultTEE struct {
 }
 
 type SerializedAuctionResultTEE struct {
-	// ResultBytes is a serialized
+	// ResultBytes is a serialized OffChainIndepAuctionResult
+	// Or OffChainCoupledAuctionResult
 	ResultBytes []byte `json:"resultBytes"`
 	// AmdReportBytes is a serialized &attest.SNPAttestationReport{}
 	AmdReportBytes []byte `json:"reportBytes"`
@@ -40,10 +42,9 @@ func RunTEEAuction(
 	}
 
 	// Run the auction
-	if auctionData.Coupled {
-		cc_auction.RunCoupled(auctionData)
-	} else {
-		cc_auction.RunIndependent(auctionData)
+	result.ResultBytes, err = runAuctionFunction(auctionData)
+	if err != nil {
+		return nil, fmt.Errorf("could not run auction function: %v", err)
 	}
 
 	// get report on the results
@@ -52,8 +53,34 @@ func RunTEEAuction(
 		return nil, err
 	}
 
+	err = result.setAppSignature(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
 	return result, nil
 
+}
+
+func runAuctionFunction(auctionData *cc_auction.AuctionData) ([]byte, error) {
+	var errAuction, err error
+	var coupledRes *cc_auction.OffChainCoupledAuctionResult
+	var indepRes *cc_auction.OffChainIndepAuctionResult
+	var resultBytes []byte
+
+	if auctionData.Coupled {
+		coupledRes, errAuction = cc_auction.RunCoupled(auctionData)
+		resultBytes, err = json.Marshal(coupledRes)
+	} else {
+		indepRes, errAuction = cc_auction.RunIndependent(auctionData)
+		resultBytes, err = json.Marshal(indepRes)
+	}
+
+	if err != nil || errAuction != nil {
+		return nil, fmt.Errorf("could not run auction: %v, %v", err, errAuction)
+	}
+
+	return resultBytes, nil
 }
 
 func (result *SerializedAuctionResultTEE) setHardwareSignature() error {
