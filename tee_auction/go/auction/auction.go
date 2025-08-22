@@ -10,9 +10,9 @@ import (
 	"github.com/johannww/phd-impl/tee_auction/go/report"
 )
 
-type AuctionResultTEE struct {
-	matched
-}
+// type AuctionResultTEE struct {
+// 	matched
+// }
 
 type SerializedAuctionResultTEE struct {
 	// ResultBytes is a serialized OffChainIndepAuctionResult
