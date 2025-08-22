@@ -41,6 +41,10 @@ func (data *TestData) SaveToWorldState(stub shim.ChaincodeStubInterface) {
 	saveToWorldState(stub, data.TokenWallets)
 	saveToWorldState(stub, data.SellBids)
 	saveToWorldState(stub, data.BuyBids)
+	if len(data.Policies) > 0 {
+		err := policies.SetActivePolicies(stub, data.Policies)
+		panicOnError(err)
+	}
 }
 
 func (data *TestData) CompaniesIdentities() (companiesIds []string) {
