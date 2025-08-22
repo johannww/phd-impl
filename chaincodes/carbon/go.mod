@@ -83,3 +83,5 @@ replace github.com/hyperledger/fabric-gateway v1.7.1 => github.com/johannww/fabr
 
 // NOTE: This is temporary until microsoft fixes serialization
 replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-989d452c4c7e => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91
+
+replace	github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693 => ../../tee_auction/go
