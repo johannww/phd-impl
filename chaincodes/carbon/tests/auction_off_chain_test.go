@@ -120,7 +120,10 @@ func retriveAuctionDataFromWorldState(
 	stub.MockTransactionStart(txID)
 	stub.Creator = (*testData.Identities)[identities.PriceViewer]
 	auctionData := &auction.AuctionData{}
-	err := auctionData.RetrieveData(stub, issueEnd)
+	auctionID, err := auction.IncrementAuctionID(stub)
+	require.NoError(t, err, "Failed to increment auction ID")
+	err = auctionData.RetrieveData(stub, issueEnd)
+	auctionData.AuctionID = auctionID
 	stub.MockTransactionEnd(txID)
 	require.NoError(t, err, "Failed to retrieve auction data")
 	return auctionData
