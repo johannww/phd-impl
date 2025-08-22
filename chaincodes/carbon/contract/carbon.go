@@ -11,6 +11,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
+	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
 )
 
 type CarbonContract struct {
@@ -120,6 +121,15 @@ func (c *CarbonContract) RetrieveDataForTEEAuction(ctx contractapi.TransactionCo
 	}
 
 	return serializedAD, err
+}
+
+// TODOHP: implement TEE auction verification
+func (c *CarbonContract) PublishTEEAuctionResults(
+	ctx contractapi.TransactionContextInterface,
+	serializedResults *tee_auction.SerializedAuctionResultTEE,
+) error {
+	panic("Not Implemented Yet")
+	return nil
 }
 
 func (c *CarbonContract) CheckCredAttr(ctx contractapi.TransactionContextInterface, attrName string) (string, error) {
