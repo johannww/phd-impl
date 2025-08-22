@@ -24,7 +24,7 @@ func TestOffChainIndependentAuction(t *testing.T) {
 	testData.SaveToWorldState(stub)
 	stub.MockTransactionEnd("tx1")
 
-	setAuctionType(t, stub, "tx2")
+	setAuctionType(t, stub, auction.AUCTION_INDEPENDENT, "tx2")
 
 	auctionData := retriveAuctionDataFromWorldState(t, stub, issueEnd, testData, "tx3")
 
@@ -52,7 +52,7 @@ func TestOffChainIndependentAuctionWithRandomBids(t *testing.T) {
 	testData.SaveToWorldState(stub)
 	stub.MockTransactionEnd("tx1")
 
-	setAuctionType(t, stub, "tx2")
+	setAuctionType(t, stub, auction.AUCTION_INDEPENDENT, "tx2")
 
 	auctionData := retriveAuctionDataFromWorldState(t, stub, issueEnd, testData, "tx3")
 
@@ -104,9 +104,8 @@ func genTestDataAndStub() (*mocks.MockStub, *utils_test.TestData) {
 	return stub, testData
 }
 
-func setAuctionType(t *testing.T, stub *mocks.MockStub, txID string) {
+func setAuctionType(t *testing.T, stub *mocks.MockStub, auctionType auction.AuctionType, txID string) {
 	stub.MockTransactionStart(txID)
-	var auctionType auction.AuctionType = auction.AUCTION_INDEPENDENT
 	err := auctionType.ToWorldState(stub)
 	stub.MockTransactionEnd(txID)
 	require.NoError(t, err, "Failed to set auction type in world state")
