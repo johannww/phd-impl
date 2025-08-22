@@ -33,6 +33,11 @@ func RunCoupled(data *AuctionData) (*OffChainCoupledAuctionResult, error) {
 		AuctionID: data.AuctionID,
 	}
 
+	// data.ActivePolicies
+	if len(data.ActivePolicies) == 0 {
+		return nil, fmt.Errorf("no active policies found for auction %d", data.AuctionID)
+	}
+
 	// Based on the model from the paper
 	// 1. Calculate multipliers for all bid pairs
 	multArray := make([]*Multiplier, len(data.SellBids)*len(data.BuyBids))
