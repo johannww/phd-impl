@@ -18,7 +18,9 @@ type AuctionServer struct {
 
 var db = map[string]string{}
 
-func (server *AuctionServer) SetupRouter(privateKey ed25519.PrivateKey) *gin.Engine {
+func (server *AuctionServer) SetupRouter(
+	privateKey ed25519.PrivateKey,
+	certDer []byte) *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.Default()
@@ -48,7 +50,7 @@ func (server *AuctionServer) SetupRouter(privateKey ed25519.PrivateKey) *gin.Eng
 	})
 
 	r.POST("/auction", func(c *gin.Context) {
-		handlers.Auction(c, privateKey)
+		handlers.Auction(c, privateKey, certDer)
 	})
 
 	// Get user value

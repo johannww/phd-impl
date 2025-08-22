@@ -9,7 +9,7 @@ import (
 	"github.com/johannww/phd-impl/tee_auction/go/auction"
 )
 
-func Auction(c *gin.Context, privateKey ed25519.PrivateKey) {
+func Auction(c *gin.Context, privateKey ed25519.PrivateKey, certDer []byte) {
 	// Get the user name and value from the request body
 	dataBytes, err := c.GetRawData()
 	if err != nil {
@@ -29,5 +29,6 @@ func Auction(c *gin.Context, privateKey ed25519.PrivateKey) {
 		c.JSON(500, gin.H{"error": "Failed to run auction: " + err.Error()})
 		return
 	}
+	auctionResult.TEECertDer = certDer
 	c.JSON(200, auctionResult)
 }

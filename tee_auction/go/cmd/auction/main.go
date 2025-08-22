@@ -43,7 +43,7 @@ func main() {
 	auctionServer := &api.AuctionServer{
 		ReportBytes: reportBytes,
 	}
-	router := auctionServer.SetupRouter(priv)
+	router := auctionServer.SetupRouter(priv, certBytes)
 	// err = http.ListenAndServe(":8080", router)
 	err = http.ListenAndServeTLS(":8080", certFileName, privKeyFileName, router)
 	if err != nil {
