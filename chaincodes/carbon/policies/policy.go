@@ -39,8 +39,8 @@ const (
 
 // TODO: add the actual implementations of the policies
 var DefinedPolicies = map[Name]PolicyFunc{
-	DISTANCE:       nil,
-	WIND_DIRECTION: nil,
+	DISTANCE:       DistancePolicy,
+	WIND_DIRECTION: WindPolicy,
 	VEGETATION:     nil,
 	AUDIT_METHOD:   nil,
 	TEMPERATURE:    nil,
