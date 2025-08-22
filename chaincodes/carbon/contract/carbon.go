@@ -128,6 +128,14 @@ func (c *CarbonContract) PublishTEEAuctionResults(
 	ctx contractapi.TransactionContextInterface,
 	serializedResults *tee_auction.SerializedAuctionResultTEE,
 ) error {
+	tee.VerifyAuctionResultReportSignature(serializedResults.AmdReportBytes,
+		serializedResults.ResultBytes)
+
+	tee.VerifyAuctionAppSignature(ctx.GetStub(),
+		serializedResults.ResultBytes,
+		serializedResults.AppSignature,
+		serializedResults.TEECertDer)
+
 	panic("Not Implemented Yet")
 	return nil
 }

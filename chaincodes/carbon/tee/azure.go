@@ -79,14 +79,8 @@ func VerifyAuctionAppSignature(
 	stub shim.ChaincodeStubInterface,
 	resultBytes []byte,
 	signatureBytes []byte,
-	certificatePEM []byte,
+	certDer []byte,
 ) (bool, error) {
-	pemBlock, _ := pem.Decode(certificatePEM) // decode the PEM certificate
-
-	if pemBlock.Type != "CERTIFICATE" || len(pemBlock.Headers) != 0 {
-		return false, fmt.Errorf("failed to decode PEM block containing certificate")
-	}
-
 	initialReportBytes, err := stub.GetState(INITIAL_TEE_REPORT)
 	if err != nil {
 		return false, fmt.Errorf("could not get initial TEE report: %v", err)
@@ -102,11 +96,12 @@ func VerifyAuctionAppSignature(
 		return false, fmt.Errorf("could not decode report data string as hex: %v", err)
 	}
 
-	if bytes.Compare(reportDataBytes, pemBlock.Bytes) != 0 {
+	certHash := sha512.Sum512(certDer)
+	if bytes.Compare(reportDataBytes, certHash[:]) != 0 {
 		return false, fmt.Errorf("report data does not match SHA512 of the provided certificate")
 	}
 
-	cert, err := x509.ParseCertificate(pemBlock.Bytes)
+	cert, err := x509.ParseCertificate(certDer)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse certificate: %v", err)
 	}
