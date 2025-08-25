@@ -6,6 +6,13 @@ import (
 
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
+	// "github.com/quagmt/udecimal"
+)
+
+const (
+	// QUANTITY_SCALE to enhance precision of the
+	// calculateClearingPriceAndQuantity function
+	QUANTITY_SCALE = 1000
 )
 
 // OffChainCoupledAuctionResult holds the result of an off-chain coupled auction.
@@ -130,19 +137,22 @@ func calculateClearingPriceAndQuantity(
 	}
 
 	quantity := min(sellBid.Quantity, buyBid.AskQuantity)
-	maxExtraQuantity := quantity * mult / policies.MULTPLIER_SCALE
+	// Scale quantity to enhance precision
+	scaledQuantity := quantity * QUANTITY_SCALE
+	buyBidScaledQuantity := buyBid.AskQuantity * QUANTITY_SCALE
+	maxExtraQuantity := scaledQuantity * mult / policies.MULTPLIER_SCALE
 
-	acquirableQuantity := quantity + maxExtraQuantity
+	acquirableQuantity := scaledQuantity + maxExtraQuantity
 
 	var toBeAcquired int64
-	if buyBid.AskQuantity >= acquirableQuantity {
-		toBeAcquired = quantity
+	if buyBidScaledQuantity >= acquirableQuantity {
+		toBeAcquired = scaledQuantity
 	} else {
 		// toBeAcquired = buyBid.AskQuantity / (1 + mult)
 		// toBeAcquired + toBeAcquired*(mult/MULTPLIER_SCALE) = buyBid.AskQuantity
 		// toBeAcquired = buyBid.AskQuantity / (1 + mult/policies.MULTPLIER_SCALE)
 		// Re-writing the denominator:
-		toBeAcquired = buyBid.AskQuantity * policies.MULTPLIER_SCALE / (policies.MULTPLIER_SCALE + mult)
+		toBeAcquired = buyBidScaledQuantity * policies.MULTPLIER_SCALE / (policies.MULTPLIER_SCALE + mult)
 	}
 
 	nominalQuantity := toBeAcquired
@@ -160,7 +170,7 @@ func calculateClearingPriceAndQuantity(
 	}
 
 	Cp = (sellBid.PrivatePrice.Price + buyerIsWillingToPayPerNominalQuantity) / 2
-	Cq = nominalQuantity
+	Cq = nominalQuantity / QUANTITY_SCALE
 
 	return Cp, Cq, true
 }
