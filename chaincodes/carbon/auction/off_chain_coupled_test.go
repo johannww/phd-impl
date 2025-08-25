@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
+	"github.com/johannww/phd-impl/chaincodes/carbon/common"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/quagmt/udecimal"
 )
@@ -16,7 +17,7 @@ func TestCalculateClearingPrice(t *testing.T) {
 	floatingPrice := int64(10)
 	fixedPointScale := int64(bids.PRICE_SCALE)
 	fixedPointPrice := floatingPrice * fixedPointScale
-	bidQuantity := int64(1000)
+	bidQuantity := int64(1000) * common.QUANTITY_SCALE
 
 	sellBid := &bids.SellBid{
 		// Initialize with test data

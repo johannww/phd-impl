@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
+	"github.com/johannww/phd-impl/chaincodes/carbon/common"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	// "github.com/quagmt/udecimal"
 )
@@ -131,6 +132,10 @@ func calculateClearingPriceAndQuantity(
 	}
 
 	quantity := min(sellBid.Quantity, buyBid.AskQuantity)
+	if quantity < common.QUANTITY_SCALE {
+		return 0, 0, false // Minimum quantity is 1 unit
+	}
+
 	maxExtraQuantity := quantity * mult / policies.MULTIPLIER_SCALE
 
 	acquirableQuantity := quantity + maxExtraQuantity
