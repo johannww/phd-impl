@@ -39,7 +39,8 @@ verify-policy-image-layers:
 	go run cmd/dmverity-vhd/main.go -d roothash -i $(REGISTRY)/carbon_auction:latest; \
 	cd ../..; \
 	echo "Policy FS layers:"; \
-	az confcom acipolicygen -a ./azure/arm_template.json --outraw-pretty-print 2>/dev/null | grep -A 3 "layers"
+	container_info=$$(az confcom acipolicygen -a ./azure/arm_template.json --outraw 2> /dev/null | grep "^containers :="); \
+	echo "$$container_info" | awk -F':=' '{print $$2}' | jq '.[0].layers'
 
 verify-report-policy:
 	./azure/scripts/create/get-and-verify-report.sh
