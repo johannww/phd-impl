@@ -172,5 +172,9 @@ func calculateClearingPriceAndQuantity(
 	Cp = (sellBid.PrivatePrice.Price + buyerIsWillingToPayPerNominalQuantity) / 2
 	Cq = nominalQuantity / QUANTITY_SCALE
 
+	if Cq == 0 {
+		return 0, 0, false
+	}
+
 	return Cp, Cq, true
 }
