@@ -7,7 +7,7 @@ echo $REPORT
 
 echo $REPORT > report.json # save the report
 
-echo $REPORT | jq '.report_data' | xargs -I{} echo 'The first 32 bytes are the container ed25519 public key: {}'
+echo $REPORT | jq '.report_data' | xargs -I{} echo 'The sha512 sum of the TEE self-signed certificate is: {}'
 
 # Check the base64 report
 REPORT=$(curl -k https://$CONTAINER_IP:8080/reportb64)
