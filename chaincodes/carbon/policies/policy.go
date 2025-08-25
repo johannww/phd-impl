@@ -11,7 +11,7 @@ import (
 
 const (
 	ACTIVE_POL_PREFIX = "activePolicies"
-	MULTPLIER_SCALE   = 1000 // Scale for multipliers to avoid floating point precision issues
+	MULTIPLIER_SCALE  = 1000 // Scale for multipliers to avoid floating point precision issues
 	MULTIPLIER_MIN    = 0    // Minimum multiplier value adjusted to the scale
 	MULTIPLIER_MAX    = 2000 // Maximum multiplier value adjusted to the scale
 )
@@ -65,7 +65,7 @@ func MintCoupledMult(input *PolicyInput, activePolicies []Name) (int64, error) {
 			}
 			// Multiplier represents the extra quantity that can be acquired.
 			// Since we have the integer scale, we do the following transformation:
-			mult = ((mult + MULTPLIER_SCALE) * (policyFunc(input) + MULTPLIER_SCALE) / MULTPLIER_SCALE) - MULTPLIER_SCALE
+			mult = ((mult + MULTIPLIER_SCALE) * (policyFunc(input) + MULTIPLIER_SCALE) / MULTIPLIER_SCALE) - MULTIPLIER_SCALE
 			mult = boundMult(mult)
 		} else {
 			return 0, fmt.Errorf("policy %s is not defined", policy)

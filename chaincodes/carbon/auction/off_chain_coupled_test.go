@@ -43,7 +43,7 @@ func TestCalculateClearingPrice(t *testing.T) {
 	sellBid.PrivatePrice.Price = floatingPrice
 	buyBid.PrivatePrice.Price = floatingPrice
 
-	priceFloat, quantityFloat, hasClearing := calculateClearingPriceAndQuantityFloat(sellBid, buyBid, float64(multiplier)/float64(policies.MULTPLIER_SCALE))
+	priceFloat, quantityFloat, hasClearing := calculateClearingPriceAndQuantityFloat(sellBid, buyBid, float64(multiplier)/float64(policies.MULTIPLIER_SCALE))
 	t.Log("Clearing Price:", priceFloat, "Clearing Quantity:", quantityFloat, "Has Clearing Price:", hasClearing)
 	t.Fatal("TestCalculateClearingPrice not implemented yet")
 }
@@ -64,8 +64,8 @@ func calculateClearingPriceAndQuantityFloat(
 		toBeAcquired = quantity
 	} else {
 		// toBeAcquired = buyBid.AskQuantity / (1 + mult)
-		// toBeAcquired + toBeAcquired*(mult/MULTPLIER_SCALE) = buyBid.AskQuantity
-		// toBeAcquired = buyBid.AskQuantity / (1 + mult/policies.MULTPLIER_SCALE)
+		// toBeAcquired + toBeAcquired*(mult/MULTIPLIER_SCALE) = buyBid.AskQuantity
+		// toBeAcquired = buyBid.AskQuantity / (1 + mult/policies.MULTIPLIER_SCALE)
 		// Re-writing the denominator:
 		toBeAcquired = float64(buyBid.AskQuantity) / (1 + mult)
 	}
@@ -96,7 +96,7 @@ func calculateClearingPriceAndQuantityUdecimal(
 
 	quantity := udecimal.MustFromInt64(min(sellBid.Quantity, buyBid.AskQuantity), 0)
 	multiplier := udecimal.MustFromInt64(mult, 0)
-	multiplierScale := udecimal.MustFromInt64(policies.MULTPLIER_SCALE, 0)
+	multiplierScale := udecimal.MustFromInt64(policies.MULTIPLIER_SCALE, 0)
 
 	maxExtraQuantity, _ := quantity.Mul(multiplier).Div(multiplierScale)
 	acquirableQuantity := quantity.Add(maxExtraQuantity)

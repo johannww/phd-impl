@@ -107,7 +107,7 @@ func RunCoupled(data *AuctionData) (*OffChainCoupledAuctionResult, error) {
 			},
 			PrivateMultiplier: &bids.PrivateMultiplier{
 				MatchingID: (*matchedBidPublic.GetID())[0],
-				Scale:      policies.MULTPLIER_SCALE,
+				Scale:      policies.MULTIPLIER_SCALE,
 				Value:      mult.Value,
 			},
 		}
@@ -140,7 +140,7 @@ func calculateClearingPriceAndQuantity(
 	// Scale quantity to enhance precision
 	scaledQuantity := quantity * QUANTITY_SCALE
 	buyBidScaledQuantity := buyBid.AskQuantity * QUANTITY_SCALE
-	maxExtraQuantity := scaledQuantity * mult / policies.MULTPLIER_SCALE
+	maxExtraQuantity := scaledQuantity * mult / policies.MULTIPLIER_SCALE
 
 	acquirableQuantity := scaledQuantity + maxExtraQuantity
 
@@ -149,10 +149,10 @@ func calculateClearingPriceAndQuantity(
 		toBeAcquired = scaledQuantity
 	} else {
 		// toBeAcquired = buyBid.AskQuantity / (1 + mult)
-		// toBeAcquired + toBeAcquired*(mult/MULTPLIER_SCALE) = buyBid.AskQuantity
-		// toBeAcquired = buyBid.AskQuantity / (1 + mult/policies.MULTPLIER_SCALE)
+		// toBeAcquired + toBeAcquired*(mult/MULTIPLIER_SCALE) = buyBid.AskQuantity
+		// toBeAcquired = buyBid.AskQuantity / (1 + mult/policies.MULTIPLIER_SCALE)
 		// Re-writing the denominator:
-		toBeAcquired = buyBidScaledQuantity * policies.MULTPLIER_SCALE / (policies.MULTPLIER_SCALE + mult)
+		toBeAcquired = buyBidScaledQuantity * policies.MULTIPLIER_SCALE / (policies.MULTIPLIER_SCALE + mult)
 	}
 
 	nominalQuantity := toBeAcquired
@@ -160,7 +160,7 @@ func calculateClearingPriceAndQuantity(
 
 	// Buyer pays both for the nominal quantity and for the seller's extra credits
 	// Expression adjusted for fixed point representation:
-	buyerIsWillingToPayTotal := buyBid.PrivatePrice.Price * (nominalQuantity + nominalQuantity*mult/(2*policies.MULTPLIER_SCALE))
+	buyerIsWillingToPayTotal := buyBid.PrivatePrice.Price * (nominalQuantity + nominalQuantity*mult/(2*policies.MULTIPLIER_SCALE))
 
 	// How much the seller receives for the nominal quantity
 	buyerIsWillingToPayPerNominalQuantity := buyerIsWillingToPayTotal / nominalQuantity

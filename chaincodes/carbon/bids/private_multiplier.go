@@ -14,7 +14,7 @@ const (
 type PrivateMultiplier struct {
 	MatchingID []string `json:"matchingID"` // This could be (Sell|Buy)bid or also MatchedBid
 	Scale      int64    `json:"scale"`      // The scale factor for the multiplier
-	Value      int64    `json:"multiplier"` // The multiplier value, scaled by MULTPLIER_SCALE
+	Value      int64    `json:"multiplier"` // The multiplier value, scaled by MULTIPLIER_SCALE
 }
 
 var _ state.WorldStateManager = (*PrivateMultiplier)(nil)
