@@ -1,16 +1,6 @@
 # Under development
 
 I can re-use modules and data from "github.com/johannww/phd-impl/chaincodes/carbon" and my Microsoft Confidential Container experiments [link](https://github.com/johannww/ubuntu-learning/blob/c79ef19b5f794e165b5ad1df2ca365b92516c3b5/crypto/azure_tee/README.md#L34)
-## TODO
-
-I also could use [fabric private chaincodes](https://github.com/hyperledger/fabric-private-chaincode/tree/main/samples) that use Intel SGX
-
-IMPORTANT: sgx has a series of known vulnerabilities (https://sgx.fail/)
-
-Perhaps my idea of using an amd sev is better.
-
-These articles reference it: https://ieeexplore.ieee.org/document/10628912 and 
-https://ieeexplore.ieee.org/abstract/document/9049585
 
 # Setup
 
@@ -113,3 +103,10 @@ go run ./cmd/report_verifier --reportJsonPath ../report.json
 ```bash
 make verify-policy-image-layers
 ```
+
+# Alternative to OUR solution
+
+I also could have used [fabric private chaincodes](https://github.com/hyperledger/fabric-private-chaincode/tree/main/samples) that take advantage of Intel SGX. However, sgx has a series of known vulnerabilities (https://sgx.fail/). In that sense, AMD SEV-SNP seems to be a more robust solution.
+
+These articles reference it: https://ieeexplore.ieee.org/document/10628912 and 
+https://ieeexplore.ieee.org/abstract/document/9049585
