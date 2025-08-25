@@ -53,7 +53,7 @@ func MintIndependentMult(chunk *properties.PropertyChunk) int64 {
 
 // TODO: Review
 func MintCoupledMult(input *PolicyInput, activePolicies []Name) (int64, error) {
-	mult := int64(1)
+	mult := int64(0)
 	for _, policy := range activePolicies {
 		if !isCoupledPolicy(policy) {
 			continue // skip independent policies
