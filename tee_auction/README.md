@@ -116,6 +116,12 @@ go run ./cmd/report_verifier --reportJsonPath ../report.json
 make verify-policy-image-layers
 ```
 
+## Verifying that the CCE policy on arm_template matches the report
+
+```bash
+make verify-report-policy
+```
+
 # Alternative to OUR solution
 
 I also could have used [fabric private chaincodes](https://github.com/hyperledger/fabric-private-chaincode/tree/main/samples) that take advantage of Intel SGX. However, sgx has a series of known vulnerabilities (https://sgx.fail/). In that sense, AMD SEV-SNP seems to be a more robust solution.

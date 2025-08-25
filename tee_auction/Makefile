@@ -40,3 +40,6 @@ verify-policy-image-layers:
 	cd ../..; \
 	echo "Policy FS layers:"; \
 	az confcom acipolicygen -a ./azure/arm_template.json --outraw-pretty-print 2>/dev/null | grep -A 3 "layers"
+
+verify-report-policy:
+	./azure/scripts/create/get-and-verify-report.sh
