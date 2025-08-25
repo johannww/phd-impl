@@ -1,12 +1,10 @@
 module github.com/johannww/phd-impl/chaincodes/carbon
 
-go 1.24.3
-
-toolchain go1.24.4
+go 1.24.4
 
 require (
 	github.com/IBM/idemix v0.0.0-20250313153527-832db18b9478
-	github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-989d452c4c7e
+	github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250820140128-4814b442cf71
 	github.com/golang/protobuf v1.5.4
 	github.com/hyperledger/fabric-chaincode-go/v2 v2.0.0
 	github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0
@@ -82,6 +80,6 @@ replace github.com/hyperledger/fabric-chaincode-go/v2 v2.0.0 => github.com/johan
 replace github.com/hyperledger/fabric-gateway v1.7.1 => github.com/johannww/fabric-gateway v0.0.0-20250527175102-91efdaca92d8
 
 // NOTE: This is temporary until microsoft fixes serialization
-replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-989d452c4c7e => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91
+// replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-4814b442cf71 => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91
 
 replace	github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693 => ../../tee_auction/go

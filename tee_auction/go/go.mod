@@ -1,9 +1,11 @@
 module github.com/johannww/phd-impl/tee_auction/go
 
-go 1.24.3
+go 1.24.4
+
+toolchain go1.24.6
 
 require (
-	github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-989d452c4c7e
+	github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250820140128-4814b442cf71
 	github.com/gin-gonic/gin v1.10.1
 	github.com/johannww/phd-impl/chaincodes/carbon v0.0.0-20250616214325-7ee2a7b80f6b
 	github.com/spf13/pflag v1.0.6
@@ -30,7 +32,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
-	github.com/lestrrat-go/blackmagic v1.0.3 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/jwx v1.2.31 // indirect
@@ -47,15 +49,15 @@ require (
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
-	github.com/ugorji/go/codec v1.2.14 // indirect
+	github.com/ugorji/go/codec v1.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/arch v0.17.0 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
+	golang.org/x/arch v0.18.0 // indirect
+	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
-	google.golang.org/grpc v1.72.2 // indirect
+	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
@@ -63,4 +65,4 @@ require (
 replace github.com/johannww/phd-impl/chaincodes/carbon v0.0.0-20250616214325-7ee2a7b80f6b => ../../chaincodes/carbon
 
 // NOTE: This is temporary until microsoft fixes serialization
-replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250521161531-e3e00a1a216a => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91
+// replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250521161531-e3e00a1a216a => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91
