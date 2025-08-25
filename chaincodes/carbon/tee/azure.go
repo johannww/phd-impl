@@ -141,6 +141,11 @@ func verifyCCEPolicy(stub shim.ChaincodeStubInterface, report attest.SNPAttestat
 	return nil
 }
 
+// ExpectedCCEPolicyToWorldState stores the expected CCE policy in the world state.
+// In the azure ARM template, the CCE policy is base64 and stays in the json path:
+// .resources[0].properties.confidentialComputeProperties.ccePolicy
+// The CCE policy contains information about the docker image being run in the TEE.
+// From the CCE policy, it is possible to identify the docker image.
 func ExpectedCCEPolicyToWorldState(stub shim.ChaincodeStubInterface, base64CcePolicy string) error {
 	if err := stub.PutState(CCE_POLICY, []byte(base64CcePolicy)); err != nil {
 
