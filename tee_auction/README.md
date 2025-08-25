@@ -1,6 +1,6 @@
-# Under development
+# Azure as TEE for the private Auction
 
-I can re-use modules and data from "github.com/johannww/phd-impl/chaincodes/carbon" and my Microsoft Confidential Container experiments [link](https://github.com/johannww/ubuntu-learning/blob/c79ef19b5f794e165b5ad1df2ca365b92516c3b5/crypto/azure_tee/README.md#L34)
+I re-used modules and data from "github.com/johannww/phd-impl/chaincodes/carbon" and my Microsoft Confidential Container experiments [link](https://github.com/johannww/ubuntu-learning/blob/c79ef19b5f794e165b5ad1df2ca365b92516c3b5/crypto/azure_tee/README.md#L34)
 
 # Setup
 
@@ -11,8 +11,20 @@ sudo pacman -S azure-cli
 az login
 
 # Extension to create the policy for confidential containers
-az extension add -n confcom 
+az extension add -n confcom
+```
 
+## Follow the makefile
+
+The Makefile sequentially describes the steps to deploy and verify the confidential container.
+
+```bash
+make registry docker policy deploy verify-policy-image-layers
+```
+
+## Run commands manually
+
+```bash
 # create the Azure Container Registry (ACR) to store the confidential container images
 az group create --name carbon --location eastus
 REGISTRY_NAME=carbonchain
