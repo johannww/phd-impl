@@ -93,9 +93,11 @@ func CreateCertAndPrivKey() (certFileName, privKeyFileName string,
 		Bytes: certDER,
 	})
 
+	privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+	panicOnError(err)
 	privPemBytes := pem.EncodeToMemory(&pem.Block{
 		Type:  "PRIVATE KEY",
-		Bytes: priv,
+		Bytes: privBytes,
 	})
 
 	// os.WriteFile("server.crt", pemBytes, 0644)
