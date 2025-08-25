@@ -63,7 +63,9 @@ func MintCoupledMult(input *PolicyInput, activePolicies []Name) (int64, error) {
 			if policyFunc == nil {
 				return 0, fmt.Errorf("policy %s is not implemented", policy)
 			}
-			mult *= policyFunc(input)
+			// Multiplier represents the extra quantity that can be acquired.
+			// Since we have the integer scale, we do the following transformation:
+			mult = ((mult + MULTPLIER_SCALE) * (policyFunc(input) + MULTPLIER_SCALE) / MULTPLIER_SCALE) - MULTPLIER_SCALE
 			mult = boundMult(mult)
 		} else {
 			return 0, fmt.Errorf("policy %s is not defined", policy)
