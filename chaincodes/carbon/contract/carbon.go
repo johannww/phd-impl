@@ -30,11 +30,6 @@ func NewCarbonContract() *CarbonContract {
 	return carbonContract
 }
 
-func (c *CarbonContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
-	c.pApplier = policies.NewPolicyApplier()
-	return nil
-}
-
 // TODO: This is only a test function
 func (c *CarbonContract) CreateBuyBid(ctx contractapi.TransactionContextInterface, key string, value string) error {
 	stub := ctx.GetStub()
