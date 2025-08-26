@@ -48,8 +48,14 @@ func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes
 
 func VerifyAuctionResultReportSignature(
 	auctionReportJsonBytes []byte,
-	expectedResult []byte) (bool, error) {
-	expectedResultHash := sha512.Sum512(expectedResult)
+	expectedResult []byte,
+	hashReceivedByTEE []byte,
+) (bool, error) {
+	bytesHashedByTEE := []byte{}
+	bytesHashedByTEE = append(bytesHashedByTEE, expectedResult...)
+	bytesHashedByTEE = append(bytesHashedByTEE, hashReceivedByTEE...)
+	expectedResultHash := sha512.Sum512(bytesHashedByTEE)
+
 	report := attest.SNPAttestationReport{}
 	err := json.Unmarshal(auctionReportJsonBytes, &report)
 	if err != nil {
@@ -77,6 +83,7 @@ func VerifyAuctionResultReportSignature(
 func VerifyAuctionAppSignature(
 	stub shim.ChaincodeStubInterface,
 	resultBytes []byte,
+	hashReceivedByTEE []byte,
 	signatureBytes []byte,
 	certDer []byte,
 ) (bool, error) {
@@ -105,9 +112,13 @@ func VerifyAuctionAppSignature(
 		return false, fmt.Errorf("failed to parse certificate: %v", err)
 	}
 
+	bytesSignedByTEE := []byte{}
+	bytesSignedByTEE = append(bytesSignedByTEE, resultBytes...)
+	bytesSignedByTEE = append(bytesSignedByTEE, hashReceivedByTEE...)
+
 	verifies := ed25519.Verify(
 		cert.PublicKey.(ed25519.PublicKey),
-		resultBytes,
+		bytesSignedByTEE,
 		signatureBytes)
 	if !verifies {
 		return false, fmt.Errorf("could not verify TEE Application signature: %v", err)

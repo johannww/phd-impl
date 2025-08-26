@@ -129,7 +129,8 @@ func (c *CarbonContract) PublishTEEAuctionResults(
 	serializedResults *tee_auction.SerializedAuctionResultTEE,
 ) error {
 	verifies, err := tee.VerifyAuctionResultReportSignature(serializedResults.AmdReportBytes,
-		serializedResults.ResultBytes)
+		serializedResults.ResultBytes,
+		serializedResults.ReceivedHash)
 	if err != nil {
 		return fmt.Errorf("could not verify TEE auction result report signature: %v", err)
 	}
@@ -139,6 +140,7 @@ func (c *CarbonContract) PublishTEEAuctionResults(
 
 	verifies, err = tee.VerifyAuctionAppSignature(ctx.GetStub(),
 		serializedResults.ResultBytes,
+		serializedResults.ReceivedHash,
 		serializedResults.AppSignature,
 		serializedResults.TEECertDer)
 	if err != nil {
