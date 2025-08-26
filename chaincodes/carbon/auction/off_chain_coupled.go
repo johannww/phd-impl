@@ -90,12 +90,17 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 			continue // skip if no clearing price is found
 		}
 
+		// Copy sellbid and buybid to store how much was available when
+		// the match was made
+		sellBidPreservedQuantity := *sellBid
+		buyBidPreservedQuantity := *buyBid
+
 		sellBid.Quantity -= matchQuantity
 		buyBid.AskQuantity -= matchQuantity
 
 		matchedBidPublic := &bids.MatchedBid{
-			BuyBid:   buyBid,
-			SellBid:  sellBid,
+			BuyBid:   &buyBidPreservedQuantity,
+			SellBid:  &sellBidPreservedQuantity,
 			Quantity: matchQuantity,
 		}
 
