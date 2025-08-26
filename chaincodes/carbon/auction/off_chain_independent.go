@@ -19,7 +19,6 @@ type OffChainIndepAuctionResult struct {
 
 type AuctionIndepRunner struct{}
 
-// TODOHP: test TEE independent auction
 func (a *AuctionIndepRunner) RunIndependent(data *AuctionData) (resultPub, resultPvt *OffChainIndepAuctionResult, err error) {
 	matchedBids := make([]*bids.MatchedBid, 0)
 
