@@ -76,8 +76,7 @@ func RunTEEAuction(
 func runAuctionFunction(auctionData *cc_auction.AuctionData) ([]byte, []byte, error) {
 	var errAuction, errPub, errPvt error
 	var coupledResPub, coupledResPvt *cc_auction.OffChainCoupledAuctionResult
-	// var indepResPub, indepResPvt *cc_auction.OffChainIndepAuctionResult
-	var indepRes *cc_auction.OffChainIndepAuctionResult
+	var indepResPub, indepResPvt *cc_auction.OffChainIndepAuctionResult
 	var resultBytesPub, resultBytesPvt []byte
 
 	pApplier := policies.NewPolicyApplier()
@@ -87,8 +86,10 @@ func runAuctionFunction(auctionData *cc_auction.AuctionData) ([]byte, []byte, er
 		resultBytesPub, errPub = json.Marshal(coupledResPub)
 		resultBytesPvt, errPvt = json.Marshal(coupledResPvt)
 	} else {
-		indepRes, errAuction = cc_auction.RunIndependent(auctionData)
-		resultBytesPub, errPub = json.Marshal(indepRes)
+		// indepRes, errAuction = cc_auction.RunIndependent(auctionData)
+		indepResPub, indepResPvt, errAuction = cc_auction.RunIndependent(auctionData)
+		resultBytesPub, errPub = json.Marshal(indepResPub)
+		resultBytesPvt, errPvt = json.Marshal(indepResPvt)
 	}
 
 	if errPub != nil || errPvt != nil || errAuction != nil {
