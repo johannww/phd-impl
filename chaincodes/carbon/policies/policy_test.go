@@ -10,11 +10,12 @@ func TestCoupledMultiplierOverlap(t *testing.T) {
 	input := &PolicyInput{}
 
 	mockMultValue := int64(300)
-	DefinedPolicies[DISTANCE] = mockCoupledPolicy(mockMultValue)
-	DefinedPolicies[WIND_DIRECTION] = mockCoupledPolicy(mockMultValue)
+	DefinedPoliciesStatic[DISTANCE] = mockCoupledPolicy(mockMultValue)
+	DefinedPoliciesStatic[WIND_DIRECTION] = mockCoupledPolicy(mockMultValue)
+	pApplier := NewPolicyApplier()
 	activePolicies := []Name{DISTANCE, WIND_DIRECTION}
 
-	multiplier, err := MintCoupledMult(input, activePolicies)
+	multiplier, err := pApplier.MintCoupledMult(input, activePolicies)
 	require.NoError(t, err)
 
 	floatCalculation := (1 + float64(mockMultValue)/MULTIPLIER_SCALE) * (1 + float64(mockMultValue)/MULTIPLIER_SCALE)
@@ -27,11 +28,12 @@ func TestMultiplierBound(t *testing.T) {
 	input := &PolicyInput{}
 
 	mockMultValue := int64(750)
-	DefinedPolicies[DISTANCE] = mockCoupledPolicy(mockMultValue)
-	DefinedPolicies[WIND_DIRECTION] = mockCoupledPolicy(mockMultValue)
+	DefinedPoliciesStatic[DISTANCE] = mockCoupledPolicy(mockMultValue)
+	DefinedPoliciesStatic[WIND_DIRECTION] = mockCoupledPolicy(mockMultValue)
+	pApplier := NewPolicyApplier()
 	activePolicies := []Name{DISTANCE, WIND_DIRECTION}
 
-	multiplier, err := MintCoupledMult(input, activePolicies)
+	multiplier, err := pApplier.MintCoupledMult(input, activePolicies)
 	require.NoError(t, err)
 
 	require.Equal(t, multiplier, int64(MULTIPLIER_MAX))

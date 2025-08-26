@@ -28,7 +28,7 @@ type Multiplier struct {
 
 // RunCoupled runs an auction with coupled policies.
 // TODO: implement
-func RunCoupled(data *AuctionData) (*OffChainCoupledAuctionResult, error) {
+func RunCoupled(data *AuctionData, pApplier policies.PolicyApplier) (*OffChainCoupledAuctionResult, error) {
 
 	result := &OffChainCoupledAuctionResult{
 		AuctionID: data.AuctionID,
@@ -49,7 +49,7 @@ func RunCoupled(data *AuctionData) (*OffChainCoupledAuctionResult, error) {
 		for buyBidIndex, buyBid := range data.BuyBids {
 			input.Company = data.CompaniesPvt[buyBid.BuyerID]
 
-			multiplier, err := policies.MintCoupledMult(input, data.ActivePolicies)
+			multiplier, err := pApplier.MintCoupledMult(input, data.ActivePolicies)
 			if err != nil {
 				return nil, fmt.Errorf("could not calculate multiplier for sell bid %s and buy bid %s: %v", sellBid.SellerID, buyBid.BuyerID, err)
 			}

@@ -199,6 +199,7 @@ func GenMintCredits(
 ) []*credits.MintCredit {
 	nDurations := int64(endTs.Sub(startTs) / issueInterval)
 	mintCredits := []*credits.MintCredit{}
+	pApplier := policies.NewPolicyApplier()
 
 	for _, prop := range props {
 		if creditWalletsMap[prop.OwnerID] == nil {
@@ -218,7 +219,7 @@ func GenMintCredits(
 				quantity, err := estimator.Estimate(chunk, lastIssue, issueTs)
 				panicOnError(err)
 
-				credit := creditForChunk(chunk, prop, quantity, issueTsStr)
+				credit := creditForChunk(pApplier, chunk, prop, quantity, issueTsStr)
 				mintCredits = append(mintCredits, credit)
 				creditWalletsMap[prop.OwnerID].Quantity += quantity
 			}
@@ -277,7 +278,8 @@ func chunkForProperty(prop *properties.Property) *properties.PropertyChunk {
 	return chunk
 }
 
-func creditForChunk(chunk *properties.PropertyChunk,
+func creditForChunk(pApplier policies.PolicyApplier,
+	chunk *properties.PropertyChunk,
 	prop *properties.Property,
 	quantity int64,
 	issueTsStr string) *credits.MintCredit {
@@ -288,7 +290,7 @@ func creditForChunk(chunk *properties.PropertyChunk,
 			Chunk:    chunk,
 			Quantity: quantity,
 		},
-		MintMult:      policies.MintIndependentMult(chunk),
+		MintMult:      pApplier.MintIndependentMult(chunk),
 		MintTimeStamp: issueTsStr,
 	}
 	return credit

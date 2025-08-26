@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	carbonCC, err := contractapi.NewChaincode(new(contract.CarbonContract))
+	carbonCC, err := contractapi.NewChaincode(contract.NewCarbonContract())
 	if err != nil {
 		panic(err)
 	}

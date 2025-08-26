@@ -16,6 +16,18 @@ import (
 
 type CarbonContract struct {
 	contractapi.Contract
+	pApplier *policies.PolicyApplierImpl
+}
+
+func NewCarbonContract() *CarbonContract {
+	carbonContract := new(CarbonContract)
+	carbonContract.pApplier = policies.NewPolicyApplier()
+	return carbonContract
+}
+
+func (c *CarbonContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
+	c.pApplier = policies.NewPolicyApplier()
+	return nil
 }
 
 // TODO: This is only a test function
@@ -173,14 +185,14 @@ func (c *CarbonContract) CheckCredAttr(ctx contractapi.TransactionContextInterfa
 // SetActivePolicies sets the list of active policies in the world state
 func (c *CarbonContract) SetActivePolicies(ctx contractapi.TransactionContextInterface, activePolicies []policies.Name) error {
 	stub := ctx.GetStub()
-	err := policies.SetActivePolicies(stub, activePolicies)
+	err := c.pApplier.SetActivePolicies(stub, activePolicies)
 	return err
 }
 
 // AppendActivePolicy adds a new policy to the list of active policies in the world state
 func (c *CarbonContract) AppendActivePolicy(ctx contractapi.TransactionContextInterface, policy policies.Name) error {
 	stub := ctx.GetStub()
-	err := policies.AppendActivePolicy(stub, policies.Name(policy))
+	err := c.pApplier.AppendActivePolicy(stub, policies.Name(policy))
 	return err
 }
 

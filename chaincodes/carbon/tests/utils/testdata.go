@@ -42,7 +42,8 @@ func (data *TestData) SaveToWorldState(stub shim.ChaincodeStubInterface) {
 	saveToWorldState(stub, data.SellBids)
 	saveToWorldState(stub, data.BuyBids)
 	if len(data.Policies) > 0 {
-		err := policies.SetActivePolicies(stub, data.Policies)
+		pApplier := policies.NewPolicyApplier()
+		err := pApplier.SetActivePolicies(stub, data.Policies)
 		panicOnError(err)
 	}
 }
