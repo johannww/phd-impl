@@ -24,11 +24,12 @@ func Auction(c *gin.Context, privateKey ed25519.PrivateKey, certDer []byte) {
 		return
 	}
 
-	auctionResult, err := auction.RunTEEAuction(&serializedAD, privateKey)
+	auctionResultPub, auctionResultPvt, err := auction.RunTEEAuction(&serializedAD, privateKey)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to run auction: " + err.Error()})
 		return
 	}
-	auctionResult.TEECertDer = certDer
-	c.JSON(200, auctionResult)
+	auctionResultPub.TEECertDer = certDer
+	auctionResultPvt.TEECertDer = certDer
+	c.JSON(200, gin.H{"public": auctionResultPub, "private": auctionResultPvt})
 }

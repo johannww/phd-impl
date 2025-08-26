@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 	"crypto/sha512"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	cc_auction "github.com/johannww/phd-impl/chaincodes/carbon/auction"
@@ -32,63 +33,69 @@ type SerializedAuctionResultTEE struct {
 // TODOHP: finish auction running on tee
 func RunTEEAuction(
 	serializedAD *cc_auction.SerializedAuctionData,
-	privateKey ed25519.PrivateKey) (*SerializedAuctionResultTEE, error) {
-	result := &SerializedAuctionResultTEE{}
+	privateKey ed25519.PrivateKey,
+) (resultPub, resultPvt *SerializedAuctionResultTEE, err error) {
+	resultPub = &SerializedAuctionResultTEE{}
+	resultPvt = &SerializedAuctionResultTEE{}
 
 	// Validate data commtiment
 	if !serializedAD.ValidateHash() {
-		return nil, fmt.Errorf("Auction data commitment does not match the expected hash")
+		return nil, nil, fmt.Errorf("Auction data commitment does not match the expected hash")
 	}
 
 	auctionData, err := serializedAD.ToAuctionData()
 	if err != nil {
-		return nil, fmt.Errorf("could not convert serialized auction data to auction data: %v", err)
+		return nil, nil, fmt.Errorf("could not convert serialized auction data to auction data: %v", err)
 	}
 
 	// Run the auction
-	result.ResultBytes, err = runAuctionFunction(auctionData)
+	resultPub.ResultBytes, resultPvt.ResultBytes, err = runAuctionFunction(auctionData)
 	if err != nil {
-		return nil, fmt.Errorf("could not run auction function: %v", err)
+		return nil, nil, fmt.Errorf("could not run auction function: %v", err)
 	}
 
-	result.ReceivedHash = serializedAD.Sum
+	resultPub.ReceivedHash = serializedAD.Sum
+	resultPvt.ReceivedHash = serializedAD.Sum
 
 	// get report on the results
-	err = result.setHardwareSignature()
-	if err != nil {
-		return nil, err
+	err = resultPub.setHardwareSignature()
+	err2 := resultPvt.setHardwareSignature()
+	if err != nil || err2 != nil {
+		return nil, nil, errors.Join(err, err2)
 	}
 
-	err = result.setAppSignature(privateKey)
-	if err != nil {
-		return nil, err
+	err = resultPub.setAppSignature(privateKey)
+	err2 = resultPvt.setAppSignature(privateKey)
+	if err != nil || err2 != nil {
+		return nil, nil, errors.Join(err, err2)
 	}
 
-	return result, nil
-
+	return resultPub, resultPvt, nil
 }
 
-func runAuctionFunction(auctionData *cc_auction.AuctionData) ([]byte, error) {
-	var errAuction, err error
-	var coupledRes *cc_auction.OffChainCoupledAuctionResult
+func runAuctionFunction(auctionData *cc_auction.AuctionData) ([]byte, []byte, error) {
+	var errAuction, errPub, errPvt error
+	var coupledResPub, coupledResPvt *cc_auction.OffChainCoupledAuctionResult
+	// var indepResPub, indepResPvt *cc_auction.OffChainIndepAuctionResult
 	var indepRes *cc_auction.OffChainIndepAuctionResult
-	var resultBytes []byte
+	var resultBytesPub, resultBytesPvt []byte
 
 	pApplier := policies.NewPolicyApplier()
 
 	if auctionData.Coupled {
-		coupledRes, errAuction = cc_auction.RunCoupled(auctionData, pApplier)
-		resultBytes, err = json.Marshal(coupledRes)
+		coupledResPub, coupledResPvt, errAuction = cc_auction.RunCoupled(auctionData, pApplier)
+		resultBytesPub, errPub = json.Marshal(coupledResPub)
+		resultBytesPvt, errPvt = json.Marshal(coupledResPvt)
 	} else {
 		indepRes, errAuction = cc_auction.RunIndependent(auctionData)
-		resultBytes, err = json.Marshal(indepRes)
+		resultBytesPub, errPub = json.Marshal(indepRes)
 	}
 
-	if err != nil || errAuction != nil {
-		return nil, fmt.Errorf("could not run auction: %v, %v", err, errAuction)
+	if errPub != nil || errPvt != nil || errAuction != nil {
+		return nil, nil, fmt.Errorf("could not run auction: %v, %v, %v", errAuction, errPub, errPvt)
 	}
 
-	return resultBytes, nil
+	return resultBytesPub, resultBytesPvt, nil
 }
 
 func (result *SerializedAuctionResultTEE) setHardwareSignature() error {

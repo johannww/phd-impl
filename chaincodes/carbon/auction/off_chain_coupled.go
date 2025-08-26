@@ -28,15 +28,18 @@ type Multiplier struct {
 
 // RunCoupled runs an auction with coupled policies.
 // TODO: implement
-func RunCoupled(data *AuctionData, pApplier policies.PolicyApplier) (*OffChainCoupledAuctionResult, error) {
+func RunCoupled(data *AuctionData, pApplier policies.PolicyApplier) (public, private *OffChainCoupledAuctionResult, err error) {
 
-	result := &OffChainCoupledAuctionResult{
+	public = &OffChainCoupledAuctionResult{
+		AuctionID: data.AuctionID,
+	}
+	private = &OffChainCoupledAuctionResult{
 		AuctionID: data.AuctionID,
 	}
 
 	// data.ActivePolicies
 	if len(data.ActivePolicies) == 0 {
-		return nil, fmt.Errorf("no active policies found for auction %d", data.AuctionID)
+		return nil, nil, fmt.Errorf("no active policies found for auction %d", data.AuctionID)
 	}
 
 	// Based on the model from the paper
@@ -51,7 +54,7 @@ func RunCoupled(data *AuctionData, pApplier policies.PolicyApplier) (*OffChainCo
 
 			multiplier, err := pApplier.MintCoupledMult(input, data.ActivePolicies)
 			if err != nil {
-				return nil, fmt.Errorf("could not calculate multiplier for sell bid %s and buy bid %s: %v", sellBid.SellerID, buyBid.BuyerID, err)
+				return nil, nil, fmt.Errorf("could not calculate multiplier for sell bid %s and buy bid %s: %v", sellBid.SellerID, buyBid.BuyerID, err)
 			}
 			multArray[sellBidIndex*len(data.BuyBids)+buyBidIndex] = &Multiplier{
 				SellBidIndex: sellBidIndex,
@@ -109,12 +112,12 @@ func RunCoupled(data *AuctionData, pApplier policies.PolicyApplier) (*OffChainCo
 		data.BuyBids[mult.BuyBidIndex] = buyBid
 		data.SellBids[mult.SellBidIndex] = sellBid
 
-		result.MatchedBidsPublic = append(result.MatchedBidsPublic, matchedBidPublic)
-		result.MatchedBidsPrivate = append(result.MatchedBidsPrivate, matchedBidPrivate)
+		public.MatchedBidsPublic = append(public.MatchedBidsPublic, matchedBidPublic)
+		private.MatchedBidsPrivate = append(private.MatchedBidsPrivate, matchedBidPrivate)
 
 	}
 
-	return result, nil
+	return public, private, nil
 }
 
 // calculateClearingPriceAndQuantity calculates the clearing price and quantity for a pair of bids.
