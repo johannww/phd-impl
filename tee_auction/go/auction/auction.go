@@ -49,7 +49,11 @@ func RunTEEAuction(
 	}
 
 	// Run the auction
-	resultPub.ResultBytes, resultPvt.ResultBytes, err = runAuctionFunction(auctionData)
+	r := AuctionRunnerTEE{
+		coupledRunner: &cc_auction.AuctionCoupledRunner{},
+		indepRunner:   &cc_auction.AuctionIndepRunner{},
+	}
+	resultPub.ResultBytes, resultPvt.ResultBytes, err = r.runAuctionFunction(auctionData)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not run auction function: %v", err)
 	}
@@ -73,7 +77,12 @@ func RunTEEAuction(
 	return resultPub, resultPvt, nil
 }
 
-func runAuctionFunction(auctionData *cc_auction.AuctionData) ([]byte, []byte, error) {
+type AuctionRunnerTEE struct {
+	coupledRunner *cc_auction.AuctionCoupledRunner
+	indepRunner   *cc_auction.AuctionIndepRunner
+}
+
+func (r *AuctionRunnerTEE) runAuctionFunction(auctionData *cc_auction.AuctionData) ([]byte, []byte, error) {
 	var errAuction, errPub, errPvt error
 	var coupledResPub, coupledResPvt *cc_auction.OffChainCoupledAuctionResult
 	var indepResPub, indepResPvt *cc_auction.OffChainIndepAuctionResult
@@ -82,12 +91,12 @@ func runAuctionFunction(auctionData *cc_auction.AuctionData) ([]byte, []byte, er
 	pApplier := policies.NewPolicyApplier()
 
 	if auctionData.Coupled {
-		coupledResPub, coupledResPvt, errAuction = cc_auction.RunCoupled(auctionData, pApplier)
+		coupledResPub, coupledResPvt, errAuction = r.coupledRunner.RunCoupled(auctionData, pApplier)
 		resultBytesPub, errPub = json.Marshal(coupledResPub)
 		resultBytesPvt, errPvt = json.Marshal(coupledResPvt)
 	} else {
 		// indepRes, errAuction = cc_auction.RunIndependent(auctionData)
-		indepResPub, indepResPvt, errAuction = cc_auction.RunIndependent(auctionData)
+		indepResPub, indepResPvt, errAuction = r.indepRunner.RunIndependent(auctionData)
 		resultBytesPub, errPub = json.Marshal(indepResPub)
 		resultBytesPvt, errPvt = json.Marshal(indepResPvt)
 	}

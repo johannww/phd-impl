@@ -26,9 +26,11 @@ type Multiplier struct {
 	Value        int64
 }
 
+type AuctionCoupledRunner struct{}
+
 // RunCoupled runs an auction with coupled policies.
 // TODO: implement
-func RunCoupled(data *AuctionData, pApplier policies.PolicyApplier) (public, private *OffChainCoupledAuctionResult, err error) {
+func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.PolicyApplier) (public, private *OffChainCoupledAuctionResult, err error) {
 
 	public = &OffChainCoupledAuctionResult{
 		AuctionID: data.AuctionID,

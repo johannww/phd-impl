@@ -34,7 +34,8 @@ func TestOffChainIndependentAuction(t *testing.T) {
 	}
 
 	// Run the auction
-	auctionResultPub, auctionResultPvt, err := auction.RunIndependent(auctionData)
+	runner := &auction.AuctionIndepRunner{}
+	auctionResultPub, auctionResultPvt, err := runner.RunIndependent(auctionData)
 	require.NoError(t, err, "Failed to run independent auction")
 	auctionResult, err := auction.MergeIndependentPublicPrivateResults(auctionResultPub, auctionResultPvt)
 	require.NoError(t, err, "Failed to merge independent auction results")
@@ -64,7 +65,8 @@ func TestOffChainIndependentAuctionWithRandomBids(t *testing.T) {
 	}
 
 	// Run the auction
-	auctionResultPub, auctionResultPvt, err := auction.RunIndependent(auctionData)
+	runner := &auction.AuctionIndepRunner{}
+	auctionResultPub, auctionResultPvt, err := runner.RunIndependent(auctionData)
 	require.NoError(t, err, "Failed to run independent auction")
 	auctionResult, err := auction.MergeIndependentPublicPrivateResults(auctionResultPub, auctionResultPvt)
 	require.NoError(t, err, "Failed to merge independent auction results")

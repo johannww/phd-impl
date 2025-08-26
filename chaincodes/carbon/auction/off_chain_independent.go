@@ -17,8 +17,10 @@ type OffChainIndepAuctionResult struct {
 	AdustedBuyBids  []*bids.BuyBid     `json:"adjustedBuyBids"`
 }
 
+type AuctionIndepRunner struct{}
+
 // TODOHP: test TEE independent auction
-func RunIndependent(data *AuctionData) (resultPub, resultPvt *OffChainIndepAuctionResult, err error) {
+func (a *AuctionIndepRunner) RunIndependent(data *AuctionData) (resultPub, resultPvt *OffChainIndepAuctionResult, err error) {
 	matchedBids := make([]*bids.MatchedBid, 0)
 
 	sellBids := data.SellBids
