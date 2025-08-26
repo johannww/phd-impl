@@ -13,6 +13,7 @@ import (
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
 	report_verifier "github.com/johannww/phd-impl/tee_auction/go/report"
 )
 
@@ -174,4 +175,30 @@ func GetCCEPolicy(stub shim.ChaincodeStubInterface) (string, error) {
 		return "", fmt.Errorf("CCE policy not found in world state")
 	}
 	return string(ccePolicy), nil
+}
+
+func VerifyTEEResult(stub shim.ChaincodeStubInterface, serializedResults *tee_auction.SerializedAuctionResultTEE) error {
+	verifies, err := VerifyAuctionResultReportSignature(serializedResults.AmdReportBytes,
+		serializedResults.ResultBytes,
+		serializedResults.ReceivedHash)
+	if err != nil {
+		return fmt.Errorf("could not verify TEE auction result report signature: %v", err)
+	}
+	if !verifies {
+		return fmt.Errorf("TEE auction result report signature is invalid")
+	}
+
+	verifies, err = VerifyAuctionAppSignature(stub,
+		serializedResults.ResultBytes,
+		serializedResults.ReceivedHash,
+		serializedResults.AppSignature,
+		serializedResults.TEECertDer)
+	if err != nil {
+		return fmt.Errorf("could not verify TEE auction app signature: %v", err)
+	}
+	if !verifies {
+		return fmt.Errorf("TEE auction app signature is invalid")
+	}
+
+	return nil
 }

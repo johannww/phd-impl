@@ -176,3 +176,18 @@ func calculateClearingPriceAndQuantity(
 
 	return Cp, Cq, true
 }
+
+func MergeCoupledPublicPrivateResults(
+	pubResult, pvtResult *OffChainCoupledAuctionResult,
+) (*OffChainCoupledAuctionResult, error) {
+	if pubResult.AuctionID != pvtResult.AuctionID {
+		return nil, fmt.Errorf("auction ID mismatch between public and private results")
+	}
+
+	mergedResult := &OffChainCoupledAuctionResult{
+		AuctionID:          pubResult.AuctionID,
+		MatchedBidsPublic:  pubResult.MatchedBidsPublic,
+		MatchedBidsPrivate: pvtResult.MatchedBidsPrivate,
+	}
+	return mergedResult, nil
+}

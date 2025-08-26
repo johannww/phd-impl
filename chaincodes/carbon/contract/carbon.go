@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
@@ -12,6 +13,10 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
+)
+
+const (
+	SERIALIZED_RESULT_TEE_PVT_KEY = "serializedResultPvt"
 )
 
 type CarbonContract struct {
@@ -138,31 +143,35 @@ func (c *CarbonContract) RetrieveDataForTEEAuction(ctx contractapi.TransactionCo
 // TODOHP: implement TEE auction verification
 func (c *CarbonContract) PublishTEEAuctionResults(
 	ctx contractapi.TransactionContextInterface,
-	serializedResults *tee_auction.SerializedAuctionResultTEE,
+	serializedResultsPub *tee_auction.SerializedAuctionResultTEE,
 ) error {
-	verifies, err := tee.VerifyAuctionResultReportSignature(serializedResults.AmdReportBytes,
-		serializedResults.ResultBytes,
-		serializedResults.ReceivedHash)
+	transient, err := ctx.GetStub().GetTransient()
 	if err != nil {
-		return fmt.Errorf("could not verify TEE auction result report signature: %v", err)
+		return fmt.Errorf("could not get transient: %v", err)
 	}
-	if !verifies {
-		return fmt.Errorf("TEE auction result report signature is invalid")
+	serializedResultPvtBytes := transient[SERIALIZED_RESULT_TEE_PVT_KEY]
+	if len(serializedResultPvtBytes) == 0 {
+		return fmt.Errorf("serialized result pvt not found in transient")
 	}
 
-	verifies, err = tee.VerifyAuctionAppSignature(ctx.GetStub(),
-		serializedResults.ResultBytes,
-		serializedResults.ReceivedHash,
-		serializedResults.AppSignature,
-		serializedResults.TEECertDer)
+	var serializedResultsPvt tee_auction.SerializedAuctionResultTEE
+	err = json.Unmarshal(serializedResultPvtBytes, &serializedResultsPub)
 	if err != nil {
-		return fmt.Errorf("could not verify TEE auction app signature: %v", err)
-	}
-	if !verifies {
-		return fmt.Errorf("TEE auction app signature is invalid")
+		return fmt.Errorf("could not unmarshal serialized result pvt: %v", err)
 	}
 
-	auction.ProcessOffChainAuctionResult(ctx.GetStub(), serializedResults.ResultBytes)
+	err1 := tee.VerifyTEEResult(ctx.GetStub(), serializedResultsPub)
+	err2 := tee.VerifyTEEResult(ctx.GetStub(), &serializedResultsPvt)
+	if err1 != nil || err2 != nil {
+		return fmt.Errorf("could not verify TEE auction result: %v, %v", err1, err2)
+	}
+
+	err = auction.ProcessOffChainAuctionResult(ctx.GetStub(),
+		serializedResultsPub.ResultBytes,
+		serializedResultsPvt.ResultBytes)
+	if err != nil {
+		return fmt.Errorf("could not process off-chain auction result: %v", err)
+	}
 
 	panic("Not Implemented Yet")
 	return nil
