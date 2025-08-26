@@ -44,3 +44,7 @@ verify-policy-image-layers:
 
 verify-report-policy:
 	./azure/scripts/create/get-and-verify-report.sh
+
+.PHONY: docs
+docs:
+	./docs/scripts/generate-diagrams.sh
