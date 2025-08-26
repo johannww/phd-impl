@@ -12,7 +12,6 @@ const (
 // TODO: Credit wallet will generate MVCC read conflict if multiple transactions
 // mint credits and add to the wallet. Evaluate that later.
 // CreditWallet is for networks with fungible credits
-// TODOHP: should not this credit wallet be public??
 type CreditWallet struct {
 	OwnerID  string `json:"owner"`
 	Quantity int64  `json:"quantity"`
@@ -22,7 +21,8 @@ var _ state.WorldStateManager = (*CreditWallet)(nil)
 
 func (cw *CreditWallet) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
 	// NOTE: We are using the same private collection as the one used for the private price
-	err := state.GetPvtDataWithCompositeKey(stub, CREDIT_WALLET_PREFIX, keyAttributes, state.BIDS_PVT_DATA_COLLECTION, cw)
+	// err := state.GetPvtDataWithCompositeKey(stub, CREDIT_WALLET_PREFIX, keyAttributes, state.BIDS_PVT_DATA_COLLECTION, cw)
+	err := state.GetStateWithCompositeKey(stub, CREDIT_WALLET_PREFIX, keyAttributes, cw)
 	if err != nil {
 		return err
 	}
@@ -31,10 +31,13 @@ func (cw *CreditWallet) FromWorldState(stub shim.ChaincodeStubInterface, keyAttr
 
 func (cw *CreditWallet) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	// NOTE: We are using the same private collection as the one used for the private price
-	return state.PutPvtDataWithCompositeKey(
+	// return state.PutPvtDataWithCompositeKey(
+	// 	stub, CREDIT_WALLET_PREFIX,
+	// 	(*cw.GetID())[0],
+	// 	state.BIDS_PVT_DATA_COLLECTION, cw)
+	return state.PutStateWithCompositeKey(
 		stub, CREDIT_WALLET_PREFIX,
-		(*cw.GetID())[0],
-		state.BIDS_PVT_DATA_COLLECTION, cw)
+		cw.GetID(), cw)
 }
 
 func (cw *CreditWallet) GetID() *[][]string {
