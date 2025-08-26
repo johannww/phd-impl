@@ -15,6 +15,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
+	"github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
 	"github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
 )
@@ -23,6 +24,9 @@ const (
 	COMPANY_PREFIX = "company"
 	OWNER_PREFIX   = "owner"
 )
+
+// mockStub helps generating chaincode identity strings
+var mockStub = mocks.NewMockStub("carbon", nil)
 
 func GenData(
 	nOwners int,
@@ -117,9 +121,8 @@ func GenProperties(nChunks int, mockIds *setup.MockIdentities) []*properties.Pro
 		// TODO: this should be tought later to avoid collisions
 		id := mathrand.Uint64()
 
-		// TODOHP: I should get the OwnerID from the stub/cid creator
 		prop := &properties.Property{
-			OwnerID: key,
+			OwnerID: getCidFromMockIdentity((*mockIds)[key]),
 			ID:      id,
 		}
 		props = append(props, prop)
@@ -176,7 +179,7 @@ func GenCreditWalletsMap(
 			continue // skip companies
 		}
 		creditWalletsMap[ownerId] = &credits.CreditWallet{
-			OwnerID: ownerId,
+			OwnerID: getCidFromMockIdentity((*mockIds)[ownerId]),
 		}
 	}
 
@@ -242,7 +245,7 @@ func GenTokenWallets(
 		}
 
 		wallet := &payment.VirtualTokenWallet{
-			OwnerID:  key,
+			OwnerID:  getCidFromMockIdentity((*mockIds)[key]),
 			Quantity: 0,
 		}
 		wallets = append(wallets, wallet)
@@ -300,4 +303,9 @@ func panicOnError(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func getCidFromMockIdentity(mockId []byte) string {
+	mockStub.Creator = mockId
+	return identities.GetID(mockStub)
 }
