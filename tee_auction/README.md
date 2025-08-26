@@ -19,7 +19,7 @@ az extension add -n confcom
 The Makefile sequentially describes the steps to deploy and verify the confidential container.
 
 ```bash
-make registry docker policy deploy verify-policy-image-layers
+make registry docker policy deploy verify-policy-image-layers verify-report-policy
 ```
 
 ## Run commands manually
