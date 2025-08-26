@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	cc_auction "github.com/johannww/phd-impl/chaincodes/carbon/auction"
+	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/tee_auction/go/report"
 )
 
@@ -73,8 +74,10 @@ func runAuctionFunction(auctionData *cc_auction.AuctionData) ([]byte, error) {
 	var indepRes *cc_auction.OffChainIndepAuctionResult
 	var resultBytes []byte
 
+	pApplier := policies.NewPolicyApplier()
+
 	if auctionData.Coupled {
-		coupledRes, errAuction = cc_auction.RunCoupled(auctionData)
+		coupledRes, errAuction = cc_auction.RunCoupled(auctionData, pApplier)
 		resultBytes, err = json.Marshal(coupledRes)
 	} else {
 		indepRes, errAuction = cc_auction.RunIndependent(auctionData)
