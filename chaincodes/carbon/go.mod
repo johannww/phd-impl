@@ -11,6 +11,7 @@ require (
 	github.com/hyperledger/fabric-gateway v1.7.1
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6
 	github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693
+	github.com/quagmt/udecimal v1.9.0
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
@@ -31,7 +32,7 @@ require (
 	github.com/hyperledger/fabric-amcl v0.0.0-20230602173724-9e02669dceb2 // indirect
 	github.com/kilic/bls12-381 v0.1.0 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
-	github.com/lestrrat-go/blackmagic v1.0.3 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/jwx v1.2.31 // indirect
@@ -45,7 +46,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
+	golang.org/x/crypto v0.39.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
@@ -63,13 +64,13 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 	// google.golang.org/grpc v1.70.0
 	// google.golang.org/protobuf v1.36.5
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
-	google.golang.org/grpc v1.72.2
+	google.golang.org/grpc v1.73.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
@@ -82,4 +83,4 @@ replace github.com/hyperledger/fabric-gateway v1.7.1 => github.com/johannww/fabr
 // NOTE: This is temporary until microsoft fixes serialization
 // replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-4814b442cf71 => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91
 
-replace	github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693 => ../../tee_auction/go
+replace github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693 => ../../tee_auction/go

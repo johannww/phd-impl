@@ -7,7 +7,6 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/common"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
-	// "github.com/quagmt/udecimal"
 )
 
 // OffChainCoupledAuctionResult holds the result of an off-chain coupled auction.
