@@ -1,7 +1,9 @@
 package auction
 
 import (
+	crand "crypto/rand"
 	"fmt"
+	"math/big"
 	"slices"
 
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
