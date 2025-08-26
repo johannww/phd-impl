@@ -124,6 +124,8 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 
 	}
 
+	shuffleMatchedBids(public.MatchedBidsPublic, private.MatchedBidsPrivate)
+
 	return public, private, nil
 }
 
@@ -201,4 +203,23 @@ func MergeCoupledPublicPrivateResults(
 		MatchedBidsPrivate: pvtResult.MatchedBidsPrivate,
 	}
 	return mergedResult, nil
+}
+
+// shuffleMatchedBids shuffles the matched bids in both public and private slices
+// because the order of matched bids imply in a higher multiplier. This eases
+// infering the buyer from the seller.
+func shuffleMatchedBids(matchedBidPub []*bids.MatchedBid, matchedBidPvt []*bids.MatchedBid) {
+	secureShuffle(len(matchedBidPub), func(i, j int) {
+		matchedBidPub[i], matchedBidPub[j] = matchedBidPub[j], matchedBidPub[i]
+		matchedBidPvt[i], matchedBidPvt[j] = matchedBidPvt[j], matchedBidPvt[i]
+	})
+}
+
+// secureShuffle implements the Fisher-Yates shuffle using crypto/rand for secure randomness.
+func secureShuffle(n int, swap func(i, j int)) {
+	for i := n - 1; i > 0; i-- {
+		jBig, _ := crand.Int(crand.Reader, big.NewInt(int64(i+1)))
+		j := int(jBig.Int64())
+		swap(i, j)
+	}
 }
