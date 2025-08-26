@@ -184,6 +184,10 @@ func MergeCoupledPublicPrivateResults(
 		return nil, fmt.Errorf("auction ID mismatch between public and private results")
 	}
 
+	if len(pubResult.MatchedBidsPublic) != len(pvtResult.MatchedBidsPrivate) {
+		return nil, fmt.Errorf("matched bids length mismatch between public and private results")
+	}
+
 	mergedResult := &OffChainCoupledAuctionResult{
 		AuctionID:          pubResult.AuctionID,
 		MatchedBidsPublic:  pubResult.MatchedBidsPublic,
