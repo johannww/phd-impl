@@ -2,7 +2,7 @@
 
 mkdir -p ./docs/diagrams
 
-dirs="go/auction"
+dirs="go/auction,go/api,go/cmd/auction"
 
 go-plantuml generate \
     -d "${dirs}" \
