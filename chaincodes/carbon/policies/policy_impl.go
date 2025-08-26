@@ -139,10 +139,9 @@ func (p *PolicyApplierImpl) AppendActivePolicy(stub shim.ChaincodeStubInterface,
 	}
 
 	// Check if policy already exists
-	for _, p := range activePolicies {
-		if p == policy {
-			return nil
-		}
+	alreadyContains := slices.Contains(activePolicies, policy)
+	if alreadyContains {
+		return nil
 	}
 
 	activePolicies = append(activePolicies, policy)
