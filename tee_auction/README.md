@@ -1,6 +1,6 @@
 # Azure as TEE for the private Auction
 
-I re-used modules and data from "github.com/johannww/phd-impl/chaincodes/carbon" and the [Microsoft Confidential Container repository](https://github.com/Microsoft/confidential-sidecar-containers).
+I re-used modules and data from "github.com/johannww/phd-impl/chaincodes/carbon" and the [Microsoft Confidential Container repository](https://github.com/Microsoft/confidential-sidecar-containers) to implement a private auction for carbon credits using Azure as TEE.
 
 # Setup
 
