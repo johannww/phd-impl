@@ -1,6 +1,6 @@
 # Azure as TEE for the private Auction
 
-I re-used modules and data from "github.com/johannww/phd-impl/chaincodes/carbon" and my Microsoft Confidential Container experiments [link](https://github.com/johannww/ubuntu-learning/blob/c79ef19b5f794e165b5ad1df2ca365b92516c3b5/crypto/azure_tee/README.md#L34)
+I re-used modules and data from "github.com/johannww/phd-impl/chaincodes/carbon" and the [Microsoft Confidential Container repository](https://github.com/Microsoft/confidential-sidecar-containers).
 
 # Setup
 
@@ -124,7 +124,6 @@ make verify-report-policy
 
 # Alternative to OUR solution
 
-I also could have used [fabric private chaincodes](https://github.com/hyperledger/fabric-private-chaincode/tree/main/samples) that take advantage of Intel SGX. However, sgx has a series of known vulnerabilities (https://sgx.fail/). In that sense, AMD SEV-SNP seems to be a more robust solution.
-
-These articles reference it: https://ieeexplore.ieee.org/document/10628912 and 
-https://ieeexplore.ieee.org/abstract/document/9049585
+- I also could have used [fabric private chaincodes](https://github.com/hyperledger/fabric-private-chaincode/tree/main/samples) that take advantage of Intel SGX. However, sgx has a series of known vulnerabilities (https://sgx.fail/). In that sense, AMD SEV-SNP seems to be a more robust solution. These articles reference it: https://ieeexplore.ieee.org/document/10628912 and https://ieeexplore.ieee.org/abstract/document/9049585
+- Run the TEE as a chaincode
+    - Contrary to our current solution, a third party would not need to feed the data to the TEE.
