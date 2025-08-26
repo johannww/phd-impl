@@ -7,7 +7,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 )
 
-// TODO:
+// TODOHP: implement off chain auction result processing
 func ProcessOffChainAuctionResult(stub shim.ChaincodeStubInterface, resultBytesPub, resultBytesPvt []byte) error {
 
 	indepResultPub, indepResultPvt := &OffChainIndepAuctionResult{}, &OffChainIndepAuctionResult{}
@@ -35,7 +35,7 @@ func processIndependentAuctionResult(stub shim.ChaincodeStubInterface,
 	}
 
 	_ = result // TODO: do something with the result
-	return nil
+	return fmt.Errorf("independent auction result processing not implemented yet")
 }
 
 func processCoupledAuctionResult(stub shim.ChaincodeStubInterface,
@@ -46,5 +46,5 @@ func processCoupledAuctionResult(stub shim.ChaincodeStubInterface,
 		return fmt.Errorf("could not merge coupled public and private results: %v", err)
 	}
 	_ = result // TODO: do something with the result
-	return nil
+	return fmt.Errorf("coupled auction result processing not implemented yet")
 }

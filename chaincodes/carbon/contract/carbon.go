@@ -135,7 +135,6 @@ func (c *CarbonContract) RetrieveDataForTEEAuction(ctx contractapi.TransactionCo
 	return serializedAD, err
 }
 
-// TODOHP: implement TEE auction verification
 func (c *CarbonContract) PublishTEEAuctionResults(
 	ctx contractapi.TransactionContextInterface,
 	serializedResultsPub *tee_auction.SerializedAuctionResultTEE,
@@ -168,7 +167,6 @@ func (c *CarbonContract) PublishTEEAuctionResults(
 		return fmt.Errorf("could not process off-chain auction result: %v", err)
 	}
 
-	panic("Not Implemented Yet")
 	return nil
 }
 
