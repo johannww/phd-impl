@@ -7,6 +7,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/common"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/quagmt/udecimal"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCalculateClearingPrice(t *testing.T) {
@@ -38,15 +39,17 @@ func TestCalculateClearingPrice(t *testing.T) {
 	price, quantity, hasClearing := calculateClearingPriceAndQuantity(sellBid, buyBid, multiplier)
 	t.Log("Clearing Price:", price, "Clearing Quantity:", quantity, "Has Clearing Price:", hasClearing)
 
-	price, quantity, hasClearing = calculateClearingPriceAndQuantityUdecimal(sellBid, buyBid, multiplier)
+	priceUdecimal, quantityUdecimal, hasClearing := calculateClearingPriceAndQuantityUdecimal(sellBid, buyBid, multiplier)
 	t.Log("Clearing Price:", price, "Clearing Quantity:", quantity, "Has Clearing Price:", hasClearing)
+
+	require.Equal(t, price, priceUdecimal)
+	require.Equal(t, quantity, quantityUdecimal)
 
 	sellBid.PrivatePrice.Price = floatingPrice
 	buyBid.PrivatePrice.Price = floatingPrice
 
 	priceFloat, quantityFloat, hasClearing := calculateClearingPriceAndQuantityFloat(sellBid, buyBid, float64(multiplier)/float64(policies.MULTIPLIER_SCALE))
 	t.Log("Clearing Price:", priceFloat, "Clearing Quantity:", quantityFloat, "Has Clearing Price:", hasClearing)
-	t.Fatal("TestCalculateClearingPrice not implemented yet")
 }
 
 // calculateClearingPriceAndQuantityFloat serves to compare the float64 version of the clearing price calculation
