@@ -128,13 +128,27 @@ func (c *CarbonContract) PublishTEEAuctionResults(
 	ctx contractapi.TransactionContextInterface,
 	serializedResults *tee_auction.SerializedAuctionResultTEE,
 ) error {
-	tee.VerifyAuctionResultReportSignature(serializedResults.AmdReportBytes,
+	verifies, err := tee.VerifyAuctionResultReportSignature(serializedResults.AmdReportBytes,
 		serializedResults.ResultBytes)
+	if err != nil {
+		return fmt.Errorf("could not verify TEE auction result report signature: %v", err)
+	}
+	if !verifies {
+		return fmt.Errorf("TEE auction result report signature is invalid")
+	}
 
-	tee.VerifyAuctionAppSignature(ctx.GetStub(),
+	verifies, err = tee.VerifyAuctionAppSignature(ctx.GetStub(),
 		serializedResults.ResultBytes,
 		serializedResults.AppSignature,
 		serializedResults.TEECertDer)
+	if err != nil {
+		return fmt.Errorf("could not verify TEE auction app signature: %v", err)
+	}
+	if !verifies {
+		return fmt.Errorf("TEE auction app signature is invalid")
+	}
+
+	auction.ProcessOffChainAuctionResult(ctx.GetStub(), serializedResults.ResultBytes)
 
 	panic("Not Implemented Yet")
 	return nil
