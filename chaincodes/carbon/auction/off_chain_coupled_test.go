@@ -32,7 +32,9 @@ func TestCalculateClearingPrice(t *testing.T) {
 		PrivatePrice: &bids.PrivatePrice{
 			Price: fixedPointPrice, // Example price
 		},
-		AskQuantity: bidQuantity,
+		PrivateQuantity: &bids.PrivateQuantity{
+			AskQuantity: bidQuantity,
+		},
 	}
 	multiplier := int64(100) // Example multiplier value
 
@@ -58,20 +60,20 @@ func calculateClearingPriceAndQuantityFloat(
 	buyBid *bids.BuyBid,
 	mult float64) (Cp float64, Cq float64, hasClearingPrice bool) {
 
-	quantity := float64(min(sellBid.Quantity, buyBid.AskQuantity))
+	quantity := float64(min(sellBid.Quantity, buyBid.PrivateQuantity.AskQuantity))
 	maxExtraQuantity := float64(quantity) * mult
 
 	acquirableQuantity := float64(quantity) + maxExtraQuantity
 
 	var toBeAcquired float64
-	if float64(buyBid.AskQuantity) >= acquirableQuantity {
+	if float64(buyBid.PrivateQuantity.AskQuantity) >= acquirableQuantity {
 		toBeAcquired = quantity
 	} else {
 		// toBeAcquired = buyBid.AskQuantity / (1 + mult)
 		// toBeAcquired + toBeAcquired*(mult/MULTIPLIER_SCALE) = buyBid.AskQuantity
 		// toBeAcquired = buyBid.AskQuantity / (1 + mult/policies.MULTIPLIER_SCALE)
 		// Re-writing the denominator:
-		toBeAcquired = float64(buyBid.AskQuantity) / (1 + mult)
+		toBeAcquired = float64(buyBid.PrivateQuantity.AskQuantity) / (1 + mult)
 	}
 
 	nominalQuantity := toBeAcquired
@@ -98,7 +100,7 @@ func calculateClearingPriceAndQuantityUdecimal(
 	buyBid *bids.BuyBid,
 	mult int64) (Cp int64, Cq int64, hasClearingPrice bool) {
 
-	quantity := udecimal.MustFromInt64(min(sellBid.Quantity, buyBid.AskQuantity), 0)
+	quantity := udecimal.MustFromInt64(min(sellBid.Quantity, buyBid.PrivateQuantity.AskQuantity), 0)
 	multiplier := udecimal.MustFromInt64(mult, 0)
 	multiplierScale := udecimal.MustFromInt64(policies.MULTIPLIER_SCALE, 0)
 
@@ -106,7 +108,7 @@ func calculateClearingPriceAndQuantityUdecimal(
 	acquirableQuantity := quantity.Add(maxExtraQuantity)
 
 	var toBeAcquired udecimal.Decimal
-	buyAskQuantity := udecimal.MustFromInt64(buyBid.AskQuantity, 0)
+	buyAskQuantity := udecimal.MustFromInt64(buyBid.PrivateQuantity.AskQuantity, 0)
 
 	if buyAskQuantity.GreaterThanOrEqual(acquirableQuantity) {
 		toBeAcquired = quantity

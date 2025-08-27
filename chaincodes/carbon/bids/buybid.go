@@ -19,18 +19,26 @@ const (
 
 // BuyBid represents an ask from a buyer.
 // Their ID could be either x509 or pseudonym-based
+// TODOHP: add omitempty for every field in every struct?
 type BuyBid struct {
 	// TODO: temp fix for teste
 	// TODO: interfaces cannot be marshalled
-	BuyerID      string        `json:"buyerID"`
-	Timestamp    string        `json:"timestamp"`
-	AskQuantity  int64         `json:"askQuantity"`
+	BuyerID   string `json:"buyerID,omitempty"`
+	Timestamp string `json:"timestamp,omitempty"`
+
+	// AskQuantity is used for public cases
+	AskQuantity *int64 `json:"askQuantity,omitempty"`
+	// PrivateQuantity is required for coupled auctions, when
+	// the multiplier can be inferred from the AskQuantity, possibly
+	// revealing the anonymous buyer
+	PrivateQuantity *PrivateQuantity `json:"privateQuantity,omitempty"`
+
 	PrivatePrice *PrivatePrice `json:"privatePrice,omitempty"`
 }
 
 var _ ccstate.WorldStateManager = (*BuyBid)(nil)
 
-func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, buyerID *identities.X509Identity) error {
+func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity int64, buyerID *identities.X509Identity) error {
 	// TODO: cidID is nil when idemix
 	cidID, _ := cid.GetID(stub)
 	// TODO: enhance this
@@ -55,7 +63,7 @@ func PublishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, buyerID *id
 	buyBid := &BuyBid{
 		BuyerID:     identities.GetID(stub),
 		Timestamp:   bidTSStr,
-		AskQuantity: quantity,
+		AskQuantity: &quantity,
 	}
 	bidID := *(buyBid.GetID())
 
@@ -94,6 +102,19 @@ func (b *BuyBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) error {
 	return nil
 }
 
+func (b *BuyBid) FetchPrivateQuantity(stub shim.ChaincodeStubInterface) error {
+	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
+		privateQuantity := &PrivateQuantity{}
+		err := privateQuantity.FromWorldState(stub, (*b.GetID())[0])
+		if err != nil {
+			return fmt.Errorf("could not get private price from world state: %v", err)
+		}
+
+		b.PrivateQuantity = privateQuantity
+	}
+	return nil
+}
+
 func (b *BuyBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
 	err := ccstate.GetStateWithCompositeKey(stub, BUY_BID_PREFIX, keyAttributes, b)
 	if err != nil {
@@ -105,7 +126,12 @@ func (b *BuyBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes 
 		return err
 	}
 
-	return nil
+	if b.AskQuantity != nil {
+		return nil
+	}
+
+	err = b.FetchPrivateQuantity(stub)
+	return err
 }
 
 // TODO: test for the bids mutex timestamp
@@ -116,7 +142,7 @@ func (b *BuyBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	if b.BuyerID == "" {
 		return fmt.Errorf("buyerID is empty")
 	}
-	if b.AskQuantity <= 0 {
+	if !b.validQuantity() {
 		return fmt.Errorf("ask quantity is invalid")
 	}
 	if b.PrivatePrice != nil {
@@ -147,6 +173,10 @@ func (b *BuyBid) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
 	b.PrivatePrice.BidID = (*bidID)[0]
 	err = b.PrivatePrice.DeleteFromWorldState(stub, BUY_BID_PVT)
 
+	if b.PrivateQuantity != nil {
+		b.PrivateQuantity.DeleteFromWorldState(stub)
+	}
+
 	return err
 }
 
@@ -164,4 +194,9 @@ func (b *BuyBid) Less(b2 *BuyBid) int {
 		return 1
 	}
 	return 0
+}
+
+func (b *BuyBid) validQuantity() bool {
+	return (b.AskQuantity != nil && *b.AskQuantity > 0) ||
+		(b.PrivateQuantity != nil && b.PrivateQuantity.AskQuantity > 0)
 }

@@ -33,7 +33,7 @@ func NewCarbonContract() *CarbonContract {
 // TODO: This is only a test function
 func (c *CarbonContract) CreateBuyBid(ctx contractapi.TransactionContextInterface, key string, value string) error {
 	stub := ctx.GetStub()
-	err := bids.PublishBuyBid(stub, 2, &identities.X509Identity{CertID: "certid"})
+	err := bids.PublishBuyBidWithPublicQuanitity(stub, 2, &identities.X509Identity{CertID: "certid"})
 	// _, err = state.GetStatesByRangeCompositeKey(stub, "buyBid", []string{"a"}, []string{"ac"})
 	return err
 }

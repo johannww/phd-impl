@@ -30,7 +30,7 @@ func TestOnChainIndependentAuction(t *testing.T) {
 
 	issueStart, err := time.Parse(time.RFC3339, "2023-01-01T00:31:00Z")
 	require.NoError(t, err)
-	genAllMatchedBids(testData, issueStart)
+	genAllMatchedBids(testData, issueStart, auction.AUCTION_INDEPENDENT)
 
 	stub.MockTransactionStart("tx1")
 	testData.SaveToWorldState(stub)
@@ -53,7 +53,8 @@ func TestOnChainIndependentAuction(t *testing.T) {
 }
 
 // genAllMatchedBids generates a set of bids that will be fully matched
-func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time) (lastIssueRFC339Ts string) {
+func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time,
+	auctionType auction.AuctionType) (lastIssueRFC339Ts string) {
 	sellPrice := int64(1000)
 	buyPrice := int64(1200)
 
@@ -77,14 +78,21 @@ func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time) (las
 		testData.SellBids = append(testData.SellBids, sellBid)
 
 		buyerIdIndex := rand.Intn(len(buyerIds))
-
 		buyBid := &bids.BuyBid{
-			BuyerID:     buyerIds[buyerIdIndex].Pseudonym,
-			AskQuantity: mintCredit.Quantity,
-			Timestamp:   issueTsStr,
+			BuyerID:   buyerIds[buyerIdIndex].Pseudonym,
+			Timestamp: issueTsStr,
 			PrivatePrice: &bids.PrivatePrice{
 				Price: buyPrice,
 			},
+		}
+		if auctionType == auction.AUCTION_COUPLED {
+			buyBid.PrivateQuantity = &bids.PrivateQuantity{
+				AskQuantity: mintCredit.Quantity,
+				BidID:       (*buyBid.GetID())[0],
+			}
+		} else {
+			buyBidAskQuantity := mintCredit.Quantity
+			buyBid.AskQuantity = &buyBidAskQuantity
 		}
 		buyBid.PrivatePrice.BidID = (*buyBid.GetID())[0]
 

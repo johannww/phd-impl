@@ -83,7 +83,7 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 		sellBid := data.SellBids[mult.SellBidIndex]
 		buyBid := data.BuyBids[mult.BuyBidIndex]
 
-		if sellBid.Quantity == 0 || buyBid.AskQuantity == 0 {
+		if sellBid.Quantity == 0 || buyBid.PrivateQuantity.AskQuantity == 0 {
 			continue // skip if either bid is exhausted
 		}
 
@@ -98,7 +98,7 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 		buyBidPreservedQuantity := *buyBid
 
 		sellBid.Quantity -= matchQuantity
-		buyBid.AskQuantity -= matchQuantity
+		buyBid.PrivateQuantity.AskQuantity -= matchQuantity
 
 		matchedBidPublic := &bids.MatchedBid{
 			BuyBid:   &buyBidPreservedQuantity,
@@ -149,7 +149,7 @@ func calculateClearingPriceAndQuantity(
 		return 0, 0, false
 	}
 
-	quantity := min(sellBid.Quantity, buyBid.AskQuantity)
+	quantity := min(sellBid.Quantity, buyBid.PrivateQuantity.AskQuantity)
 	if quantity < common.QUANTITY_SCALE {
 		return 0, 0, false // Minimum quantity is 1 unit
 	}
@@ -159,14 +159,14 @@ func calculateClearingPriceAndQuantity(
 	acquirableQuantity := quantity + maxExtraQuantity
 
 	var toBeAcquired int64
-	if buyBid.AskQuantity >= acquirableQuantity {
+	if buyBid.PrivateQuantity.AskQuantity >= acquirableQuantity {
 		toBeAcquired = quantity
 	} else {
 		// toBeAcquired = buyBid.AskQuantity / (1 + mult)
 		// toBeAcquired + toBeAcquired*(mult/MULTIPLIER_SCALE) = buyBid.AskQuantity
 		// toBeAcquired = buyBid.AskQuantity / (1 + mult/policies.MULTIPLIER_SCALE)
 		// Re-writing the denominator:
-		toBeAcquired = buyBid.AskQuantity * policies.MULTIPLIER_SCALE / (policies.MULTIPLIER_SCALE + mult)
+		toBeAcquired = buyBid.PrivateQuantity.AskQuantity * policies.MULTIPLIER_SCALE / (policies.MULTIPLIER_SCALE + mult)
 	}
 
 	nominalQuantity := toBeAcquired
