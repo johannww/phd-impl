@@ -124,8 +124,10 @@ func (s *SellBid) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
 	return err
 }
 
+// GetID might result in conflicting IDs if two sell bids are created by the
+// same seller for the same credit at the same timestamp. This is unlikely, but should be
+// clarified
 func (s *SellBid) GetID() *[][]string {
-	// TODO: possible colision with other bids
 	creditIdAsPrefix := s.CreditID
 	creditIdAsPrefix = append(creditIdAsPrefix, s.Timestamp)
 	return &[][]string{
