@@ -9,7 +9,6 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/auction"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
-	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
@@ -33,7 +32,7 @@ func NewCarbonContract() *CarbonContract {
 // TODO: This is only a test function
 func (c *CarbonContract) CreateBuyBid(ctx contractapi.TransactionContextInterface, key string, value string) error {
 	stub := ctx.GetStub()
-	err := bids.PublishBuyBidWithPublicQuanitity(stub, 2, &identities.X509Identity{CertID: "certid"})
+	err := bids.PublishBuyBidWithPublicQuanitity(stub, 2)
 	// _, err = state.GetStatesByRangeCompositeKey(stub, "buyBid", []string{"a"}, []string{"ac"})
 	return err
 }

@@ -25,7 +25,7 @@ func TestBid(t *testing.T) {
 	}
 
 	stub.MockTransactionStart("tx1")
-	err := bids.PublishBuyBidWithPublicQuanitity(stub, 100, &identities.X509Identity{})
+	err := bids.PublishBuyBidWithPublicQuanitity(stub, 100)
 	if err != nil {
 		t.Fatalf("Error publishing buy bid: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestBidBatchRecover(t *testing.T) {
 		}
 		stub.MockTransactionStart("tx" + strconv.FormatInt(i, 10))
 		stub.TxTimestamp = timestamppb.New(initialTime.Add(time.Duration(i) * time.Second))
-		err := bids.PublishBuyBidWithPublicQuanitity(stub, 100, &identities.X509Identity{})
+		err := bids.PublishBuyBidWithPublicQuanitity(stub, 100)
 		if err != nil {
 			t.Fatalf("Error publishing buy bid: %v", err)
 		}

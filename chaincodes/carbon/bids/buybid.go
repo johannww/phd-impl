@@ -147,7 +147,7 @@ func (b *BuyBid) validQuantity() bool {
 		(b.PrivateQuantity != nil && b.PrivateQuantity.AskQuantity > 0)
 }
 
-func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity int64, buyerID *identities.X509Identity) error {
+func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity int64) error {
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
 		return err
@@ -158,6 +158,8 @@ func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity
 		return fmt.Errorf("could not parse price: %v", err)
 	}
 
+	buyerID := identities.GetID(stub)
+
 	bidTS, err := stub.GetTxTimestamp()
 	if err != nil {
 		return fmt.Errorf("could not get transaction timestamp: %v", err)
@@ -165,7 +167,7 @@ func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity
 	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
 
 	buyBid := &BuyBid{
-		BuyerID:     identities.GetID(stub),
+		BuyerID:     buyerID,
 		Timestamp:   bidTSStr,
 		AskQuantity: &quantity,
 	}
