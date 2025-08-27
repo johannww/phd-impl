@@ -31,55 +31,6 @@ type SellBid struct {
 
 var _ ccstate.WorldStateManager = (*SellBid)(nil)
 
-// TODOHP: check if credit has quantity and control how much announced quantity exist against a credit.
-// This applies when they are non-fungible credits.
-func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID []string) error {
-	priceBytes, err := ccstate.GetTransientData(stub, "price")
-	if err != nil {
-		return err
-	}
-
-	price, err := strconv.ParseFloat(string(priceBytes), 64)
-	if err != nil {
-		return fmt.Errorf("could not parse price: %v", err)
-	}
-
-	bidTS, err := stub.GetTxTimestamp()
-	if err != nil {
-		return fmt.Errorf("could not get transaction timestamp: %v", err)
-	}
-	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
-
-	sellBid := &SellBid{
-		SellerID:  identities.GetID(stub),
-		CreditID:  creditID,
-		Timestamp: bidTSStr,
-		Quantity:  quantity,
-	}
-	bidID := *(sellBid.GetID())
-
-	privatePrice := &PrivatePrice{
-		Price: int64(price),
-		BidID: bidID[0],
-	}
-	sellBid.PrivatePrice = privatePrice
-
-	if err := sellBid.ToWorldState(stub); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func RetractSellBid(stub shim.ChaincodeStubInterface, bidID []string) error {
-	mockBid := &SellBid{
-		CreditID:  bidID[0:2],
-		Timestamp: bidID[2],
-	}
-	err := mockBid.DeleteFromWorldState(stub)
-	return err
-}
-
 func (s *SellBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) error {
 	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
 		privatePrice := &PrivatePrice{}
@@ -187,4 +138,53 @@ func (b *SellBid) Less(b2 *SellBid) int {
 		return 1
 	}
 	return 0
+}
+
+// TODOHP: check if credit has quantity and control how much announced quantity exist against a credit.
+// This applies when they are non-fungible credits.
+func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID []string) error {
+	priceBytes, err := ccstate.GetTransientData(stub, "price")
+	if err != nil {
+		return err
+	}
+
+	price, err := strconv.ParseFloat(string(priceBytes), 64)
+	if err != nil {
+		return fmt.Errorf("could not parse price: %v", err)
+	}
+
+	bidTS, err := stub.GetTxTimestamp()
+	if err != nil {
+		return fmt.Errorf("could not get transaction timestamp: %v", err)
+	}
+	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
+
+	sellBid := &SellBid{
+		SellerID:  identities.GetID(stub),
+		CreditID:  creditID,
+		Timestamp: bidTSStr,
+		Quantity:  quantity,
+	}
+	bidID := *(sellBid.GetID())
+
+	privatePrice := &PrivatePrice{
+		Price: int64(price),
+		BidID: bidID[0],
+	}
+	sellBid.PrivatePrice = privatePrice
+
+	if err := sellBid.ToWorldState(stub); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RetractSellBid(stub shim.ChaincodeStubInterface, bidID []string) error {
+	mockBid := &SellBid{
+		CreditID:  bidID[0:2],
+		Timestamp: bidID[2],
+	}
+	err := mockBid.DeleteFromWorldState(stub)
+	return err
 }
