@@ -131,7 +131,6 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 				PrivatePrice:    buyBidPreservedQuantity.PrivatePrice,
 			},
 			SellBid: &bids.SellBid{
-				Quantity:     sellBidPreservedQuantity.Quantity,
 				PrivatePrice: sellBidPreservedQuantity.PrivatePrice,
 			},
 			PrivatePrice: &bids.PrivatePrice{
