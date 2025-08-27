@@ -117,36 +117,13 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 		sellBidPreservedQuantity := *sellBid
 		buyBidPreservedQuantity := *buyBid
 
-		matchedBidPublic := &bids.MatchedBid{
-			BuyBid:   &buyBidPreservedQuantity,
-			SellBid:  &sellBidPreservedQuantity,
-			Quantity: matchQuantity,
-		}
-		matchedBidPrivate := &bids.MatchedBid{
-			BuyBid: &bids.BuyBid{
-				PrivateQuantity: &bids.PrivateQuantity{
-					AskQuantity: buyBidPreservedQuantity.PrivateQuantity.AskQuantity,
-					BidID:       buyBidPreservedQuantity.PrivateQuantity.BidID,
-				},
-				PrivatePrice: buyBidPreservedQuantity.PrivatePrice,
-			},
-			SellBid: &bids.SellBid{
-				PrivatePrice: sellBidPreservedQuantity.PrivatePrice,
-			},
-			PrivatePrice: &bids.PrivatePrice{
-				Price: matchPrice,
-				BidID: (*matchedBidPublic.GetID())[0],
-			},
-			PrivateMultiplier: &bids.PrivateMultiplier{
-				MatchingID: (*matchedBidPublic.GetID())[0],
-				Scale:      policies.MULTIPLIER_SCALE,
-				Value:      mult.Value,
-			},
-		}
-		// Erase private attributes from public part
-		matchedBidPublic.BuyBid.PrivateQuantity = nil
-		matchedBidPublic.BuyBid.PrivatePrice = nil
-		matchedBidPublic.SellBid.PrivatePrice = nil
+		matchedBidPublic, matchedBidPrivate := a.mountPublicAndPrivateMatchedBid(
+			&sellBidPreservedQuantity,
+			&buyBidPreservedQuantity,
+			matchPrice,
+			matchQuantity,
+			mult.Value,
+		)
 
 		sellBid.Quantity -= matchQuantity
 		buyBid.PrivateQuantity.AskQuantity -= matchQuantity
@@ -162,6 +139,48 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 	shuffleMatchedBids(public.MatchedBidsPublic, private.MatchedBidsPrivate)
 
 	return public, private, nil
+}
+
+// mountPublicAndPrivateMatchedBid creates the public and private parts of a matched bid.
+// The public part contains only non-sensitive information, while the private part contains
+// sensitive information such as private prices and quantities.
+func (a *AuctionCoupledRunner) mountPublicAndPrivateMatchedBid(
+	sellBidCopy *bids.SellBid,
+	buyBidCopy *bids.BuyBid,
+	matchPrice, matchQuantity, multValue int64,
+) (pub, pvt *bids.MatchedBid) {
+	pub = &bids.MatchedBid{
+		BuyBid:   buyBidCopy,
+		SellBid:  sellBidCopy,
+		Quantity: matchQuantity,
+	}
+	pvt = &bids.MatchedBid{
+		BuyBid: &bids.BuyBid{
+			PrivateQuantity: &bids.PrivateQuantity{
+				AskQuantity: buyBidCopy.PrivateQuantity.AskQuantity,
+				BidID:       buyBidCopy.PrivateQuantity.BidID,
+			},
+			PrivatePrice: buyBidCopy.PrivatePrice,
+		},
+		SellBid: &bids.SellBid{
+			PrivatePrice: sellBidCopy.PrivatePrice,
+		},
+		PrivatePrice: &bids.PrivatePrice{
+			Price: matchPrice,
+			BidID: (*pub.GetID())[0],
+		},
+		PrivateMultiplier: &bids.PrivateMultiplier{
+			MatchingID: (*pub.GetID())[0],
+			Scale:      policies.MULTIPLIER_SCALE,
+			Value:      multValue,
+		},
+	}
+	// Erase private attributes from public part
+	pub.BuyBid.PrivateQuantity = nil
+	pub.BuyBid.PrivatePrice = nil
+	pub.SellBid.PrivatePrice = nil
+
+	return
 }
 
 // calculateClearingPriceAndQuantity calculates the clearing price and quantity for a pair of bids.
