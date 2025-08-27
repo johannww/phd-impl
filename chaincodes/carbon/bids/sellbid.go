@@ -49,6 +49,10 @@ func (s *SellBid) FetchCredit(stub shim.ChaincodeStubInterface) error {
 	if err != nil {
 		return fmt.Errorf("could not get credit in state: %v", err)
 	}
+
+	if s.Credit.OwnerID != s.SellerID {
+		return fmt.Errorf("credit owner ID does not match seller %s", s.SellerID)
+	}
 	return nil
 }
 
@@ -140,9 +144,11 @@ func (b *SellBid) Less(b2 *SellBid) int {
 	return 0
 }
 
-// TODOHP: check if credit has quantity and control how much announced quantity exist against a credit.
-// This applies when they are non-fungible credits.
+// PublishSellBid creates a sell bid in the world state.
+// The price is read from the transient data.
+// The credit is fetched from the world state to verify ownership and quantity. After that, the credit is updated in the world state with the new quantity.
 func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID []string) error {
+	ownerID := identities.GetID(stub)
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
 		return err
@@ -160,11 +166,21 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID [
 	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
 
 	sellBid := &SellBid{
-		SellerID:  identities.GetID(stub),
+		SellerID:  ownerID,
 		CreditID:  creditID,
 		Timestamp: bidTSStr,
 		Quantity:  quantity,
 	}
+	err = sellBid.FetchCredit(stub)
+	if err != nil {
+		return fmt.Errorf("could not fetch credit: %v", err)
+	}
+
+	sellBid.Credit.Quantity -= quantity
+	if sellBid.Credit.Quantity < 0 {
+		return fmt.Errorf("sell bid quantity %d exceeds credit quantity %d", sellBid.Quantity, sellBid.Credit.Quantity)
+	}
+
 	bidID := *(sellBid.GetID())
 
 	privatePrice := &PrivatePrice{
