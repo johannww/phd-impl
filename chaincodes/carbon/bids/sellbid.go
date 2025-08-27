@@ -21,11 +21,11 @@ const (
 
 // TODO: review how the credit should be loaded here
 type SellBid struct {
-	SellerID     string              `json:"sellerID"`
+	SellerID     string              `json:"sellerID,omitempty"`
 	CreditID     []string            `json:"creditID"`
-	Timestamp    string              `json:"timestamp"`
-	Credit       *credits.MintCredit `json:"credit"`
-	Quantity     int64               `json:"quantity"`
+	Timestamp    string              `json:"timestamp,omitempty"`
+	Credit       *credits.MintCredit `json:"credit,omitempty"`
+	Quantity     int64               `json:"quantity,omitempty"`
 	PrivatePrice *PrivatePrice       `json:"privatePrice,omitempty"`
 }
 

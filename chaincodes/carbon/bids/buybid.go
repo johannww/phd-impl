@@ -19,7 +19,6 @@ const (
 
 // BuyBid represents an ask from a buyer.
 // Their ID could be either x509 or pseudonym-based
-// TODOHP: add omitempty for every field in every struct?
 type BuyBid struct {
 	// TODO: temp fix for teste
 	// TODO: interfaces cannot be marshalled
