@@ -20,8 +20,6 @@ const (
 // BuyBid represents an ask from a buyer.
 // Their ID could be either x509 or pseudonym-based
 type BuyBid struct {
-	// TODO: temp fix for teste
-	// TODO: interfaces cannot be marshalled
 	BuyerID   string `json:"buyerID,omitempty"`
 	Timestamp string `json:"timestamp,omitempty"`
 
