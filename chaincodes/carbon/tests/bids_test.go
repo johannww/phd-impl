@@ -8,12 +8,28 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
 	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func TestBidWithNoWallet(t *testing.T) {
+	stub := mocks.NewMockStub("carbon", nil)
+	possibleIds := setup.SetupIdentities(stub)
+	stub.Creator = possibleIds[setup.REGULAR_ID]
+
+	stub.TransientMap = map[string][]byte{
+		"price": []byte("1000"),
+	}
+
+	stub.MockTransactionStart("tx1")
+	err := bids.PublishBuyBidWithPublicQuanitity(stub, 100)
+	require.Error(t, err, "could not get buyer wallet")
+}
 
 func TestBid(t *testing.T) {
 	stub := mocks.NewMockStub("carbon", nil)
@@ -25,10 +41,10 @@ func TestBid(t *testing.T) {
 	}
 
 	stub.MockTransactionStart("tx1")
+	createAndStoreWalletForCreator(t, stub, 200000000)
+
 	err := bids.PublishBuyBidWithPublicQuanitity(stub, 100)
-	if err != nil {
-		t.Fatalf("Error publishing buy bid: %v", err)
-	}
+	require.NoError(t, err, "Error publishing buy bid")
 
 	creatorId, _ := cid.GetID(stub)
 	protoTs, _ := stub.GetTxTimestamp()
@@ -59,6 +75,7 @@ func TestBidBatchRecover(t *testing.T) {
 	stub := mocks.NewMockStub("carbon", nil)
 	possibleIds := setup.SetupIdentities(stub)
 	stub.Creator = possibleIds[setup.REGULAR_ID]
+	createAndStoreWalletForCreator(t, stub, 200000000)
 
 	numOfBids := int64(100)
 	initialTime := time.Now()
@@ -113,9 +130,12 @@ func ensureAllBidsWereRetrieved(stub *mocks.MockStub, t *testing.T,
 	}
 }
 
-// func TestWithGoMock(t *testing.T) {
-// 	ctrllr := gomock.NewController(t)
-// 	mockStub := NewMockChaincodeStubInterface(ctrllr)
-// 	t.Log(mockStub.GetTxID())
-// 	_ = mockStub
-// }
+func createAndStoreWalletForCreator(t *testing.T, stub *mocks.MockStub, currencyQuantity int64) {
+	ownerID := identities.GetID(stub)
+	buyerWallet := &payment.VirtualTokenWallet{
+		OwnerID:  ownerID,
+		Quantity: currencyQuantity,
+	}
+	err := buyerWallet.ToWorldState(stub)
+	require.NoError(t, err, "Failed to store buyer wallet in world state")
+}
