@@ -117,9 +117,6 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 		sellBidPreservedQuantity := *sellBid
 		buyBidPreservedQuantity := *buyBid
 
-		sellBid.Quantity -= matchQuantity
-		buyBid.PrivateQuantity.AskQuantity -= matchQuantity
-
 		matchedBidPublic := &bids.MatchedBid{
 			BuyBid:   &buyBidPreservedQuantity,
 			SellBid:  &sellBidPreservedQuantity,
@@ -127,8 +124,11 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 		}
 		matchedBidPrivate := &bids.MatchedBid{
 			BuyBid: &bids.BuyBid{
-				PrivateQuantity: buyBidPreservedQuantity.PrivateQuantity,
-				PrivatePrice:    buyBidPreservedQuantity.PrivatePrice,
+				PrivateQuantity: &bids.PrivateQuantity{
+					AskQuantity: buyBidPreservedQuantity.PrivateQuantity.AskQuantity,
+					BidID:       buyBidPreservedQuantity.PrivateQuantity.BidID,
+				},
+				PrivatePrice: buyBidPreservedQuantity.PrivatePrice,
 			},
 			SellBid: &bids.SellBid{
 				PrivatePrice: sellBidPreservedQuantity.PrivatePrice,
@@ -147,6 +147,9 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 		matchedBidPublic.BuyBid.PrivateQuantity = nil
 		matchedBidPublic.BuyBid.PrivatePrice = nil
 		matchedBidPublic.SellBid.PrivatePrice = nil
+
+		sellBid.Quantity -= matchQuantity
+		buyBid.PrivateQuantity.AskQuantity -= matchQuantity
 
 		data.BuyBids[mult.BuyBidIndex] = buyBid
 		data.SellBids[mult.SellBidIndex] = sellBid
