@@ -41,7 +41,7 @@ func processIndependentAuctionResult(stub shim.ChaincodeStubInterface,
 func processCoupledAuctionResult(stub shim.ChaincodeStubInterface,
 	resultPub *OffChainCoupledAuctionResult, resultPvt *OffChainCoupledAuctionResult,
 ) error {
-	result, err := MergeCoupledPublicPrivateResults(resultPub, resultPvt)
+	result, err := NewSingleCoupledResults(resultPub, resultPvt)
 	if err != nil {
 		return fmt.Errorf("could not merge coupled public and private results: %v", err)
 	}

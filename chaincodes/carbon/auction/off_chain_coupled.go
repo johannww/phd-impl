@@ -20,6 +20,26 @@ type OffChainCoupledAuctionResult struct {
 	MatchedBidsPrivate []*bids.MatchedBid `json:"matchedBidsPrivate"`
 }
 
+func (r *OffChainCoupledAuctionResult) MergeIntoSingleMatchedBids() ([]*bids.MatchedBid, error) {
+	if len(r.MatchedBidsPublic) != len(r.MatchedBidsPrivate) {
+		return nil, fmt.Errorf("mismatched lengths between public and private matched bids")
+	}
+	merged := make([]*bids.MatchedBid, len(r.MatchedBidsPublic))
+	for i := range r.MatchedBidsPublic {
+		merged[i] = &bids.MatchedBid{
+			BuyBid:            r.MatchedBidsPublic[i].BuyBid,
+			SellBid:           r.MatchedBidsPublic[i].SellBid,
+			Quantity:          r.MatchedBidsPublic[i].Quantity,
+			PrivatePrice:      r.MatchedBidsPrivate[i].PrivatePrice,
+			PrivateMultiplier: r.MatchedBidsPrivate[i].PrivateMultiplier,
+		}
+		merged[i].BuyBid.PrivateQuantity = r.MatchedBidsPrivate[i].BuyBid.PrivateQuantity
+		merged[i].BuyBid.PrivatePrice = r.MatchedBidsPrivate[i].BuyBid.PrivatePrice
+		merged[i].SellBid.PrivatePrice = r.MatchedBidsPrivate[i].SellBid.PrivatePrice
+	}
+	return merged, nil
+}
+
 // Multiplier represents a multiplier for a pair of bids.
 // We represent as Int64 to avoid floating point precision issues.
 type Multiplier struct {
@@ -105,8 +125,15 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 			SellBid:  &sellBidPreservedQuantity,
 			Quantity: matchQuantity,
 		}
-
 		matchedBidPrivate := &bids.MatchedBid{
+			BuyBid: &bids.BuyBid{
+				PrivateQuantity: buyBidPreservedQuantity.PrivateQuantity,
+				PrivatePrice:    buyBidPreservedQuantity.PrivatePrice,
+			},
+			SellBid: &bids.SellBid{
+				Quantity:     sellBidPreservedQuantity.Quantity,
+				PrivatePrice: sellBidPreservedQuantity.PrivatePrice,
+			},
 			PrivatePrice: &bids.PrivatePrice{
 				Price: matchPrice,
 				BidID: (*matchedBidPublic.GetID())[0],
@@ -117,6 +144,10 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 				Value:      mult.Value,
 			},
 		}
+		// Erase private attributes from public part
+		matchedBidPublic.BuyBid.PrivateQuantity = nil
+		matchedBidPublic.BuyBid.PrivatePrice = nil
+		matchedBidPublic.SellBid.PrivatePrice = nil
 
 		data.BuyBids[mult.BuyBidIndex] = buyBid
 		data.SellBids[mult.SellBidIndex] = sellBid
@@ -193,7 +224,7 @@ func calculateClearingPriceAndQuantity(
 	return Cp, Cq, true
 }
 
-func MergeCoupledPublicPrivateResults(
+func NewSingleCoupledResults(
 	pubResult, pvtResult *OffChainCoupledAuctionResult,
 ) (*OffChainCoupledAuctionResult, error) {
 	if pubResult.AuctionID != pvtResult.AuctionID {
