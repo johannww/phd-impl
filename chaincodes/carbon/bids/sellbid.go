@@ -148,7 +148,7 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID [
 		return err
 	}
 
-	price, err := strconv.ParseFloat(string(priceBytes), 64)
+	price, err := strconv.ParseInt(string(priceBytes), 10, 64)
 	if err != nil {
 		return fmt.Errorf("could not parse price: %v", err)
 	}
@@ -168,7 +168,7 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID [
 	bidID := *(sellBid.GetID())
 
 	privatePrice := &PrivatePrice{
-		Price: int64(price),
+		Price: price,
 		BidID: bidID[0],
 	}
 	sellBid.PrivatePrice = privatePrice
