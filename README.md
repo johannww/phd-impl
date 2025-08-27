@@ -4,7 +4,8 @@
 
 - [X] Understand and fix hyperledger bevel
 - [ ] Finish chaincode
-- [ ] Enable TEE auction (microsoft confidential containers)
+- [] Integrate cacti for interoperability
+- [X] Enable TEE auction (microsoft confidential containers)
 - [ ] Understand cacti and how to  uset it 
 - [ ] Understand hyperledger caliper for experiments
 - [ ] Understand grafana, prometheus for metrics
