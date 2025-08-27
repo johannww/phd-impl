@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	ccstate "github.com/johannww/phd-impl/chaincodes/carbon/state"
 	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 )
@@ -159,6 +160,17 @@ func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity
 	}
 
 	buyerID := identities.GetID(stub)
+	buyerWallet := &payment.VirtualTokenWallet{}
+	err = buyerWallet.FromWorldState(stub, []string{buyerID})
+	if err != nil {
+		return fmt.Errorf("could not get buyer wallet from world state: %v", err)
+	}
+
+	if buyerWallet.Quantity < price*quantity {
+		return fmt.Errorf("buyer does not have enough tokens to place the bid")
+	}
+
+	buyerWallet.Quantity -= price * quantity
 
 	bidTS, err := stub.GetTxTimestamp()
 	if err != nil {
@@ -180,6 +192,9 @@ func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity
 	buyBid.PrivatePrice = privatePrice
 
 	if err := buyBid.ToWorldState(stub); err != nil {
+		return err
+	}
+	if err := buyerWallet.ToWorldState(stub); err != nil {
 		return err
 	}
 

@@ -1,4 +1,4 @@
-package payment
+package htlc
 
 import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
