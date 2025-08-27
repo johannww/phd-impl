@@ -114,6 +114,8 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 
 		// Copy sellbid and buybid to store how much was available when
 		// the match was made
+		// TODOHP: the sell bid quantity at the matching will expose the
+		// order of matching to an observer.
 		sellBidPreservedQuantity := *sellBid
 		buyBidPreservedQuantity := *buyBid
 
