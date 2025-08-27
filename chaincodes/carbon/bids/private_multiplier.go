@@ -9,8 +9,7 @@ const (
 	PVT_MULTIPLIER_PREFIX = "privateMultiplier"
 )
 
-// TODO: this may be a float64 passed to the chaincode via transient data
-// PrivateMultiplier is an for-the-government-only price encoded as a base64 string.
+// PrivateMultiplier is an for-the-(government/audtior)-only multiplier
 type PrivateMultiplier struct {
 	MatchingID []string `json:"matchingID"` // This could be (Sell|Buy)bid or also MatchedBid
 	Scale      int64    `json:"scale"`      // The scale factor for the multiplier
