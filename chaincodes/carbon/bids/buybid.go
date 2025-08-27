@@ -148,11 +148,6 @@ func (b *BuyBid) validQuantity() bool {
 }
 
 func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity int64, buyerID *identities.X509Identity) error {
-	// TODO: cidID is nil when idemix
-	cidID, _ := cid.GetID(stub)
-	// TODO: enhance this
-	buyerID = &identities.X509Identity{CertID: cidID}
-
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
 		return err
