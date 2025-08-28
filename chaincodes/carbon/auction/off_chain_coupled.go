@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"slices"
 
+	bidcopier "github.com/johannww/phd-impl/chaincodes/carbon/auction/bid_copier"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/common"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
@@ -112,16 +113,13 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 			continue // skip if no clearing price is found
 		}
 
-		// Copy sellbid and buybid to store how much was available when
-		// the match was made
-		// TODOHP: the sell bid quantity at the matching will expose the
-		// order of matching to an observer.
-		sellBidPreservedQuantity := *sellBid
-		buyBidPreservedQuantity := *buyBid
+		// In testing environments, we preserve the quantities at match time for verification.
+		// In production, we zero them out to avoid leaking information.
+		sellBidEditedQuantity, buyBidEditedQuantity := bidcopier.CopyBids(sellBid, buyBid)
 
 		matchedBidPublic, matchedBidPrivate := a.mountPublicAndPrivateMatchedBid(
-			&sellBidPreservedQuantity,
-			&buyBidPreservedQuantity,
+			sellBidEditedQuantity,
+			buyBidEditedQuantity,
 			matchPrice,
 			matchQuantity,
 			mult.Value,
@@ -158,11 +156,8 @@ func (a *AuctionCoupledRunner) mountPublicAndPrivateMatchedBid(
 	}
 	pvt = &bids.MatchedBid{
 		BuyBid: &bids.BuyBid{
-			PrivateQuantity: &bids.PrivateQuantity{
-				AskQuantity: buyBidCopy.PrivateQuantity.AskQuantity,
-				BidID:       buyBidCopy.PrivateQuantity.BidID,
-			},
-			PrivatePrice: buyBidCopy.PrivatePrice,
+			PrivateQuantity: buyBidCopy.PrivateQuantity,
+			PrivatePrice:    buyBidCopy.PrivatePrice,
 		},
 		SellBid: &bids.SellBid{
 			PrivatePrice: sellBidCopy.PrivatePrice,

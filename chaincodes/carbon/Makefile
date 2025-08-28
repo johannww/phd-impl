@@ -13,7 +13,7 @@ unit-test:
 	go test $(shell go list ./... | grep -v '\.tests/')
 
 test:
-	go test ./tests
+	go test --tags=testing ./tests
 
 test-no-cache:
 	go test -count=1 ./tests
