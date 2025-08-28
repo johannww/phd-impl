@@ -36,7 +36,7 @@ jobs:
         run: go mod tidy && go mod vendor && go build -o carbon ./cmd/carbon/main.go
 
       - name: Run the tests
-        run: go test ./tests
+        run: go test --tags=testing ./tests
 
   # I had to grant package access in: https://github.com/johannww?tab=packages
   docker-chaincode-build:
