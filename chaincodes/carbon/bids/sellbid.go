@@ -146,6 +146,19 @@ func (b *SellBid) Less(b2 *SellBid) int {
 	return 0
 }
 
+func (b *SellBid) DeepCopy() *SellBid {
+	bidCopy := *b
+	if b.Credit != nil {
+		creditCopy := *b.Credit
+		bidCopy.Credit = &creditCopy
+	}
+	if b.PrivatePrice != nil {
+		priceCopy := *b.PrivatePrice
+		bidCopy.PrivatePrice = &priceCopy
+	}
+	return &bidCopy
+}
+
 // PublishSellBid creates a sell bid in the world state.
 // The price is read from the transient data.
 // The credit is fetched from the world state to verify ownership and quantity. After that, the credit is updated in the world state with the new quantity.

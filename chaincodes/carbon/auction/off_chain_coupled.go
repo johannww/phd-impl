@@ -28,8 +28,8 @@ func (r *OffChainCoupledAuctionResult) MergeIntoSingleMatchedBids() ([]*bids.Mat
 	merged := make([]*bids.MatchedBid, len(r.MatchedBidsPublic))
 	for i := range r.MatchedBidsPublic {
 		merged[i] = &bids.MatchedBid{
-			BuyBid:            r.MatchedBidsPublic[i].BuyBid,
-			SellBid:           r.MatchedBidsPublic[i].SellBid,
+			BuyBid:            r.MatchedBidsPublic[i].BuyBid.DeepCopy(),
+			SellBid:           r.MatchedBidsPublic[i].SellBid.DeepCopy(),
 			Quantity:          r.MatchedBidsPublic[i].Quantity,
 			PrivatePrice:      r.MatchedBidsPrivate[i].PrivatePrice,
 			PrivateMultiplier: r.MatchedBidsPrivate[i].PrivateMultiplier,

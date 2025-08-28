@@ -148,6 +148,19 @@ func (b *BuyBid) validQuantity() bool {
 		(b.PrivateQuantity != nil && b.PrivateQuantity.AskQuantity > 0)
 }
 
+func (b *BuyBid) DeepCopy() *BuyBid {
+	copyB := *b
+	if b.PrivatePrice != nil {
+		privatePriceCopy := *b.PrivatePrice
+		copyB.PrivatePrice = &privatePriceCopy
+	}
+	if b.PrivateQuantity != nil {
+		privateQuantityCopy := *b.PrivateQuantity
+		copyB.PrivateQuantity = &privateQuantityCopy
+	}
+	return &copyB
+}
+
 func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity int64) error {
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
