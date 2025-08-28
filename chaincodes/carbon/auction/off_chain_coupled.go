@@ -220,7 +220,7 @@ func calculateClearingPriceAndQuantity(
 		// toBeAcquired + toBeAcquired*(mult/MULTIPLIER_SCALE) = buyBid.AskQuantity
 		// toBeAcquired = buyBid.AskQuantity / (1 + mult/policies.MULTIPLIER_SCALE)
 		// Re-writing the denominator:
-		toBeAcquired = buyBid.PrivateQuantity.AskQuantity * policies.MULTIPLIER_SCALE / (policies.MULTIPLIER_SCALE + mult)
+		toBeAcquired = quantity * policies.MULTIPLIER_SCALE / (policies.MULTIPLIER_SCALE + mult)
 	}
 
 	nominalQuantity := toBeAcquired
