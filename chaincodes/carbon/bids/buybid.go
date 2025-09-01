@@ -25,7 +25,7 @@ type BuyBid struct {
 	Timestamp string `json:"timestamp,omitempty"`
 
 	// AskQuantity is used for public cases
-	AskQuantity *int64 `json:"askQuantity,omitempty"`
+	AskQuantity int64 `json:"askQuantity,omitempty"`
 	// PrivateQuantity is required for coupled auctions, when
 	// the multiplier can be inferred from the AskQuantity, possibly
 	// revealing the anonymous buyer
@@ -73,7 +73,7 @@ func (b *BuyBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes 
 		return err
 	}
 
-	if b.AskQuantity != nil {
+	if b.AskQuantity != 0 {
 		return nil
 	}
 
@@ -144,7 +144,7 @@ func (b *BuyBid) Less(b2 *BuyBid) int {
 }
 
 func (b *BuyBid) validQuantity() bool {
-	return (b.AskQuantity != nil && *b.AskQuantity > 0) ||
+	return (b.AskQuantity > 0) ||
 		(b.PrivateQuantity != nil && b.PrivateQuantity.AskQuantity > 0)
 }
 
@@ -194,7 +194,7 @@ func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity
 	buyBid := &BuyBid{
 		BuyerID:     buyerID,
 		Timestamp:   bidTSStr,
-		AskQuantity: &quantity,
+		AskQuantity: quantity,
 	}
 	bidID := *(buyBid.GetID())
 

@@ -92,7 +92,7 @@ func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time,
 			}
 		} else {
 			buyBidAskQuantity := mintCredit.Quantity
-			buyBid.AskQuantity = &buyBidAskQuantity
+			buyBid.AskQuantity = buyBidAskQuantity
 		}
 		buyBid.PrivatePrice.BidID = (*buyBid.GetID())[0]
 

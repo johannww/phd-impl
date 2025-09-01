@@ -134,7 +134,7 @@ func matchBidsIndependent(
 		buyBids[j].PrivatePrice.Price >= sellBids[i].PrivatePrice.Price {
 
 		// Skip exhausted bids
-		if *buyBids[j].AskQuantity == 0 {
+		if buyBids[j].AskQuantity == 0 {
 			j--
 			continue
 		} else if sellBids[i].Quantity == 0 {
@@ -142,9 +142,9 @@ func matchBidsIndependent(
 			continue
 		}
 
-		matchQuantity := min(sellBids[i].Quantity, *buyBids[j].AskQuantity)
+		matchQuantity := min(sellBids[i].Quantity, buyBids[j].AskQuantity)
 		sellBids[i].Quantity -= matchQuantity
-		*buyBids[j].AskQuantity -= matchQuantity
+		buyBids[j].AskQuantity -= matchQuantity
 
 		matchedBid := &bids.MatchedBid{
 			BuyBid:   buyBids[j],
@@ -164,7 +164,7 @@ func matchBidsIndependent(
 			errSell = sellBids[i].DeleteFromWorldState(stub)
 			i++
 		}
-		if *buyBids[j].AskQuantity == 0 {
+		if buyBids[j].AskQuantity == 0 {
 			errBuy = buyBids[j].DeleteFromWorldState(stub)
 			j--
 		}

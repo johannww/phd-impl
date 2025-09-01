@@ -31,7 +31,7 @@ func TestOffChainIndependentAuction(t *testing.T) {
 
 	var totalBuyBidQuantity int64 = 0
 	for _, bid := range auctionData.BuyBids {
-		totalBuyBidQuantity += *bid.AskQuantity
+		totalBuyBidQuantity += bid.AskQuantity
 	}
 
 	// Run the auction
@@ -62,7 +62,7 @@ func TestOffChainIndependentAuctionWithRandomBids(t *testing.T) {
 
 	var totalBuyBidQuantity int64 = 0
 	for _, bid := range auctionData.BuyBids {
-		totalBuyBidQuantity += *bid.AskQuantity
+		totalBuyBidQuantity += bid.AskQuantity
 	}
 
 	// Run the auction
@@ -190,7 +190,7 @@ func verifyBidsQuantityConsistency(
 	}
 
 	for _, bid := range auctionResult.AdustedBuyBids {
-		totalAdjusted += *bid.AskQuantity
+		totalAdjusted += bid.AskQuantity
 	}
 
 	require.Equal(t, totalBuyBidQuantity, totalMatched+totalAdjusted, "Sum of matched and adjusted bids quantities must equal total bids quantity")
@@ -265,7 +265,7 @@ func genRandomBidsForMintCredits(testData *utils_test.TestData, issueStart time.
 		bidAskQuantity := mintCredit.Quantity
 		buyBid := &bids.BuyBid{
 			BuyerID:     buyerIds[buyerIdIndex].Pseudonym,
-			AskQuantity: &bidAskQuantity,
+			AskQuantity: bidAskQuantity,
 			Timestamp:   issueTsStr,
 			PrivatePrice: &bids.PrivatePrice{
 				Price: buyPrice,
