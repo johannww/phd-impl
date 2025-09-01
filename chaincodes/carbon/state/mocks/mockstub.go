@@ -99,9 +99,10 @@ func (stub *MockStub) GetArgs() [][]byte {
 }
 
 // GetStringArgs ...
+// We do not lock here because GetFunctionAndParameters also calls this function
 func (stub *MockStub) GetStringArgs() []string {
-	stub.mutex.Lock()
-	defer stub.mutex.Unlock()
+	// stub.mutex.Lock()
+	// defer stub.mutex.Unlock()
 	args := stub.args
 	strargs := make([]string, 0, len(args))
 	for _, barg := range args {
