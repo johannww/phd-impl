@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
 
@@ -49,6 +50,11 @@ func LockCredit(stub shim.ChaincodeStubInterface, creditID []string, quantity in
 	err := credit.FromWorldState(stub, creditID)
 	if err != nil {
 		return fmt.Errorf("could not get credit from world state: %v", err)
+	}
+
+	callerID := identities.GetID(stub)
+	if credit.OwnerID != callerID {
+		return fmt.Errorf("only the owner of the credit can lock it: %s != %s", credit.OwnerID, callerID)
 	}
 
 	if quantity == 0 {
