@@ -209,3 +209,13 @@ func (c *CarbonContract) DeleteActivePolicy(ctx contractapi.TransactionContextIn
 func (c *CarbonContract) GetCallerMatchedBids(ctx contractapi.TransactionContextInterface) ([]*bids.MatchedBid, error) {
 	return bids.GetCallerMatchedBids(ctx.GetStub())
 }
+
+// TODOHP: evaluate
+func (c *CarbonContract) CreditIsLocked(ctx contractapi.TransactionContextInterface, creditID []string) bool {
+	return credits.CreditIsLocked(ctx.GetStub(), creditID)
+}
+
+// TODOHP: evaluate
+func (c *CarbonContract) LockCredit(ctx contractapi.TransactionContextInterface, creditID []string, quantity int64) error {
+	return credits.LockCredit(ctx.GetStub(), creditID, quantity)
+}
