@@ -23,6 +23,7 @@ func (c *InteropContract) InitLedger() {}
 func (c *InteropContract) CreditIsLocked(
 	ctx contractapi.TransactionContextInterface,
 	creditID []string,
+	lockID string,
 ) (bool, error) {
-	return lock.CreditIsLocked(ctx.GetStub(), CARBON_CC_NAME, creditID)
+	return lock.CreditIsLocked(ctx.GetStub(), CARBON_CC_NAME, creditID, lockID)
 }

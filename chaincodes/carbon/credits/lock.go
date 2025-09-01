@@ -32,7 +32,9 @@ func (l *LockedCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttri
 
 // GetID implements state.WorldStateManager.
 func (l *LockedCredit) GetID() *[][]string {
-	return &[][]string{l.CreditID}
+	creditIdAsPrefix := append([]string{}, l.CreditID...)
+	creditIdAsPrefix = append(creditIdAsPrefix, l.LockID)
+	return &[][]string{creditIdAsPrefix}
 }
 
 // ToWorldState implements state.WorldStateManager.
@@ -45,16 +47,16 @@ func (l *LockedCredit) ToWorldState(stub shim.ChaincodeStubInterface) error {
 
 }
 
-func LockCredit(stub shim.ChaincodeStubInterface, creditID []string, quantity int64) error {
+func LockCredit(stub shim.ChaincodeStubInterface, creditID []string, quantity int64) (lockIDStr string, err error) {
 	credit := &MintCredit{}
-	err := credit.FromWorldState(stub, creditID)
+	err = credit.FromWorldState(stub, creditID)
 	if err != nil {
-		return fmt.Errorf("could not get credit from world state: %v", err)
+		return "", fmt.Errorf("could not get credit from world state: %v", err)
 	}
 
 	callerID := identities.GetID(stub)
 	if credit.OwnerID != callerID {
-		return fmt.Errorf("only the owner of the credit can lock it: %s != %s", credit.OwnerID, callerID)
+		return "", fmt.Errorf("only the owner of the credit can lock it: %s != %s", credit.OwnerID, callerID)
 	}
 
 	if quantity == 0 {
@@ -62,19 +64,19 @@ func LockCredit(stub shim.ChaincodeStubInterface, creditID []string, quantity in
 	}
 
 	if quantity > credit.Quantity {
-		return fmt.Errorf("cannot lock more credits than available: %d > %d", quantity, credit.Quantity)
+		return "", fmt.Errorf("cannot lock more credits than available: %d > %d", quantity, credit.Quantity)
 	}
 
 	// reduce the available quantity of the credit
 	credit.Quantity -= quantity
 	err = credit.ToWorldState(stub)
 	if err != nil {
-		return fmt.Errorf("could not update credit in world state: %v", err)
+		return "", fmt.Errorf("could not update credit in world state: %v", err)
 	}
 
 	// TODOHP: think about the id later
 	lockID := rand.Uint64()
-	lockIDStr := fmt.Sprintf("%x", lockID)
+	lockIDStr = fmt.Sprintf("%x", lockID)
 
 	lockedCredit := &LockedCredit{
 		CreditID: creditID,
@@ -84,15 +86,15 @@ func LockCredit(stub shim.ChaincodeStubInterface, creditID []string, quantity in
 
 	err = lockedCredit.ToWorldState(stub)
 	if err != nil {
-		return fmt.Errorf("could not put locked credit in state: %v", err)
+		return "", fmt.Errorf("could not put locked credit in state: %v", err)
 	}
 
-	return nil
+	return lockIDStr, nil
 }
 
-func CreditIsLocked(stub shim.ChaincodeStubInterface, creditID []string) bool {
-	lockedCredit := &LockedCredit{}
-	err := lockedCredit.FromWorldState(stub, creditID)
+func CreditIsLocked(stub shim.ChaincodeStubInterface, creditID []string, lockID string) bool {
+	lockedCredit := &LockedCredit{CreditID: creditID, LockID: lockID}
+	err := lockedCredit.FromWorldState(stub, (*lockedCredit.GetID())[0])
 	if err != nil {
 		return false
 	}

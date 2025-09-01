@@ -10,7 +10,9 @@ import (
 func CreditIsLocked(
 	stub shim.ChaincodeStubInterface,
 	carbonCCName string,
-	creditID []string) (bool, error) {
+	creditID []string,
+	lockID string,
+) (bool, error) {
 	funcName := "CreditIsLocked"
 	args := [][]byte{}
 	args = append(args, []byte(funcName))
@@ -18,13 +20,14 @@ func CreditIsLocked(
 	if err != nil {
 		return false, fmt.Errorf("failed to marshal creditID: %v", err)
 	}
+	lockIdBytes := []byte(lockID)
 	args = append(args, creditIdJson)
+	args = append(args, lockIdBytes)
 
 	resp := stub.InvokeChaincode(carbonCCName, args, "")
 	if resp.Status != 200 {
 		return false, fmt.Errorf("failed to invoke chaincode %s, function %s: %s", carbonCCName, funcName, resp.Message)
 	}
-	fmt.Printf("Response from %s, function %s: %s\n", carbonCCName, funcName, string(resp.Payload))
 	if resp.Payload[0] == 'f' {
 		return false, nil
 	}
