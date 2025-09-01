@@ -10,7 +10,7 @@ app:
 	go build -o /dev/null ./cmd/application/main.go
 
 unit-test:
-	go test $(shell go list ./... | grep -v '\.tests/')
+	go test --tags=testing $(shell go list ./... | grep -v '\.tests/')
 
 test:
 	go test --tags=testing ./tests
