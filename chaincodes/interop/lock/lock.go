@@ -30,6 +30,24 @@ func CreditIsLocked(
 	return true, nil
 }
 
+func UnlockCredit(
+	stub shim.ChaincodeStubInterface,
+	carbonCCName string,
+	creditID []string,
+	lockID string,
+) error {
+	funcName := "UnlockCredit"
+	args, err := marshallCreditIDAndLockID(funcName, creditID, lockID)
+	if err != nil {
+		return fmt.Errorf("failed to marshall arguments for %s: %v", funcName, err)
+	}
+	resp := stub.InvokeChaincode(carbonCCName, args, "")
+	if resp.Status != 200 {
+		return fmt.Errorf("failed to invoke chaincode %s, function %s: %s", carbonCCName, funcName, resp.Message)
+	}
+	return nil
+}
+
 func marshallCreditIDAndLockID(
 	funcName string,
 	creditID []string,

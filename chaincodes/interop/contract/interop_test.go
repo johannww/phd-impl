@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 	carbon "github.com/johannww/phd-impl/chaincodes/carbon/contract"
 	credits "github.com/johannww/phd-impl/chaincodes/carbon/credits"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	setup_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
@@ -38,6 +39,13 @@ func TestLockedCredit(t *testing.T) {
 	isLocked, err := lock.CreditIsLocked(stub, CARBON_CC_NAME, (*toBeLocked.GetID())[0], lockID)
 	require.NoError(t, err)
 	require.True(t, isLocked)
+	stub.MockTransactionEnd("tx1")
+
+	stub.MockTransactionStart("tx2")
+	carbonStub.Creator = mockIds[identities.InteropRelayerAttr]
+	stub.Creator = mockIds[identities.InteropRelayerAttr]
+	err = lock.UnlockCredit(stub, CARBON_CC_NAME, (*toBeLocked.GetID())[0], lockID)
+	require.NoError(t, err)
 	stub.MockTransactionEnd("tx1")
 }
 

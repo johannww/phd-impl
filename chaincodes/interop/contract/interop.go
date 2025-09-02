@@ -27,3 +27,11 @@ func (c *InteropContract) CreditIsLocked(
 ) (bool, error) {
 	return lock.CreditIsLocked(ctx.GetStub(), CARBON_CC_NAME, creditID, lockID)
 }
+
+func (c *InteropContract) UnlockCredit(
+	ctx contractapi.TransactionContextInterface,
+	creditID []string,
+	lockID string,
+) (bool, error) {
+	return lock.CreditIsLocked(ctx.GetStub(), CARBON_CC_NAME, creditID, lockID)
+}
