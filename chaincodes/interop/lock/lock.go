@@ -14,15 +14,10 @@ func CreditIsLocked(
 	lockID string,
 ) (bool, error) {
 	funcName := "CreditIsLocked"
-	args := [][]byte{}
-	args = append(args, []byte(funcName))
-	creditIdJson, err := json.Marshal(creditID)
+	args, err := marshallCreditIDAndLockID(funcName, creditID, lockID)
 	if err != nil {
-		return false, fmt.Errorf("failed to marshal creditID: %v", err)
+		return false, fmt.Errorf("failed to marshall arguments for %s: %v", funcName, err)
 	}
-	lockIdBytes := []byte(lockID)
-	args = append(args, creditIdJson)
-	args = append(args, lockIdBytes)
 
 	resp := stub.InvokeChaincode(carbonCCName, args, "")
 	if resp.Status != 200 {
@@ -33,4 +28,21 @@ func CreditIsLocked(
 	}
 
 	return true, nil
+}
+
+func marshallCreditIDAndLockID(
+	funcName string,
+	creditID []string,
+	lockID string,
+) (args [][]byte, err error) {
+	args = [][]byte{}
+	args = append(args, []byte(funcName))
+	creditIdJson, err := json.Marshal(creditID)
+	if err != nil {
+		return nil, err
+	}
+	lockIdBytes := []byte(lockID)
+	args = append(args, creditIdJson)
+	args = append(args, lockIdBytes)
+	return args, nil
 }
