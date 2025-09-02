@@ -210,12 +210,10 @@ func (c *CarbonContract) GetCallerMatchedBids(ctx contractapi.TransactionContext
 	return bids.GetCallerMatchedBids(ctx.GetStub())
 }
 
-// TODOHP: evaluate
 func (c *CarbonContract) CreditIsLocked(ctx contractapi.TransactionContextInterface, creditID []string, lockID string) bool {
 	return credits.CreditIsLocked(ctx.GetStub(), creditID, lockID)
 }
 
-// TODOHP: evaluate
 func (c *CarbonContract) LockCredit(ctx contractapi.TransactionContextInterface, creditID []string, quantity int64) (string, error) {
 	return credits.LockCredit(ctx.GetStub(), creditID, quantity)
 }
