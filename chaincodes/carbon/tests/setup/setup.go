@@ -66,7 +66,11 @@ func generateX509(attrs *attrmgr.Attributes, mspName, cn string) []byte {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, _ := rand.Int(rand.Reader, serialNumberLimit)
 	keyUsage := x509.KeyUsageDigitalSignature
-	marshaledAttr, _ := json.Marshal(attrs)
+	marshaledAttr, err := json.Marshal(attrs)
+	if err != nil {
+		panic(fmt.Sprintf("could not marshal attributes: %s", err))
+	}
+
 	template := &x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
