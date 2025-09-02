@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
@@ -45,6 +46,10 @@ func (l *LockedCredit) ToWorldState(stub shim.ChaincodeStubInterface) error {
 
 	return nil
 
+}
+
+func (l *LockedCredit) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
+	return state.DeleteStateWithCompositeKey(stub, LOCKED_CREDIT_PREFIX, l.GetID())
 }
 
 func LockCredit(stub shim.ChaincodeStubInterface, creditID []string, quantity int64) (lockIDStr string, err error) {
@@ -100,4 +105,37 @@ func CreditIsLocked(stub shim.ChaincodeStubInterface, creditID []string, lockID 
 	}
 
 	return true
+}
+
+func UnlockCredit(stub shim.ChaincodeStubInterface, creditID []string, lockID string) error {
+	lockedCredit := &LockedCredit{CreditID: creditID, LockID: lockID}
+	err := lockedCredit.FromWorldState(stub, (*lockedCredit.GetID())[0])
+	if err != nil {
+		return fmt.Errorf("could not get locked credit from world state: %v", err)
+	}
+
+	credit := &MintCredit{}
+	err = credit.FromWorldState(stub, creditID)
+	if err != nil {
+		return fmt.Errorf("could not get credit from world state: %v", err)
+	}
+
+	if cid.AssertAttributeValue(stub, identities.InteropRelayerAttr, "true") != nil {
+		return fmt.Errorf("only the interop relayer can unlock credits: missing attribute %s", identities.InteropRelayerAttr)
+	}
+
+	// increase the available quantity of the credit
+	credit.Quantity += lockedCredit.Quantity
+	err = credit.ToWorldState(stub)
+	if err != nil {
+		return fmt.Errorf("could not update credit in world state: %v", err)
+	}
+
+	// delete the locked credit from the world state
+	err = lockedCredit.DeleteFromWorldState(stub)
+	if err != nil {
+		return fmt.Errorf("could not delete locked credit from world state: %v", err)
+	}
+
+	return nil
 }

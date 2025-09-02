@@ -217,3 +217,7 @@ func (c *CarbonContract) CreditIsLocked(ctx contractapi.TransactionContextInterf
 func (c *CarbonContract) LockCredit(ctx contractapi.TransactionContextInterface, creditID []string, quantity int64) (lockID string, err error) {
 	return credits.LockCredit(ctx.GetStub(), creditID, quantity)
 }
+
+func UnlockCredit(ctx contractapi.TransactionContextInterface, creditID []string, lockID string) error {
+	return credits.UnlockCredit(ctx.GetStub(), creditID, lockID)
+}
