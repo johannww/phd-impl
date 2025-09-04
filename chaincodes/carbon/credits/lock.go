@@ -2,12 +2,12 @@ package credits
 
 import (
 	"fmt"
-	"math/rand"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 )
 
 const (
@@ -80,7 +80,7 @@ func LockCredit(stub shim.ChaincodeStubInterface, creditID []string, quantity in
 	}
 
 	// TODOHP: think about the id later
-	lockID := rand.Uint64()
+	lockID := utils.UnixNowFromTransactionTimestamp(stub)
 	lockIDStr = fmt.Sprintf("%x", lockID)
 
 	lockedCredit := &LockedCredit{

@@ -3,6 +3,7 @@ package utils
 import (
 	"time"
 
+	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -14,4 +15,12 @@ func TimestampRFC3339UtcString(ts *timestamppb.Timestamp) string {
 	// "AsTime" returns UTC time.
 	// We also use environment variable TZ=UTC to make sure
 	return ts.AsTime().Format(time.RFC3339)
+}
+
+func UnixNowFromTransactionTimestamp(stub shim.ChaincodeStubInterface) int64 {
+	txTime, err := stub.GetTxTimestamp()
+	if err != nil {
+		panic(err)
+	}
+	return txTime.AsTime().Unix()
 }
