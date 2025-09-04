@@ -42,6 +42,7 @@ func (t *Temperature) ToWorldState(stub shim.ChaincodeStubInterface) error {
 // GetID implements state.WorldStateManager.
 func (t *Temperature) GetID() *[][]string {
 	// TODOHP: should i use a georeferenced database?
+	// I could use a mongo db with geospatial indexing and save readings hashes on chain
 	latitudeStr := strconv.FormatFloat(t.Coordinate.Latitude, 'f', 6, 64)
 	longitudeStr := strconv.FormatFloat(t.Coordinate.Longitude, 'f', 6, 64)
 	return &[][]string{
