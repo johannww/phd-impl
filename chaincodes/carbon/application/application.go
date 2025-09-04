@@ -162,34 +162,34 @@ func newSign(mspPath string) identity.Sign {
 func newIdemixIdentityAndSign(mspPath, mspID string) (identity.Identity, identity.Sign) {
 	issuerPkBytes, err := os.ReadFile(path.Join(mspPath, "IssuerPublicKey"))
 	if err != nil {
-		panic(fmt.Sprintf("failed to read issuer public key: %w", err))
+		panic(fmt.Sprintf("failed to read issuer public key: %v", err))
 	}
 
 	revocationPkBytes, err := os.ReadFile(path.Join(mspPath, "RevocationPublicKey"))
 	if err != nil {
-		panic(fmt.Sprintf("failed to read issuer revocation public key: %w", err))
+		panic(fmt.Sprintf("failed to read issuer revocation public key: %v", err))
 	}
 
 	mspConfig := identity.IdemixMspConfigFromBytes(mspID, issuerPkBytes, revocationPkBytes)
 
 	signerConfBytes, err := os.ReadFile(path.Join(mspPath, "user", "SignerConfig"))
 	if err != nil {
-		panic(fmt.Sprintf("failed to read signer config: %w", err))
+		panic(fmt.Sprintf("failed to read signer config: %v", err))
 	}
 
 	signerConf, err := identity.IdemixSignerConfigFromBytes(mspConfig, signerConfBytes)
 	if err != nil {
-		panic(fmt.Sprintf("failed to create signer config: %w", err))
+		panic(fmt.Sprintf("failed to create signer config: %v", err))
 	}
 
 	idemixId, err := identity.NewIdemixIdentity(mspID, signerConf, mspConfig)
 	if err != nil {
-		panic(fmt.Sprintf("failed to create Idemix identity: %w", err))
+		panic(fmt.Sprintf("failed to create Idemix identity: %v", err))
 	}
 
 	idemixSign, err := identity.NewIdemixSign(mspConfig, idemixId)
 	if err != nil {
-		panic(fmt.Sprintf("failed to create Idemix sign: %w", err))
+		panic(fmt.Sprintf("failed to create Idemix sign: %v", err))
 	}
 
 	return idemixId, idemixSign
