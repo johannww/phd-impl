@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 )
 
@@ -87,6 +89,10 @@ func boundMult(mult int64) int64 {
 }
 
 func (p *PolicyApplierImpl) SetActivePolicies(stub shim.ChaincodeStubInterface, activePolicies []Name) error {
+	if err := cid.AssertAttributeValue(stub, identities.PolicySetter, "true"); err != nil {
+		return fmt.Errorf("this identity cannot modify active policies: %v", err)
+	}
+
 	if len(activePolicies) == 0 {
 		return fmt.Errorf("active policies cannot be empty")
 	}
@@ -124,6 +130,10 @@ func GetActivePolicies(stub shim.ChaincodeStubInterface) ([]Name, error) {
 }
 
 func (p *PolicyApplierImpl) AppendActivePolicy(stub shim.ChaincodeStubInterface, policy Name) error {
+	if err := cid.AssertAttributeValue(stub, identities.PolicySetter, "true"); err != nil {
+		return fmt.Errorf("this identity cannot modify active policies: %v", err)
+	}
+
 	if _, exists := p.DefinedPolicies[policy]; !exists {
 		return fmt.Errorf("policy %s is not coded in this chaincode", policy)
 	}
