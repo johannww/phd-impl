@@ -5,3 +5,7 @@ diagrams:
 test:
 	cd ./chaincodes/carbon/ && go test -count=1 ./tests
 	
+ai-list-structs:
+	./scripts/gopls_get_structs.sh ./chaincodes/carbon/
+	./scripts/gopls_get_structs.sh ./chaincodes/interop/
+	./scripts/gopls_get_structs.sh ./tee_auction/go
