@@ -1,28 +1,25 @@
 # A country-agnostic Blockchain ETS Model with Geographical and Time References inspired by the Brazilian Ecosystem using Hyperledger Fabric, Hyperledger Cacti and Microsoft Confidential Containers
 
-# TODOs
+This repository is an ongoing implementation of a Blockchain-based Emission Trading System (ETS) model that incorporates **geographical** and **temporal** references. To ensure security and privacy during auctions, we utilize **Microsoft Confidential Containers** for Trusted Execution Environments (TEE).
 
-<!-- TODO: project todos --> 
+# Techonologies used
 
-- [X] Understand and fix hyperledger bevel
-- [ ] Finish chaincode
-- [] Integrate cacti for interoperability
-- [X] Enable TEE auction (microsoft confidential containers)
-- [ ] Understand cacti and how to  uset it 
-- [ ] Understand hyperledger caliper for experiments
-- [ ] Understand grafana, prometheus for metrics
+- [Hyperledger Fabric](https://github.com/hyperledger/fabric) v2.5.12
+    - For the main blockchain network
+- [Hyperledger Cacti](https://github.com/hyperledger-cacti/cacti)
+    - For interoperability between different blockchains
+    - Supports Ethereum-based chains, Hyperledger Fabric, and Corda
+- [Microsoft Confidential Containers](https://github.com/microsoft/confidential-sidecar-containers/tree/4814b442cf71de2b1317f00846f16727e40a3088) (for TEE)
+    - Auction HTTPS service runs inside a confidential container attested by the hardware
+    - For secure auctioning of carbon credits
+    - Ensures data privacy and integrity during auctions
+    - Uses AMD SEV-SNP technology
 
 # phd-impl
 
 # Description
 
 This is the implementation of our PhD thesis. It consists of a Blokchain Emission Trading Systems (BETS) coupled with a cross-chain framework to 
-
-## Technology Stack
-
-Primary chains:
-- Hyperledger Fabric/Besu
-- Hyperledger Cacti 
 
 ## Use case
 
@@ -51,8 +48,6 @@ Our model provides plugability for other policy types
 
 ### Auction
 
-<!-- TODO: how can the auction be maximized taking the many combinations? Should we implement it?-->
-
 
 ## Stakeholders
 
@@ -67,5 +62,13 @@ Here are the stakholders considered. We aimed to conform to the Brazilian bill 2
 
 ## Interoperability
 
-<!-- TODO: talk about the Interoperability measures --> 
+# TODOs
 
+<!-- TODO: project todos --> 
+
+- [X] Understand and fix hyperledger bevel
+- [ ] Finish chaincode
+- [] Integrate cacti for interoperability
+- [X] Enable TEE auction (microsoft confidential containers)
+- [ ] Understand hyperledger caliper for experiments
+- [ ] Understand grafana, prometheus for metrics
