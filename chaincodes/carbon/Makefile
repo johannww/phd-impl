@@ -16,7 +16,7 @@ test:
 	go test --tags=testing ./tests
 
 test-no-cache:
-	go test -count=1 ./tests
+	go test --tags=testing -count=1 ./tests
 
 test-network:
 	./tests/scripts/setup-test-network.sh
