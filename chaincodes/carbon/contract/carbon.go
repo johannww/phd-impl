@@ -9,6 +9,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/auction"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
@@ -89,6 +90,11 @@ func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionCont
 // Thus, private data is not shared with the world state.
 // To retrieve the auction data, use RetrieveDataForTEEAuction instead.
 func (c *CarbonContract) CommitDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) error {
+	if cid.AssertAttributeValue(ctx.GetStub(), identities.PriceViewer, "true") != nil {
+		return fmt.Errorf("caller does not have the %s attribute, "+
+			"which is required to commit auction data", identities.PriceViewer)
+	}
+
 	auctionID, err := auction.IncrementAuctionID(ctx.GetStub())
 	if err != nil {
 		return fmt.Errorf("could not increment auction ID: %v", err)
