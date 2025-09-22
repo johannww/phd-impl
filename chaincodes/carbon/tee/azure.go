@@ -12,7 +12,9 @@ import (
 	"fmt"
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
 	report_verifier "github.com/johannww/phd-impl/tee_auction/go/report"
 )
@@ -23,6 +25,10 @@ const (
 )
 
 func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes []byte) error {
+	if cid.AssertAttributeValue(stub, identities.TEEConfigurer, "true") != nil {
+		return fmt.Errorf("this identity cannot set the initial TEE report")
+	}
+
 	report := attest.SNPAttestationReport{}
 	err := json.Unmarshal(reportJsonBytes, &report)
 	if err != nil {
@@ -159,6 +165,10 @@ func verifyCCEPolicy(stub shim.ChaincodeStubInterface, report attest.SNPAttestat
 // The CCE policy contains information about the docker image being run in the TEE.
 // From the CCE policy, it is possible to identify the docker image.
 func ExpectedCCEPolicyToWorldState(stub shim.ChaincodeStubInterface, base64CcePolicy string) error {
+	if cid.AssertAttributeValue(stub, identities.TEEConfigurer, "true") != nil {
+		return fmt.Errorf("this identity cannot set the expected CCE policy")
+	}
+
 	if err := stub.PutState(CCE_POLICY, []byte(base64CcePolicy)); err != nil {
 
 		return fmt.Errorf("could not store CCE policy: %v", err)
