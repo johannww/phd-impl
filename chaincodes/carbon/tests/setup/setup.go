@@ -156,6 +156,15 @@ func SetupIdentities(stub *mocks.MockStub) MockIdentities {
 		}, "AUCTIONEER", "auctioneer1",
 	)
 
+	mockIds[identities.PolicySetter] = GenerateHFSerializedIdentity(
+		X509_TYPE,
+		&attrmgr.Attributes{
+			Attrs: map[string]string{
+				identities.PolicySetter: "true",
+			},
+		}, "AUCTIONEER", "auctioneer1",
+	)
+
 	// // Generate idmix identity for buyer
 	// mockIds[IDEMIX_ID] = generateIdemix(attrmgr.Attributes{
 	// 	Attrs: map[string]string{}}, "BUYER", "buyer1",

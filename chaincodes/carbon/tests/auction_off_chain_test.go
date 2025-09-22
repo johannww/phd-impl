@@ -86,6 +86,7 @@ func TestOffChainCoupledAuction(t *testing.T) {
 	testData.Policies = []policies.Name{policies.DISTANCE, policies.WIND_DIRECTION}
 
 	stub.MockTransactionStart("tx1")
+	stub.Creator = (*testData.Identities)[identities.PolicySetter]
 	testData.SaveToWorldState(stub)
 	stub.MockTransactionEnd("tx1")
 
