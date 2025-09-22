@@ -74,7 +74,7 @@ func (c *CarbonContract) SetAuctionType(
 	return auctionType.ToWorldState(ctx.GetStub())
 }
 
-func (c *CarbonContract) PublishExpectedCCEPolicy(ctx contractapi.TransactionContextInterface, base64CcePolicy string) error {
+func (c *CarbonContract) PublishExpectedTEECCEPolicy(ctx contractapi.TransactionContextInterface, base64CcePolicy string) error {
 	return tee.ExpectedCCEPolicyToWorldState(ctx.GetStub(), base64CcePolicy)
 }
 
