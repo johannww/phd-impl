@@ -137,34 +137,25 @@ func SetupIdentities(stub *mocks.MockStub) MockIdentities {
 		"",
 	)
 
-	// Generate a certificate for the price viewer
-	mockIds[identities.PriceViewer] = GenerateHFSerializedIdentity(
-		X509_TYPE,
-		&attrmgr.Attributes{
-			Attrs: map[string]string{
-				identities.PriceViewer: "true",
-			},
-		}, "AUCTIONEER", "auctioneer1",
-	)
+	identityAttributes := []string{
+		identities.PriceViewer,
+		identities.VirtualTokenMinter,
+		identities.InteropRelayerAttr,
+		identities.PolicySetter,
+		identities.TEEConfigurer,
+	}
 
-	mockIds[identities.InteropRelayerAttr] = GenerateHFSerializedIdentity(
-		X509_TYPE,
-		&attrmgr.Attributes{
-			Attrs: map[string]string{
-				identities.InteropRelayerAttr: "true",
-			},
-		}, "AUCTIONEER", "auctioneer1",
-	)
-
-	mockIds[identities.PolicySetter] = GenerateHFSerializedIdentity(
-		X509_TYPE,
-		&attrmgr.Attributes{
-			Attrs: map[string]string{
-				identities.PolicySetter: "true",
-			},
-		}, "AUCTIONEER", "auctioneer1",
-	)
-
+	for _, attr := range identityAttributes {
+		// Generate a certificate for each attribute
+		mockIds[attr] = GenerateHFSerializedIdentity(
+			X509_TYPE,
+			&attrmgr.Attributes{
+				Attrs: map[string]string{
+					attr: "true",
+				},
+			}, "AUCTIONEER", "auctioneer1",
+		)
+	}
 	// // Generate idmix identity for buyer
 	// mockIds[IDEMIX_ID] = generateIdemix(attrmgr.Attributes{
 	// 	Attrs: map[string]string{}}, "BUYER", "buyer1",

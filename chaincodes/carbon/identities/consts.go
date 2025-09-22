@@ -5,4 +5,5 @@ const (
 	VirtualTokenMinter = "virtual_token_minter"
 	InteropRelayerAttr = "interop_relayer"
 	PolicySetter       = "policy_setter"
+	TEEConfigurer      = "tee_configurer"
 )
