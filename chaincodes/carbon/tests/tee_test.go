@@ -5,8 +5,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
+	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,6 +30,8 @@ func TestAzureCEEPolicyVerification(t *testing.T) {
 
 	stub := mocks.NewMockStub("carbon", nil)
 	stub.MockTransactionStart("tx1")
+	mockIds := setup.SetupIdentities(stub)
+	stub.Creator = mockIds[identities.TEEConfigurer]
 
 	err = tee.ExpectedCCEPolicyToWorldState(stub, ccePolicyB64)
 	require.NoError(t, err, "Failed to store CCE policy in world state")
