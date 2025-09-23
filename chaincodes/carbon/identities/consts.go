@@ -6,4 +6,5 @@ const (
 	InteropRelayerAttr = "interop_relayer"
 	PolicySetter       = "policy_setter"
 	TEEConfigurer      = "tee_configurer"
+	CreditMinter      = "credit_minter"
 )

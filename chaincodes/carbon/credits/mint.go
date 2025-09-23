@@ -3,7 +3,9 @@ package credits
 import (
 	"fmt"
 
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
@@ -58,6 +60,9 @@ func MintCreditForChunk(
 	RFC339Timestamp string,
 	mintMult int64,
 ) (*MintCredit, error) {
+	if cid.AssertAttributeValue(stub, identities.CreditMinter, "true") != nil {
+		return nil, fmt.Errorf("caller is not a minter")
+	}
 
 	credit := &MintCredit{
 		Credit: Credit{
