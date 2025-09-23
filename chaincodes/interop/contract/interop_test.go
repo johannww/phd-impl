@@ -18,6 +18,7 @@ import (
 
 func TestLockedCredit(t *testing.T) {
 	stub := mocks.NewMockStub("interop", nil)
+	dstChainID := "mockDstChain"
 	carbonCC, err := contractapi.NewChaincode(carbon.NewCarbonContract())
 	require.NoError(t, err)
 	carbonStub := mocks.NewMockStub(CARBON_CC_NAME, carbonCC)
@@ -30,15 +31,20 @@ func TestLockedCredit(t *testing.T) {
 	carbonStub.MockTransactionEnd("tx1")
 
 	carbonStub.MockTransactionStart("tx2")
-	lockID, err := credits.LockCredit(carbonStub, (*toBeLocked.GetID())[0], 0)
+	lockID, err := credits.LockCredit(carbonStub, (*toBeLocked.GetID())[0], 0, dstChainID)
 	require.NoError(t, err)
 	carbonStub.MockTransactionEnd("tx2")
 
 	stub.MockTransactionStart("tx1")
 	stub.Creator = mockIds[setup_test.REGULAR_ID]
-	isLocked, err := lock.CreditIsLocked(stub, CARBON_CC_NAME, (*toBeLocked.GetID())[0], lockID)
+	isLocked, err := lock.CreditIsLocked(stub, CARBON_CC_NAME,
+		(*toBeLocked.GetID())[0], lockID)
 	require.NoError(t, err)
 	require.True(t, isLocked)
+	isLockedForChain, err := lock.CreditIsLockedForChainID(stub, CARBON_CC_NAME,
+		(*toBeLocked.GetID())[0], lockID, dstChainID)
+	require.NoError(t, err)
+	require.True(t, isLockedForChain)
 	stub.MockTransactionEnd("tx1")
 
 	stub.MockTransactionStart("tx2")

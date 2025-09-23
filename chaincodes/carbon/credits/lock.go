@@ -15,9 +15,10 @@ const (
 )
 
 type LockedCredit struct {
-	CreditID []string `json:"creditID"`
-	Quantity int64    `json:"quantity"`
-	LockID   string   `json:"lockID"`
+	CreditID    []string `json:"creditID"`
+	Quantity    int64    `json:"quantity"`
+	LockID      string   `json:"lockID"`
+	DestChainID string   `json:"destChainID,omitempty"`
 }
 
 var _ state.WorldStateManager = (*LockedCredit)(nil)
@@ -52,7 +53,11 @@ func (l *LockedCredit) DeleteFromWorldState(stub shim.ChaincodeStubInterface) er
 	return state.DeleteStateWithCompositeKey(stub, LOCKED_CREDIT_PREFIX, l.GetID())
 }
 
-func LockCredit(stub shim.ChaincodeStubInterface, creditID []string, quantity int64) (lockIDStr string, err error) {
+func LockCredit(stub shim.ChaincodeStubInterface,
+	creditID []string,
+	quantity int64,
+	destChainID string,
+) (lockIDStr string, err error) {
 	credit := &MintCredit{}
 	err = credit.FromWorldState(stub, creditID)
 	if err != nil {
@@ -84,9 +89,10 @@ func LockCredit(stub shim.ChaincodeStubInterface, creditID []string, quantity in
 	lockIDStr = fmt.Sprintf("%x", lockID)
 
 	lockedCredit := &LockedCredit{
-		CreditID: creditID,
-		Quantity: quantity,
-		LockID:   lockIDStr,
+		CreditID:    creditID,
+		Quantity:    quantity,
+		LockID:      lockIDStr,
+		DestChainID: destChainID,
 	}
 
 	err = lockedCredit.ToWorldState(stub)
@@ -105,6 +111,16 @@ func CreditIsLocked(stub shim.ChaincodeStubInterface, creditID []string, lockID 
 	}
 
 	return true
+}
+
+func ChainIDCreditIsLockedFor(stub shim.ChaincodeStubInterface, creditID []string, lockID string) string {
+	lockedCredit := &LockedCredit{CreditID: creditID, LockID: lockID}
+	err := lockedCredit.FromWorldState(stub, (*lockedCredit.GetID())[0])
+	if err != nil {
+		return ""
+	}
+
+	return lockedCredit.DestChainID
 }
 
 func UnlockCredit(stub shim.ChaincodeStubInterface, creditID []string, lockID string) error {

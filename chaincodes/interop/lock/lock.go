@@ -1,10 +1,11 @@
 package lock
 
 import (
-	"encoding/json"
+	"bytes"
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/interop/util"
 )
 
 func CreditIsLocked(
@@ -14,7 +15,7 @@ func CreditIsLocked(
 	lockID string,
 ) (bool, error) {
 	funcName := "CreditIsLocked"
-	args, err := marshallCreditIDAndLockID(funcName, creditID, lockID)
+	args, err := util.MarshallInvokeArgs(funcName, creditID, lockID)
 	if err != nil {
 		return false, fmt.Errorf("failed to marshall arguments for %s: %v", funcName, err)
 	}
@@ -30,6 +31,30 @@ func CreditIsLocked(
 	return true, nil
 }
 
+func CreditIsLockedForChainID(
+	stub shim.ChaincodeStubInterface,
+	carbonCCName string,
+	creditID []string,
+	lockID string,
+	destChainID string,
+) (bool, error) {
+	funcName := "ChainIDCreditIsLockedFor"
+	args, err := util.MarshallInvokeArgs(funcName, creditID, lockID)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshall arguments for %s: %v", funcName, err)
+	}
+
+	resp := stub.InvokeChaincode(carbonCCName, args, "")
+	if resp.Status != 200 {
+		return false, fmt.Errorf("failed to invoke chaincode %s, function %s: %s", carbonCCName, funcName, resp.Message)
+	}
+	if !bytes.Equal(resp.Payload, []byte(destChainID)) {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func UnlockCredit(
 	stub shim.ChaincodeStubInterface,
 	carbonCCName string,
@@ -37,7 +62,7 @@ func UnlockCredit(
 	lockID string,
 ) error {
 	funcName := "UnlockCredit"
-	args, err := marshallCreditIDAndLockID(funcName, creditID, lockID)
+	args, err := util.MarshallInvokeArgs(funcName, creditID, lockID)
 	if err != nil {
 		return fmt.Errorf("failed to marshall arguments for %s: %v", funcName, err)
 	}
@@ -46,21 +71,4 @@ func UnlockCredit(
 		return fmt.Errorf("failed to invoke chaincode %s, function %s: %s", carbonCCName, funcName, resp.Message)
 	}
 	return nil
-}
-
-func marshallCreditIDAndLockID(
-	funcName string,
-	creditID []string,
-	lockID string,
-) (args [][]byte, err error) {
-	args = [][]byte{}
-	args = append(args, []byte(funcName))
-	creditIdJson, err := json.Marshal(creditID)
-	if err != nil {
-		return nil, err
-	}
-	lockIdBytes := []byte(lockID)
-	args = append(args, creditIdJson)
-	args = append(args, lockIdBytes)
-	return args, nil
 }
