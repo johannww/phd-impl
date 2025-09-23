@@ -8,7 +8,6 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
-	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 )
 
 const (
@@ -51,8 +50,33 @@ func NewPolicyApplier() *PolicyApplierImpl {
 }
 
 // TODO: implement this
-func (p *PolicyApplierImpl) MintIndependentMult(chunk *properties.PropertyChunk) int64 {
-	return 1.0
+func (p *PolicyApplierImpl) MintIndependentMult(input *PolicyInput, activePolicies []Name) (int64, error) {
+	mult := int64(0)
+
+	for _, policy := range activePolicies {
+		if isCoupledPolicy(policy) {
+			continue // skip coupled policies
+		}
+
+		if policyFunc, exists := p.DefinedPolicies[policy]; exists {
+			if policyFunc == nil {
+				return 0, fmt.Errorf("policy %s is not implemented", policy)
+			}
+
+			mult = ((mult + MULTIPLIER_SCALE) * (policyFunc(input) + MULTIPLIER_SCALE) / MULTIPLIER_SCALE) - MULTIPLIER_SCALE
+			mult = boundMult(mult)
+		} else {
+			return 0, fmt.Errorf("policy %s is not defined", policy)
+		}
+	}
+
+	return mult, nil
+}
+
+// TODO: implement this
+func (p *PolicyApplierImpl) BurnIndependentMult(input *PolicyInput, activePolicies []Name) (int64, error) {
+	mult := int64(0)
+	return mult, fmt.Errorf("not implemented")
 }
 
 // TODO: Review

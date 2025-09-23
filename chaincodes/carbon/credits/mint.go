@@ -6,6 +6,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 )
@@ -52,16 +53,41 @@ func (mc *MintCredit) GetID() *[][]string {
 	return &[][]string{creditId}
 }
 
+// TODO: test minting function
 func MintCreditForChunk(
 	stub shim.ChaincodeStubInterface,
 	ownerID string,
 	chunkID []string,
 	quantity int64,
 	RFC339Timestamp string,
-	mintMult int64,
 ) (*MintCredit, error) {
 	if cid.AssertAttributeValue(stub, identities.CreditMinter, "true") != nil {
 		return nil, fmt.Errorf("caller is not a minter")
+	}
+
+	activePolicies, err := policies.GetActivePolicies(stub)
+	if err != nil {
+		return nil, fmt.Errorf("could not get active policies: %v", err)
+	}
+
+	if len(activePolicies) == 0 {
+		return nil, fmt.Errorf("no active policies found")
+	}
+
+	//get chunk
+	chunk := &properties.PropertyChunk{}
+	if err := chunk.FromWorldState(stub, chunkID); err != nil {
+		return nil, fmt.Errorf("could not get property chunk from world state: %v", err)
+	}
+
+	pApplier := policies.NewPolicyApplier()
+	pInput := &policies.PolicyInput{
+		Chunk: chunk,
+	}
+
+	mintMult, err := pApplier.MintIndependentMult(pInput, activePolicies)
+	if err != nil {
+		return nil, fmt.Errorf("could not get mint multiplier from active policies: %v", err)
 	}
 
 	credit := &MintCredit{
