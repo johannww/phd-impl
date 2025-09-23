@@ -286,6 +286,11 @@ func creditForChunk(pApplier policies.PolicyApplier,
 	prop *properties.Property,
 	quantity int64,
 	issueTsStr string) *credits.MintCredit {
+	mintMult, err := pApplier.MintIndependentMult(
+		&policies.PolicyInput{Chunk: chunk},
+		[]policies.Name{policies.VEGETATION})
+	panicOnError(err)
+
 	credit := &credits.MintCredit{
 		Credit: credits.Credit{
 			OwnerID:  prop.OwnerID,
@@ -293,7 +298,7 @@ func creditForChunk(pApplier policies.PolicyApplier,
 			Chunk:    chunk,
 			Quantity: quantity,
 		},
-		MintMult:      pApplier.MintIndependentMult(chunk),
+		MintMult:      mintMult,
 		MintTimeStamp: issueTsStr,
 	}
 	return credit

@@ -32,7 +32,7 @@ const (
 var DefinedPoliciesStatic = map[Name]PolicyFunc{
 	DISTANCE:       DistancePolicy,
 	WIND_DIRECTION: WindPolicy,
-	VEGETATION:     nil,
+	VEGETATION:     VegetationPolicy,
 	AUDIT_METHOD:   nil,
 	TEMPERATURE:    nil,
 }
