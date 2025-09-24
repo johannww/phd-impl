@@ -34,7 +34,7 @@ var DefinedPoliciesStatic = map[Name]PolicyFunc{
 	WIND_DIRECTION: WindPolicy,
 	VEGETATION:     VegetationPolicy,
 	AUDIT_METHOD:   nil,
-	TEMPERATURE:    nil,
+	TEMPERATURE:    TemperaturePolicy,
 }
 
 type PolicyApplierImpl struct {
@@ -49,7 +49,6 @@ func NewPolicyApplier() *PolicyApplierImpl {
 	}
 }
 
-// TODO: implement this
 func (p *PolicyApplierImpl) MintIndependentMult(input *PolicyInput, activePolicies []Name) (int64, error) {
 	mult := int64(0)
 
@@ -73,10 +72,27 @@ func (p *PolicyApplierImpl) MintIndependentMult(input *PolicyInput, activePolici
 	return mult, nil
 }
 
-// TODO: implement this
 func (p *PolicyApplierImpl) BurnIndependentMult(input *PolicyInput, activePolicies []Name) (int64, error) {
 	mult := int64(0)
-	return mult, fmt.Errorf("not implemented")
+
+	for _, policy := range activePolicies {
+		if isCoupledPolicy(policy) {
+			continue // skip coupled policies
+		}
+
+		if policyFunc, exists := p.DefinedPolicies[policy]; exists {
+			if policyFunc == nil {
+				return 0, fmt.Errorf("policy %s is not implemented", policy)
+			}
+
+			mult = ((mult + MULTIPLIER_SCALE) * (policyFunc(input) + MULTIPLIER_SCALE) / MULTIPLIER_SCALE) - MULTIPLIER_SCALE
+			mult = boundMult(mult)
+		} else {
+			return 0, fmt.Errorf("policy %s is not defined", policy)
+		}
+	}
+
+	return mult, nil
 }
 
 // TODO: Review
