@@ -14,6 +14,7 @@ import (
 	carbon_utils "github.com/johannww/phd-impl/chaincodes/carbon/utils"
 
 	"github.com/johannww/phd-impl/chaincodes/interop/lock"
+	"github.com/johannww/phd-impl/chaincodes/interop/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,10 +23,10 @@ func TestLockedCredit(t *testing.T) {
 	dstChainID := "mockDstChain"
 	carbonCC, err := contractapi.NewChaincode(carbon.NewCarbonContract())
 	require.NoError(t, err)
-	carbonStub := mocks.NewMockStub(CARBON_CC_NAME, carbonCC)
+	carbonStub := mocks.NewMockStub(util.CARBON_CC_NAME, carbonCC)
 	mockIds := setup_test.SetupIdentities(stub)
 
-	stub.MockPeerChaincode(CARBON_CC_NAME, carbonStub, "")
+	stub.MockPeerChaincode(util.CARBON_CC_NAME, carbonStub, "")
 
 	carbonStub.MockTransactionStart("tx1")
 	toBeLocked := createCreditOnCarbonCC(carbonStub, t, mockIds)
@@ -38,11 +39,11 @@ func TestLockedCredit(t *testing.T) {
 
 	stub.MockTransactionStart("tx1")
 	stub.Creator = mockIds[identities.InteropRelayerAttr]
-	isLocked, err := lock.CreditIsLocked(stub, CARBON_CC_NAME,
+	isLocked, err := lock.CreditIsLocked(stub, util.CARBON_CC_NAME,
 		(*toBeLocked.GetID())[0], lockID)
 	require.NoError(t, err)
 	require.True(t, isLocked)
-	isLockedForChain, err := lock.CreditIsLockedForChainID(stub, CARBON_CC_NAME,
+	isLockedForChain, err := lock.CreditIsLockedForChainID(stub, util.CARBON_CC_NAME,
 		(*toBeLocked.GetID())[0], lockID, dstChainID)
 	require.NoError(t, err)
 	require.True(t, isLockedForChain)
@@ -51,7 +52,7 @@ func TestLockedCredit(t *testing.T) {
 	stub.MockTransactionStart("tx2")
 	carbonStub.Creator = mockIds[identities.InteropRelayerAttr]
 	stub.Creator = mockIds[identities.InteropRelayerAttr]
-	err = lock.UnlockCredit(stub, CARBON_CC_NAME, (*toBeLocked.GetID())[0], lockID)
+	err = lock.UnlockCredit(stub, util.CARBON_CC_NAME, (*toBeLocked.GetID())[0], lockID)
 	require.NoError(t, err)
 	stub.MockTransactionEnd("tx1")
 }

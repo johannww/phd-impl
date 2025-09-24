@@ -3,10 +3,7 @@ package contract
 import (
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 	"github.com/johannww/phd-impl/chaincodes/interop/lock"
-)
-
-const (
-	CARBON_CC_NAME = "carbon"
+	"github.com/johannww/phd-impl/chaincodes/interop/util"
 )
 
 type InteropContract struct {
@@ -25,7 +22,7 @@ func (c *InteropContract) CreditIsLocked(
 	creditID []string,
 	lockID string,
 ) (bool, error) {
-	return lock.CreditIsLocked(ctx.GetStub(), CARBON_CC_NAME, creditID, lockID)
+	return lock.CreditIsLocked(ctx.GetStub(), util.CARBON_CC_NAME, creditID, lockID)
 }
 
 func (c *InteropContract) CreditIsLockedForChainID(
@@ -34,7 +31,7 @@ func (c *InteropContract) CreditIsLockedForChainID(
 	lockID string,
 	destChainID string,
 ) (bool, error) {
-	return lock.CreditIsLockedForChainID(ctx.GetStub(), CARBON_CC_NAME, creditID, lockID, destChainID)
+	return lock.CreditIsLockedForChainID(ctx.GetStub(), util.CARBON_CC_NAME, creditID, lockID, destChainID)
 }
 
 func (c *InteropContract) UnlockCredit(
@@ -42,5 +39,5 @@ func (c *InteropContract) UnlockCredit(
 	creditID []string,
 	lockID string,
 ) (bool, error) {
-	return lock.CreditIsLocked(ctx.GetStub(), CARBON_CC_NAME, creditID, lockID)
+	return lock.CreditIsLocked(ctx.GetStub(), util.CARBON_CC_NAME, creditID, lockID)
 }
