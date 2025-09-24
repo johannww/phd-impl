@@ -5,17 +5,17 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
-	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 )
 
 const COMPANY_PREFIX = "company"
 
 // Company represent a company stored as private data in the world state.
 type Company struct {
-	ID         string                 // ID might be the CNPJ (brazilian company national ID)
-	Coordinate *properties.Coordinate // Geographical coordinate in floating point format
-	DataProps  *data.ValidationProps  // How data from the company is validated
+	ID         string                // ID might be the CNPJ (brazilian company national ID)
+	Coordinate *utils.Coordinate     // Geographical coordinate in floating point format
+	DataProps  *data.ValidationProps // How data from the company is validated
 }
 
 var _ state.WorldStateManager = (*Company)(nil)
@@ -43,7 +43,7 @@ func CompanyToWorldState(stub shim.ChaincodeStubInterface, company *Company) err
 	if company.ID == "" {
 		return fmt.Errorf("company ID cannot be empty")
 	}
-	if *company.Coordinate == (properties.Coordinate{}) {
+	if *company.Coordinate == (utils.Coordinate{}) {
 		return fmt.Errorf("company coordinate cannot be empty")
 	}
 	if company.DataProps == nil || len(company.DataProps.Methods) == 0 {

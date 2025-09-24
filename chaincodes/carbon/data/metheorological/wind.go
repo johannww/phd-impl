@@ -4,18 +4,18 @@ import (
 	"strconv"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
-	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 )
 
 const WIND_PREFIX = "wind"
 
 // TODO: Save it on a georeferenced database
 type Wind struct {
-	Coordinate properties.Coordinate `json:"coordinate"` // Geographical coordinate in floating point format
-	Datetime   string                `json:"datetime"`   // RFC3339 utc format
-	Speed      float64               `json:"speed"`      // Wind speed in meters per second
-	Direction  float64               `json:"direction"`  // Wind direction in degrees
+	Coordinate utils.Coordinate `json:"coordinate"` // Geographical coordinate in floating point format
+	Datetime   string           `json:"datetime"`   // RFC3339 utc format
+	Speed      float64          `json:"speed"`      // Wind speed in meters per second
+	Direction  float64          `json:"direction"`  // Wind direction in degrees
 }
 
 var _ state.WorldStateManager = (*Wind)(nil)

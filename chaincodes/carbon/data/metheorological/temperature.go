@@ -5,17 +5,17 @@ import (
 	"strconv"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
-	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 )
 
 const TEMPERATURE_PREFIX = "temperature"
 
 // Temperature represents a temperature reading at a specific geographical coordinate and time.
 type Temperature struct {
-	Coordinate  properties.Coordinate `json:"coordinate"`  // Geographical coordinate in floating point format
-	Datetime    string                `json:"datetime"`    // RFC3339 utc format
-	Temperature float64               `json:"temperature"` // Temperature in degrees Celsius
+	Coordinate  utils.Coordinate `json:"coordinate"`  // Geographical coordinate in floating point format
+	Datetime    string           `json:"datetime"`    // RFC3339 utc format
+	Temperature float64          `json:"temperature"` // Temperature in degrees Celsius
 }
 
 var _ state.WorldStateManager = (*Temperature)(nil)

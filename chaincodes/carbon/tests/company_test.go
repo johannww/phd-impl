@@ -5,9 +5,9 @@ import (
 
 	"github.com/johannww/phd-impl/chaincodes/carbon/companies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
-	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
+	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +18,7 @@ func TestCompanyRegister(t *testing.T) {
 	stub.Creator = possibleIds[setup.IDEMIX_ID]
 	company := &companies.Company{
 		ID: "12345678901234", // Example CNPJ
-		Coordinate: &properties.Coordinate{
+		Coordinate: &utils.Coordinate{
 			Latitude:  -23.550520,
 			Longitude: -46.633308,
 		},

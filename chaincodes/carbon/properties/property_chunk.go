@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 	v "github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
 )
 
@@ -16,12 +17,6 @@ const (
 	CHUNK_KEY_LENGTH      = 3 // PropertyID, Latitude, Longitude
 )
 
-// Coordinate represents a geographical coordinate in the floating point format.
-type Coordinate struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-}
-
 // PropertyChunk represents a chunk of a property.
 // It exists because properties might have heterogeneous chunks.
 // It points to the property because otherwise---if in a slice in the
@@ -29,7 +24,7 @@ type Coordinate struct {
 // See: https://github.com/hyperledger/fabric/issues/3748
 type PropertyChunk struct {
 	PropertyID       uint64                `json:"propertyId"`
-	Coordinates      []Coordinate          `json:"coordinates"`
+	Coordinates      []utils.Coordinate    `json:"coordinates"`
 	VegetationsProps *v.VegetationProps    `json:"vegetationsProps"`
 	ValidationProps  *data.ValidationProps `json:"validationProps"`
 }

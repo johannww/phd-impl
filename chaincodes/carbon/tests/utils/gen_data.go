@@ -17,6 +17,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
+	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 	"github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
 )
 
@@ -146,7 +147,7 @@ func GenCompaniesWithPseudonyms(n int, mockIds *setup.MockIdentities,
 
 		company := &companies.Company{
 			ID: companyName,
-			Coordinate: &properties.Coordinate{
+			Coordinate: &utils.Coordinate{
 				Latitude:  mathrand.Float64()*180 - 90,
 				Longitude: mathrand.Float64()*360 - 180,
 			},
@@ -266,7 +267,7 @@ func chunkForProperty(prop *properties.Property) *properties.PropertyChunk {
 	chunk := &properties.PropertyChunk{
 		PropertyID: prop.ID,
 		// NOTE: chunks will be spread
-		Coordinates: []properties.Coordinate{
+		Coordinates: []utils.Coordinate{
 			{
 				Latitude:  mathrand.Float64()*180 - 90,
 				Longitude: mathrand.Float64()*360 - 180,
