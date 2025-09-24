@@ -25,6 +25,10 @@ func (h *HtlcLock) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	return state.PutStateWithCompositeKey(stub, HTLC_LOCK_PREFIX, h.GetID(), h)
 }
 
+func (h *HtlcLock) DeleteFromWorldState(stub shim.ChaincodeStubInterface) error {
+	return state.DeleteStateWithCompositeKey(stub, HTLC_LOCK_PREFIX, h.GetID())
+}
+
 // GetID implements state.WorldStateManager.
 func (h *HtlcLock) GetID() *[][]string {
 	return &[][]string{{h.LockID, h.HTLCID}}

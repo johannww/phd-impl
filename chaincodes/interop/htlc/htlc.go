@@ -22,6 +22,33 @@ type HTLC struct {
 	ValidUntil string `json:"validUntil"`
 }
 
+func (h *HTLC) UnlockCreditsAfterValidUntil(stub shim.ChaincodeStubInterface) error {
+
+	var err error
+	protoTs, _ := stub.GetTxTimestamp()
+	transactionTs := carbon_utils.TimestampRFC3339UtcString(protoTs)
+
+	htlcLock := &HtlcLock{
+		LockID: h.LockID,
+		HTLCID: h.SecretHash,
+	}
+
+	if err = htlcLock.FromWorldState(stub, (*htlcLock.GetID())[0]); err != nil {
+		return fmt.Errorf("failed to get HTLC lock from world state: %v", err)
+	}
+
+	if transactionTs <= h.ValidUntil {
+		return fmt.Errorf("HTLC is still valid until %s, current time is %s",
+			h.ValidUntil, transactionTs)
+	}
+
+	if err = htlcLock.DeleteFromWorldState(stub); err != nil {
+		return fmt.Errorf("failed to get HTLC lock from world state: %v", err)
+	}
+
+	return nil
+}
+
 // TODOHP: finish implementation
 func NewHTLC(stub shim.ChaincodeStubInterface,
 	secretHash, lockID, receiverID, validUntil, destChainID string,
