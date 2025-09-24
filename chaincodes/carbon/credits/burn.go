@@ -58,7 +58,75 @@ func (bc *BurnCredit) GetID() *[][]string {
 	return bc.MintCredit.GetID()
 }
 
-// TODO: implement
-func Burn(stub shim.ChaincodeStubInterface) error {
+// TODO: Test
+// BurnQuantity handles the burning of a minted credit.
+func BurnQuantity(stub shim.ChaincodeStubInterface, mintCreditID []string, burnQuantity int64) error {
+	mc, err := loadMintCreditAndPerformChecks(stub, burnQuantity, mintCreditID)
+	if err != nil {
+		return err
+	}
+
+	bc := &BurnCredit{
+		BurnQuantity: burnQuantity,
+		MintCreditID: mintCreditID,
+		MintCredit:   mc,
+	}
+
+	if err = fillTSAndCalcMult(stub, bc); err != nil {
+		return fmt.Errorf("could not fill timestamp and calculate multiplier: %v", err)
+	}
+
+	bc.MintCredit.Credit.Quantity -= burnQuantity
+	if err = bc.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not update mint credit in world state: %v", err)
+	}
+
+	if err = bc.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not put burn credit in world state: %v", err)
+	}
+
 	return nil
+}
+
+func loadMintCreditAndPerformChecks(
+	stub shim.ChaincodeStubInterface,
+	burnQuantity int64,
+	mintCreditID []string) (*MintCredit, error) {
+	mc := &MintCredit{}
+	err := mc.FromWorldState(stub, mintCreditID)
+	if err != nil {
+		return nil, fmt.Errorf("could not get mint credit from world state: %v", err)
+	}
+
+	if burnQuantity > mc.Quantity {
+		return nil, fmt.Errorf("burn quantity exceeds available quantity: %d > %d", burnQuantity, mc.Quantity)
+	}
+
+	callerID := identities.GetID(stub)
+	if mc.OwnerID != callerID {
+		return nil, fmt.Errorf("only the owner of the credit can burn it: %s != %s", mc.OwnerID, callerID)
+	}
+	return mc, nil
+}
+
+func fillTSAndCalcMult(stub shim.ChaincodeStubInterface, bc *BurnCredit) error {
+	protoTs, _ := stub.GetTxTimestamp()
+	burnTimestamp := utils.TimestampRFC3339UtcString(protoTs)
+	bc.BurnTimeStamp = burnTimestamp
+
+	pApplier := policies.NewPolicyApplier()
+	// TODOHP: the multiplier here might expose buyer real identity.
+	// Evaluate this later.
+	pInput := &policies.PolicyInput{}
+	activePols, err := policies.GetActivePolicies(stub)
+	if err != nil {
+		return fmt.Errorf("could not get active policies: %v", err)
+	}
+	bc.BurnMult, err = pApplier.BurnIndependentMult(pInput, activePols)
+	if err != nil {
+		return fmt.Errorf("could not get burn multiplier: %v", err)
+	}
+
+	return nil
+
 }

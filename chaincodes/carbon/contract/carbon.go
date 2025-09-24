@@ -53,9 +53,8 @@ func (c *CarbonContract) MintCreditsForRange(ctx contractapi.TransactionContextI
 	return nil
 }
 
-// TODO: implement
-func (c *CarbonContract) BurnCredit(ctx contractapi.TransactionContextInterface) error {
-	return credits.Burn(ctx.GetStub())
+func (c *CarbonContract) BurnCredit(ctx contractapi.TransactionContextInterface, mintCreditID []string, burnQuantity int64) error {
+	return credits.BurnQuantity(ctx.GetStub(), mintCreditID, burnQuantity)
 }
 
 // TODO: implement
