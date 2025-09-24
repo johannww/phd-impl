@@ -11,6 +11,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	setup_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
+	carbon_utils "github.com/johannww/phd-impl/chaincodes/carbon/utils"
 
 	"github.com/johannww/phd-impl/chaincodes/interop/lock"
 	"github.com/stretchr/testify/require"
@@ -36,7 +37,7 @@ func TestLockedCredit(t *testing.T) {
 	carbonStub.MockTransactionEnd("tx2")
 
 	stub.MockTransactionStart("tx1")
-	stub.Creator = mockIds[setup_test.REGULAR_ID]
+	stub.Creator = mockIds[identities.InteropRelayerAttr]
 	isLocked, err := lock.CreditIsLocked(stub, CARBON_CC_NAME,
 		(*toBeLocked.GetID())[0], lockID)
 	require.NoError(t, err)
@@ -65,7 +66,7 @@ func createCreditOnCarbonCC(carbonStub *mocks.MockStub,
 
 	mintedForChunk := &properties.PropertyChunk{
 		PropertyID:  0,
-		Coordinates: []properties.Coordinate{{Latitude: 1.0, Longitude: 2.0}},
+		Coordinates: []carbon_utils.Coordinate{{Latitude: 1.0, Longitude: 2.0}},
 	}
 	err = mintedForChunk.ToWorldState(carbonStub)
 	require.NoError(t, err)

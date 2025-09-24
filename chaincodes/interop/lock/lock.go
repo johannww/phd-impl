@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/interop/util"
 )
 
@@ -14,6 +16,10 @@ func CreditIsLocked(
 	creditID []string,
 	lockID string,
 ) (bool, error) {
+	if cid.AssertAttributeValue(stub, identities.InteropRelayerAttr, "true") != nil {
+		return false, fmt.Errorf("only the interop relayer can check locked credits: missing attribute %s", identities.InteropRelayerAttr)
+	}
+
 	funcName := "CreditIsLocked"
 	args, err := util.MarshallInvokeArgs(funcName, creditID, lockID)
 	if err != nil {
@@ -38,6 +44,10 @@ func CreditIsLockedForChainID(
 	lockID string,
 	destChainID string,
 ) (bool, error) {
+	if cid.AssertAttributeValue(stub, identities.InteropRelayerAttr, "true") != nil {
+		return false, fmt.Errorf("only the interop relayer can check locked credits: missing attribute %s", identities.InteropRelayerAttr)
+	}
+
 	funcName := "ChainIDCreditIsLockedFor"
 	args, err := util.MarshallInvokeArgs(funcName, creditID, lockID)
 	if err != nil {
@@ -61,6 +71,10 @@ func UnlockCredit(
 	creditID []string,
 	lockID string,
 ) error {
+	if cid.AssertAttributeValue(stub, identities.InteropRelayerAttr, "true") != nil {
+		return fmt.Errorf("only the interop relayer can unlock credits: missing attribute %s", identities.InteropRelayerAttr)
+	}
+
 	funcName := "UnlockCredit"
 	args, err := util.MarshallInvokeArgs(funcName, creditID, lockID)
 	if err != nil {
