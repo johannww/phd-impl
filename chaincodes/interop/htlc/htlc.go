@@ -1,7 +1,10 @@
 package htlc
 
 import (
+	"fmt"
+
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	carbon_utils "github.com/johannww/phd-impl/chaincodes/carbon/utils"
 	"github.com/johannww/phd-impl/chaincodes/interop/lock"
 	"github.com/johannww/phd-impl/chaincodes/interop/util"
 )
