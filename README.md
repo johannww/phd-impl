@@ -16,7 +16,11 @@ This repository is an ongoing implementation of a Blockchain-based Emission Trad
     - Uses AMD SEV-SNP technology
 
 # phd-impl
-[coupled.pdf](https://github.com/user-attachments/files/22568646/coupled.pdf)
+<img width="1168" height="673" alt="image" src="https://github.com/user-attachments/assets/fe673c8d-8380-4187-96a6-5384d9b58ee1" />
+
+<img width="556" height="479" alt="image" src="https://github.com/user-attachments/assets/e4016650-280f-4550-b4d2-d670f2dc83bc" />
+
+<img width="778" height="638" alt="image" src="https://github.com/user-attachments/assets/2792bc56-54f2-4f66-a169-81524e910c39" />
 
 # Description
 
