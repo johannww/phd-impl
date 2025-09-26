@@ -16,15 +16,21 @@ This repository is an ongoing implementation of a Blockchain-based Emission Trad
     - Uses AMD SEV-SNP technology
 
 # Model overview
+
 <img width="1168" height="673" alt="image" src="https://github.com/user-attachments/assets/fe673c8d-8380-4187-96a6-5384d9b58ee1" />
 
 # Auction types
 
 ## Independent auction
 
+Auction module with independent policies only. In this auction type, the credits are fungible, and the multiplier weight is applied before and after the auction.
+
 <img width="556" height="479" alt="image" src="https://github.com/user-attachments/assets/e4016650-280f-4550-b4d2-d670f2dc83bc" />
 
 ## Coupled auction
+
+Auction module with coupled policies. In this auction type, the same carbon sink-credit \(w\) results in different burn-credit values (\(x\), \(y\), \(z\)) when sold to different burners. Because this auction might require the geolocation of the burners to apply the policies, it has access to the relevant private data that is not available to all participants in the network.
+
 <img width="556" height="479" alt="image" src="https://github.com/user-attachments/assets/2792bc56-54f2-4f66-a169-81524e910c39" />
 
 # Description
