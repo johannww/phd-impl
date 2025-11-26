@@ -69,10 +69,20 @@ Our model provides plugability for other policy types
 
 Here are the stakholders considered. We aimed to conform to the Brazilian bill 2148/2015:
 
-<!-- TODO: continue here-->
 - Project developers
 - Project methodologies
-...
+- Governments
+- Farmers
+- REDD Project Developers
+- Emitting Companies
+- Project Certifiers/Auditors
+- Technical Committee
+- Data Providers
+- Normative Bodies
+- Third-Party Brokers/Representatives
+- Settlement Entities
+- Cross-Chain Relayers
+- General Public
 
 ## Interaction with external databases
 
