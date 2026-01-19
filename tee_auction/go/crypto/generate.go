@@ -37,7 +37,7 @@ func CreateCertAndPrivKey(certFileName, privKeyFileName string) (
 		PublicKeyAlgorithm:    x509.Ed25519,
 		PublicKey:             pub,
 	}
-	certDERBytes, err := x509.CreateCertificate(rand.Reader, &certTemplate, &certTemplate, pub, priv)
+	certDERBytes, err = x509.CreateCertificate(rand.Reader, &certTemplate, &certTemplate, pub, priv)
 	panicOnError(err)
 
 	pemBytes := pem.EncodeToMemory(&pem.Block{
