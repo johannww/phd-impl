@@ -15,7 +15,9 @@ import (
 func main() {
 
 	// Generate self-signed certificate and private key
-	certFileName, privKeyFileName, certDERBytes, priv := crypto.CreateCertAndPrivKey()
+	certFileName := "server.crt"
+	privKeyFileName := "server.key"
+	certDERBytes, priv := crypto.CreateCertAndPrivKey(certFileName, privKeyFileName)
 
 	// Put the public key's hash in the AMD SEV-SNP report
 	// on ReportData field. See:

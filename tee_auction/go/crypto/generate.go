@@ -11,14 +11,12 @@ import (
 	"time"
 )
 
-func CreateCertAndPrivKey() (certFileName, privKeyFileName string,
+func CreateCertAndPrivKey(certFileName, privKeyFileName string) (
 	certDERBytes []byte,
 	priv ed25519.PrivateKey,
 ) {
 	var pub ed25519.PublicKey
 	var err error
-	certFileName = "server.crt"
-	privKeyFileName = "server.key"
 
 	// Generate key pair
 	pub, priv, err = ed25519.GenerateKey(rand.Reader)
