@@ -26,7 +26,7 @@ PEER_VER_MATCHES=$(../bin/peer version | grep $FABRIC_VER | wc -l)
 CA_VER_MATCHES=$(../bin/fabric-ca-client version | grep $FABRIC_CA_VER | wc -l)
 
 # Install fabric binaries and images
-if [[ $((HAS_PEER_BIN+PEER_VER_MATCHES+CA_VER_MATCHES)) -ne 3 ]] || [[ $DOWNLOAD_PREREQ != "true" ]]; then
+if [[ $((HAS_PEER_BIN+PEER_VER_MATCHES+CA_VER_MATCHES)) -ne 3 ]] || [[ $DOWNLOAD_PREREQ == "true" ]]; then
     ./network.sh prereq -i $FABRIC_VER -cai $FABRIC_CA_VER
 fi
 
