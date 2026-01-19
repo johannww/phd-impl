@@ -86,7 +86,6 @@ func VerifyAuctionResultReportSignature(
 	return true, nil
 }
 
-// TODO: Test
 func VerifyAuctionAppSignature(
 	stub shim.ChaincodeStubInterface,
 	resultBytes []byte,
