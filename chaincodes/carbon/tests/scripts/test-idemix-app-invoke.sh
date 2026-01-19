@@ -26,5 +26,4 @@ cd ..
 
 APP_CMD_MAIN=./cmd/application/main.go
 tree $CORE_PEER_MSPCONFIGPATH
-# TODO: this is not working yet
 go run $APP_CMD_MAIN --idemix true --mspId Org3MSP --mspPath $CORE_PEER_MSPCONFIGPATH

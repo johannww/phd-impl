@@ -248,50 +248,13 @@ func createAsset(contract *client.Contract) {
 }
 
 func testQuery(contract *client.Contract) {
-	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
+	fmt.Printf("\n--> Evaluate Transaction: CheckCredAttr\n")
 
-	evaluateResult, err := contract.EvaluateTransaction("CreateSellBid")
+	evaluateResult, err := contract.EvaluateTransaction("CheckCredAttr", "role")
 	if err != nil {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 	}
-	result := formatJSON(evaluateResult)
-
-	fmt.Printf("*** Result:%s\n", result)
-}
-
-// Evaluate a transaction by assetID to query ledger state.
-func readAssetByID(contract *client.Contract) {
-	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
-
-	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", assetId)
-	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
-	}
-	result := formatJSON(evaluateResult)
-
-	fmt.Printf("*** Result:%s\n", result)
-}
-
-// Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
-// this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
-func transferAssetAsync(contract *client.Contract) {
-	fmt.Printf("\n--> Async Submit Transaction: TransferAsset, updates existing asset owner")
-
-	submitResult, commit, err := contract.SubmitAsync("TransferAsset", client.WithArguments(assetId, "Mark"))
-	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction asynchronously: %w", err))
-	}
-
-	fmt.Printf("\n*** Successfully submitted transaction to transfer ownership from %s to Mark. \n", string(submitResult))
-	fmt.Println("*** Waiting for transaction commit.")
-
-	if commitStatus, err := commit.Status(); err != nil {
-		panic(fmt.Errorf("failed to get commit status: %w", err))
-	} else if !commitStatus.Successful {
-		panic(fmt.Errorf("transaction %s failed to commit with status: %d", commitStatus.TransactionID, int32(commitStatus.Code)))
-	}
-
-	fmt.Printf("*** Transaction committed successfully\n")
+	fmt.Printf("*** Raw Result:%s\n", string(evaluateResult))
 }
 
 // Submit transaction, passing in the wrong number of arguments ,expected to throw an error containing details of any error responses from the smart contract.
