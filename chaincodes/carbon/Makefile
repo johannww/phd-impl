@@ -15,6 +15,9 @@ unit-test:
 test:
 	go test --tags=testing ./tests
 
+test-no-amd-network-request:
+	go test --tags=testing -skip TestAzureCEEPolicyVerification ./tests
+
 test-no-cache:
 	go test --tags=testing -count=1 ./tests
 
