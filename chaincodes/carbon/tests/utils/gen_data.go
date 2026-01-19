@@ -119,7 +119,7 @@ func GenProperties(nChunks int, mockIds *setup.MockIdentities) []*properties.Pro
 			continue
 		}
 
-		// TODO: this should be tought later to avoid collisions
+		// NOTE: this should be tought later to avoid collisions
 		id := mathrand.Uint64()
 
 		prop := &properties.Property{
