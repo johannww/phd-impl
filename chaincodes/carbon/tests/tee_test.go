@@ -37,6 +37,6 @@ func TestAzureCEEPolicyVerification(t *testing.T) {
 	require.NoError(t, err, "Failed to store CCE policy in world state")
 
 	err = tee.InitialReportToWorldState(stub, reportJsonBytes)
-	require.NoError(t, err, "Faied to store initial TEE report in world state")
+	require.NoError(t, err, "Failed to store initial TEE report in world state")
 
 }

@@ -140,19 +140,19 @@ func verifyCCEPolicy(stub shim.ChaincodeStubInterface, report attest.SNPAttestat
 		return fmt.Errorf("could not get CCE policy: %v", err)
 	}
 
-	ccePoplicyBytes, err := base64.StdEncoding.DecodeString(ccePolicyBase64)
+	ccePolicyBytes, err := base64.StdEncoding.DecodeString(ccePolicyBase64)
 	if err != nil {
 		return fmt.Errorf("could not decode CCE policy from hex: %v", err)
 	}
 
-	ccePolciySha256FromWorldState := sha256.Sum256(ccePoplicyBytes)
+	ccePolicySha256FromWorldState := sha256.Sum256(ccePolicyBytes)
 
 	ccePolicySha256HashFromReport, err := hex.DecodeString(report.HostData) // see https://www.youtube.com/watch?v=H9DP5CMqGac
 	if err != nil {
 		return fmt.Errorf("could not unmarshal CCE policy: %v", err)
 	}
 
-	if !bytes.Equal(ccePolicySha256HashFromReport, ccePolciySha256FromWorldState[:]) {
+	if !bytes.Equal(ccePolicySha256HashFromReport, ccePolicySha256FromWorldState[:]) {
 		return fmt.Errorf("CCE policy hash from report does not match the expected CCE policy hash")
 	}
 
