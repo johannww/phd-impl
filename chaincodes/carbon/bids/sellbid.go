@@ -19,7 +19,6 @@ const (
 	SELL_BID_ID_CREDIT_AS_PREFIX = 2
 )
 
-// TODO: review how the credit should be loaded here
 type SellBid struct {
 	SellerID     string              `json:"sellerID,omitempty"`
 	CreditID     []string            `json:"creditID"`
