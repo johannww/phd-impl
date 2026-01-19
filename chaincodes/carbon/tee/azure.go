@@ -110,7 +110,7 @@ func VerifyAuctionAppSignature(
 	}
 
 	certHash := sha512.Sum512(certDer)
-	if bytes.Equal(reportDataBytes, certHash[:]) {
+	if !bytes.Equal(reportDataBytes, certHash[:]) {
 		return false, fmt.Errorf("report data does not match SHA512 of the provided certificate")
 	}
 
