@@ -9,6 +9,7 @@ import (
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
+	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,4 +40,13 @@ func TestAzureCEEPolicyVerification(t *testing.T) {
 	err = tee.InitialReportToWorldState(stub, reportJsonBytes)
 	require.NoError(t, err, "Failed to store initial TEE report in world state")
 
+}
+
+func TestVerifyAuctionAppSignature(t *testing.T) {
+	stub := mocks.NewMockStub("carbon", nil)
+	stub.MockTransactionStart("tx1")
+	mockIds := setup.SetupIdentities(stub)
+	stub.Creator = mockIds[identities.TEEConfigurer]
+
+	serializedResults := tee_auction.SerializedAuctionResultTEE
 }
