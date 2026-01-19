@@ -44,7 +44,6 @@ func TestOffChainIndependentAuction(t *testing.T) {
 	verifyBidsQuantityConsistency(t, totalBuyBidQuantity, auctionResult)
 }
 
-// TODOHP: continue here. test with random bids for credits
 func TestOffChainIndependentAuctionWithRandomBids(t *testing.T) {
 	stub, testData := genTestDataAndStub()
 
