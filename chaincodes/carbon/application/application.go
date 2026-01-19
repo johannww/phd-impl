@@ -33,7 +33,6 @@ const (
 var now = time.Now()
 var assetId = fmt.Sprintf("asset%d", now.Unix()*1e3+int64(now.Nanosecond())/1e6)
 
-// TODO: This was not tested yet
 func Run(idemix bool, mspPath, mspID string) {
 	// The gRPC client connection should be shared by all Gateway connections to this endpoint
 	tlsCertDir := path.Join(mspPath, "..", "..", "..", "..", "org1.example.com", "tlsca")
