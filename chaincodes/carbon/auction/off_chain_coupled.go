@@ -137,6 +137,7 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 
 	}
 
+	// 4. Shuffle matched bids to break the link between buyers and sellers. This is important because the order of matched bids implies a higher multiplier, which can lead to privacy issues.
 	shuffleMatchedBids(public.MatchedBidsPublic, private.MatchedBidsPrivate)
 
 	return public, private, nil
