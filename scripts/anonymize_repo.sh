@@ -56,6 +56,11 @@ rg --files-with-matches "github.com/johannww/phd-impl" | while read file; do
     sed -i 's/github\.com\/johannww\/phd-impl/github-com\/anonymized-repo/g' "$file"
 done
 
+rg --files-with-matches "ghcr.io/johannww/phd-impl" | while read file; do
+    echo "Anonymizing $file"
+    sed -i 's/ghcr\.io\/johannww\/phd-impl/ghcr\.io\/anonymized-repo/g' "$file"
+done
+
 echo "Anonymizing johannww forks in go.mod files"
 mod_files=(
     ./chaincodes/carbon/go.mod
@@ -108,8 +113,6 @@ pushd ./tee_auction/
 echo "Generate diagrams without johann's name"
 make docs
 popd
-
-# TODOHP: finish with the image names
 
 rg -ui "johann"
 pwd
