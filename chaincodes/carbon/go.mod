@@ -11,10 +11,12 @@ require (
 	github.com/hyperledger/fabric-gateway v1.7.1
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6
 	github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693
+	github.com/mmcloughlin/geohash v0.10.0
 	github.com/quagmt/udecimal v1.9.0
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
+	github.com/tidwall/rtree v1.10.0
 	google.golang.org/protobuf v1.36.6
 )
 
@@ -45,6 +47,7 @@ require (
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
+	github.com/tidwall/geoindex v1.7.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
