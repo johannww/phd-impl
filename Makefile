@@ -4,6 +4,11 @@ diagrams:
 
 test:
 	$(MAKE) -C chaincodes/carbon test-no-cache test-network
+
+docker:
+	$(MAKE) -C tee_auction docker
+	$(MAKE) -C ./chaincodes/carbon cc-docker
+	$(MAKE) -C ./chaincodes/interop cc-docker
 	
 ai-list-structs:
 	./scripts/gopls_get_structs.sh ./chaincodes/carbon/
