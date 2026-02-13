@@ -70,7 +70,6 @@ mod_relative_paths=(
     "../../"
     "../../"
     "../../"
-    "../"
 )
 FABRIC_CC_PATH=./fabric-chaincode-go
 FABRIC_GATEWAY_PATH=./fabric-gateway
