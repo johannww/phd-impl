@@ -112,6 +112,24 @@ make docs
 popd
 
 rg -ui "johann"
-pwd
+
+echo "Testing that the modified repo can be built and tested"
+
+pushd ./chaincodes/carbon
+make test-no-cache &
+make cc-docker &
+make app &
+wait
+popd
+
+pushd ./chaincodes/interop
+make test-no-cache &
+make cc-docker &
+wait
+popd
+
+pushd ./tee_auction
+make docker
+popd
 
 popd
