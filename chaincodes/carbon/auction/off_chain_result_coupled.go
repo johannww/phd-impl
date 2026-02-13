@@ -17,6 +17,7 @@ func processCoupledAuctionResult(stub shim.ChaincodeStubInterface,
 	return err
 }
 
+// TODOHP: calculate and store adjusted sell and buy bids for coupled auction results
 func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainCoupledAuctionResult) error {
 	for i := range result.MatchedBidsPublic {
 		mbPub := result.MatchedBidsPublic[i]
