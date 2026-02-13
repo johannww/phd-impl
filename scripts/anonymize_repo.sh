@@ -114,6 +114,7 @@ pushd ./chaincodes/carbon
 make test-no-cache &
 make cc-docker &
 make app &
+make test-network &
 wait
 popd
 
@@ -130,3 +131,5 @@ popd
 rg -ui "johann"
 
 popd
+
+zip -r blind_repo.zip blind_repo
