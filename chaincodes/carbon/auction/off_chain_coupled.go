@@ -19,6 +19,7 @@ type OffChainCoupledAuctionResult struct {
 	AuctionID          uint64             `json:"auctionID"`
 	MatchedBidsPublic  []*bids.MatchedBid `json:"matchedBidsPublic"`
 	MatchedBidsPrivate []*bids.MatchedBid `json:"matchedBidsPrivate"`
+	// TODOHP: add adjusted bids to the result
 }
 
 func (r *OffChainCoupledAuctionResult) MergeIntoSingleMatchedBids() ([]*bids.MatchedBid, error) {
