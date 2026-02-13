@@ -3,7 +3,7 @@ diagrams:
 	$(MAKE) -C tee_auction docs
 
 test:
-	cd ./chaincodes/carbon/ && go test -count=1 ./tests
+	$(MAKE) -C chaincodes/carbon test-no-cache test-network
 	
 ai-list-structs:
 	./scripts/gopls_get_structs.sh ./chaincodes/carbon/
