@@ -13,8 +13,34 @@ func processIndependentAuctionResult(stub shim.ChaincodeStubInterface,
 	if err != nil {
 		return fmt.Errorf("could not merge independent public and private results: %v", err)
 	}
+	err = storeIndepMatchedBids(stub, result)
+	return err
+}
 
-	_ = result // TODO: do something with the result
-
-	return fmt.Errorf("independent auction result processing not implemented yet")
+func storeIndepMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainIndepAuctionResult) error {
+	for i := range result.MatchedBids {
+		mb := result.MatchedBids[i]
+		err := mb.ToWorldState(stub)
+		if err != nil {
+			return fmt.Errorf("could not store matched bid %d: %v", i, err)
+		}
+	}
+	
+	for i := range result.AdustedSellBids {
+		sb := result.AdustedSellBids[i]
+		err := sb.ToWorldState(stub)
+		if err != nil {
+			return fmt.Errorf("could not store adjusted sell bid %d: %v", i, err)
+		}
+	}
+	
+	for i := range result.AdustedBuyBids {
+		bb := result.AdustedBuyBids[i]
+		err := bb.ToWorldState(stub)
+		if err != nil {
+			return fmt.Errorf("could not store adjusted buy bid %d: %v", i, err)
+		}
+	}
+	
+	return nil
 }
