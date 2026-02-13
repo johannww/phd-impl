@@ -5,7 +5,6 @@ mkdir blind_repo
 COPIABLE=(
     Makefile
     README.md
-    api
     chaincodes
     scripts
     tee_auction
@@ -66,7 +65,6 @@ mod_files=(
     ./chaincodes/carbon/go.mod
     ./chaincodes/interop/go.mod
     ./tee_auction/go/go.mod
-    ./api/go.mod
     )
 mod_relative_paths=(
     "../../"
@@ -98,7 +96,6 @@ revendor_dirs=(
     chaincodes/carbon
     chaincodes/interop
     tee_auction/go
-    api
 )
 
 for dir in "${revendor_dirs[@]}"; do
