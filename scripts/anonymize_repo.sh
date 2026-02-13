@@ -131,4 +131,6 @@ pushd ./tee_auction
 make docker
 popd
 
+rg -ui "johann"
+
 popd
