@@ -105,12 +105,8 @@ for dir in "${revendor_dirs[@]}"; do
     popd || continue
 done
 
-pushd ./tee_auction/
 echo "Generate diagrams without johann's name"
-make docs
-popd
-
-rg -ui "johann"
+make diagrams
 
 echo "Testing that the modified repo can be built and tested"
 
