@@ -26,25 +26,3 @@ func ProcessOffChainAuctionResult(stub shim.ChaincodeStubInterface, resultBytesP
 	return processCoupledAuctionResult(stub, coupledResultPub, coupledResultPvt)
 }
 
-func processIndependentAuctionResult(stub shim.ChaincodeStubInterface,
-	resultPub *OffChainIndepAuctionResult, resultPvt *OffChainIndepAuctionResult,
-) error {
-	result, err := MergeIndependentPublicPrivateResults(resultPub, resultPvt)
-	if err != nil {
-		return fmt.Errorf("could not merge independent public and private results: %v", err)
-	}
-
-	_ = result // TODO: do something with the result
-	return fmt.Errorf("independent auction result processing not implemented yet")
-}
-
-func processCoupledAuctionResult(stub shim.ChaincodeStubInterface,
-	resultPub *OffChainCoupledAuctionResult, resultPvt *OffChainCoupledAuctionResult,
-) error {
-	result, err := NewSingleCoupledResults(resultPub, resultPvt)
-	if err != nil {
-		return fmt.Errorf("could not merge coupled public and private results: %v", err)
-	}
-	_ = result // TODO: do something with the result
-	return fmt.Errorf("coupled auction result processing not implemented yet")
-}
