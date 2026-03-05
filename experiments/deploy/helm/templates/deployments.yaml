@@ -70,6 +70,16 @@ spec:
               value: /etc/hyperledger/fabric/tls/server.crt
             - name: ORDERER_GENERAL_CLUSTER_ROOTCAS
               value: "[/etc/hyperledger/fabric/tls/ca.crt]"
+            - name: ORDERER_ADMIN_LISTENADDRESS
+              value: "0.0.0.0:9443"
+            - name: ORDERER_ADMIN_TLS_ENABLED
+              value: "true"
+            - name: ORDERER_ADMIN_TLS_PRIVATEKEY
+              value: /etc/hyperledger/fabric/tls/server.key
+            - name: ORDERER_ADMIN_TLS_CERTIFICATE
+              value: /etc/hyperledger/fabric/tls/server.crt
+            - name: ORDERER_ADMIN_TLS_CLIENTROOTCAS
+              value: "[/etc/hyperledger/fabric/tls/ca.crt]"
           volumeMounts:
             - name: organizations
               mountPath: /organizations
@@ -82,6 +92,8 @@ spec:
           ports:
             - containerPort: 7050
               name: orderer
+            - containerPort: 9443
+              name: orderer-admin
       volumes:
         - name: organizations
           persistentVolumeClaim:
