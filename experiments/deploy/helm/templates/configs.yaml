@@ -1,4 +1,3 @@
-{{- $firstOrg := index .Values.network.organizations 0 -}}
 {{- $firstOrdererOrg := dict "name" "" -}}
 {{- range $org := .Values.network.organizations }}
 {{- if and (eq (get $firstOrdererOrg "name") "") (gt (int (default 0 $org.orderers)) 0) }}
@@ -22,6 +21,7 @@ data:
     set -euo pipefail
     export CORE_PEER_TLS_ENABLED=true
     export FABRIC_CHANNEL="{{ .Values.network.channelName }}"
+    export CHANNEL_ARTIFACTS_DIR="{{ .Values.operations.workspace }}/organizations/channel-artifacts"
     export CHANNEL_TX_FILE="{{ .Values.operations.workspace }}/organizations/channel-artifacts/${FABRIC_CHANNEL}.tx"
     export CHANNEL_BLOCK_FILE="{{ .Values.operations.workspace }}/organizations/channel-artifacts/${FABRIC_CHANNEL}.block"
   certgen.sh: |
@@ -56,16 +56,6 @@ data:
     set -euo pipefail
     source /scripts/envsettings.sh
     mkdir -p /workspace/pkg {{ .Values.operations.workspace }}/organizations/channel-artifacts
-    wait_for_endpoint() {
-      local host="$1"
-      local port="$2"
-      until (echo >"/dev/tcp/${host}/${port}") >/dev/null 2>&1; do
-        echo "waiting for ${host}:${port}"
-        sleep 2
-      done
-    }
-    wait_for_endpoint "$(echo "${ORDERER_ADDRESS}" | cut -d: -f1)" "$(echo "${ORDERER_ADDRESS}" | cut -d: -f2)"
-    wait_for_endpoint "$(echo "${CORE_PEER_ADDRESS}" | cut -d: -f1)" "$(echo "${CORE_PEER_ADDRESS}" | cut -d: -f2)"
     run_step() {
       local step="$1"
       local script="$2"
@@ -74,7 +64,46 @@ data:
         bash "${script}"
       fi
     }
-    run_step "channel creation" "/scripts/channel.sh"
+    run_step "channel create and join" "/scripts/channel-create-join.sh"
     #run_step "chaincode install and instantiation" "/scripts/lifecycle.sh"
     #run_step "chaincode invocation" "/scripts/invoke.sh"
     #run_step "chaincode query" "/scripts/query.sh"
+  channel-create-join.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    set -x
+    source /scripts/envsettings.sh
+    wait_for_endpoint() {
+      local host="$1"
+      local port="$2"
+      until (echo >"/dev/tcp/${host}/${port}") >/dev/null 2>&1; do
+        echo "waiting for ${host}:${port}"
+        sleep 2
+      done
+    }
+    mkdir -p "${CHANNEL_ARTIFACTS_DIR}"
+{{- range $org := .Values.network.organizations }}
+{{- if gt (int (default 0 $org.orderers)) 0 }}
+{{- range $i, $_ := until (int (default 0 $org.orderers)) }}
+    wait_for_endpoint "{{ $org.name }}-orderer-{{ $i }}" "9443"
+    export OSN_TLS_CA_ROOT_CERT="{{ $.Values.operations.workspace }}/organizations/ordererOrganizations/{{ $org.name }}/orderers/orderer{{ $i }}.{{ $org.name }}/tls/ca.crt"
+    export ADMIN_TLS_SIGN_CERT="{{ $.Values.operations.workspace }}/organizations/ordererOrganizations/{{ $org.name }}/users/Admin@{{ $org.name }}/tls/client.crt"
+    export ADMIN_TLS_PRIVATE_KEY="{{ $.Values.operations.workspace }}/organizations/ordererOrganizations/{{ $org.name }}/users/Admin@{{ $org.name }}/tls/client.key"
+    osnadmin channel join --channelID "${FABRIC_CHANNEL}" --config-block "${CHANNEL_BLOCK_FILE}" -o {{ $org.name }}-orderer-{{ $i }}:9443 --ca-file "${OSN_TLS_CA_ROOT_CERT}" --client-cert "${ADMIN_TLS_SIGN_CERT}" --client-key "${ADMIN_TLS_PRIVATE_KEY}"
+{{- end }}
+{{- end }}
+{{- end }}
+{{- range $org := .Values.network.organizations }}
+{{- if gt (int (default 0 $org.peers)) 0 }}
+{{- range $i, $_ := until (int (default 0 $org.peers)) }}
+    wait_for_endpoint "{{ $org.name }}-peer-{{ $i }}" "7051"
+    export CORE_PEER_ADDRESS="{{ $org.name }}-peer-{{ $i }}:7051"
+    export CORE_PEER_LOCALMSPID="{{ $org.name | title }}MSP"
+    export CORE_PEER_MSPCONFIGPATH="{{ $.Values.operations.workspace }}/organizations/peerOrganizations/{{ $org.name }}/users/Admin@{{ $org.name }}/msp"
+    export CORE_PEER_TLS_ROOTCERT_FILE="{{ $.Values.operations.workspace }}/organizations/peerOrganizations/{{ $org.name }}/peers/peer{{ $i }}.{{ $org.name }}/tls/ca.crt"
+    export ORDERER_ADDRESS="{{ get $firstOrdererOrg "name" }}-orderer-0:7050"
+    export ORDERER_TLS_CA="{{ $.Values.operations.workspace }}/organizations/ordererOrganizations/{{ get $firstOrdererOrg "name" }}/tlsca/tlsca.{{ get $firstOrdererOrg "name" }}-cert.pem"
+    peer channel join -b "${CHANNEL_BLOCK_FILE}" -o "${ORDERER_ADDRESS}" --cafile "${ORDERER_TLS_CA}" --tls
+{{- end }}
+{{- end }}
+{{- end }}
