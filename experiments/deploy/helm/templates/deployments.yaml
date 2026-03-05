@@ -146,6 +146,8 @@ spec:
           image: "{{ $.Values.images.peer.repository }}:{{ $.Values.images.peer.tag }}"
           imagePullPolicy: {{ $.Values.images.peer.pullPolicy }}
           env:
+            - name: CORE_PEER_TLS_ENABLED
+              value: "true"
             - name: CORE_PEER_LOCALMSPID
               value: "{{ $orgName | title }}MSP"
           volumeMounts:
