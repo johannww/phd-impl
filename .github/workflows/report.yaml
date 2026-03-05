@@ -1,0 +1,60 @@
+on:
+  schedule:
+  - cron: '0 0 * * *' # Runs every day at 21:00 Sao Paulo time (00:00 UTC)
+  workflow_dispatch: 
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    env:
+      TZ: America/Sao_Paulo
+    steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+
+    - name: Install copilot
+      run: npm install -g @github/copilot
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetch all history for git log
+
+    - name: Get logs of the day
+      run: git log --since=midnight --until=now -p > logs.txt
+
+    - name: Generate report
+      env:
+        COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+      run: |
+        cat logs.txt | wc -l
+        copilot --allow-all -p \
+        "read the git logs in logs.txt file and write a report in markdown format summarizing the work done today. Read the entire logs.txt, do not limited reads. Do not dive into other files, keep yourself to what was changed and described in the files logs.txt. The report should be concise. Save the report in a file named report_implementation.md."
+
+    - name: Email report
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: Daily Report
+        body: Please find the attached daily report.
+        to: ${{ secrets.EMAIL_TO_ONE }}
+        from: ${{ secrets.EMAIL_USERNAME }}
+        attachments: report_implementation.md
+
+    - name: Email report
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: Implementation daily report
+        body: Please find the attached daily.
+        to: ${{ secrets.EMAIL_TO_TWO }}
+        from: ${{ secrets.EMAIL_USERNAME }}
+        attachments: report_implementation.md
+
