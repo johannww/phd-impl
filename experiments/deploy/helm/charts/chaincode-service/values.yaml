@@ -19,6 +19,7 @@ network:
 chaincodes:
   - name: "carbon"
     version: "1.0"
+    sequence: 1
     packageLabel: ""
     packageIds: {}
     image:
@@ -30,6 +31,7 @@ chaincodes:
     args: []
   - name: "interop"
     version: "1.0"
+    sequence: 1
     packageLabel: ""
     packageIds: {}
     image:
