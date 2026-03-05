@@ -1,0 +1,86 @@
+{{- $firstOrg := index .Values.network.organizations 0 -}}
+{{- $firstOrdererOrg := dict "name" "" -}}
+{{- range $org := .Values.network.organizations }}
+{{- if and (eq (get $firstOrdererOrg "name") "") (gt (int (default 0 $org.orderers)) 0) }}
+{{- $_ := set $firstOrdererOrg "name" $org.name -}}
+{{- end }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fabric-experiments.fullname" . }}-scripts
+  namespace: {{ include "fabric-experiments.namespace" . }}
+  labels:
+    {{- include "fabric-experiments.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  envsettings.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export CORE_PEER_TLS_ENABLED=true
+    export FABRIC_CFG_PATH="/configtx"
+    export CHANNEL_TX_FILE="{{ .Values.operations.workspace }}/organizations/channel-artifacts/${FABRIC_CHANNEL}.tx"
+    export CHANNEL_BLOCK_FILE="{{ .Values.operations.workspace }}/organizations/channel-artifacts/${FABRIC_CHANNEL}.block"
+    export CORE_PEER_ADDRESS="{{ $firstOrg.name }}-peer-0:7051"
+    export CORE_PEER_LOCALMSPID="{{ $firstOrg.name | title }}MSP"
+    export CORE_PEER_MSPCONFIGPATH="{{ .Values.operations.workspace }}/organizations/peerOrganizations/{{ $firstOrg.name }}/users/Admin@{{ $firstOrg.name }}/msp"
+    export CORE_PEER_TLS_ROOTCERT_FILE="{{ .Values.operations.workspace }}/organizations/peerOrganizations/{{ $firstOrg.name }}/peers/peer0.{{ $firstOrg.name }}/tls/ca.crt"
+    export ORDERER_ADDRESS="{{ get $firstOrdererOrg "name" }}-orderer-0:7050"
+    export ORDERER_TLS_CA="{{ .Values.operations.workspace }}/organizations/ordererOrganizations/{{ get $firstOrdererOrg "name" }}/orderers/orderer0.{{ get $firstOrdererOrg "name" }}/msp/tlscacerts/tlsca.{{ get $firstOrdererOrg "name" }}-cert.pem"
+  certgen.sh: |
+{{ .Values.operations.certGenerationCommands | indent 4 }}
+  configtx.sh: |
+{{ .Values.operations.configtxCreateCommands | indent 4 }}
+  channel.sh: |
+{{ .Values.operations.channelCreationCommands | indent 4 }}
+  lifecycle.sh: |
+{{ .Values.operations.chaincodeLifecycleCommands | indent 4 }}
+  invoke.sh: |
+{{ .Values.operations.invokeCommands | indent 4 }}
+  query.sh: |
+{{ .Values.operations.queryCommands | indent 4 }}
+  bootstrap.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source /scripts/envsettings.sh
+    mkdir -p {{ .Values.operations.workspace }}/organizations/channel-artifacts
+    run_step() {
+      local step="$1"
+      local script="$2"
+      echo "==> ${step}"
+      if [ -s "${script}" ]; then
+        bash "${script}"
+      fi
+    }
+    run_step "certificate generation" "/scripts/certgen.sh"
+    run_step "configtx create" "/scripts/configtx.sh"
+  post-bootstrap.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source /scripts/envsettings.sh
+    mkdir -p /workspace/pkg {{ .Values.operations.workspace }}/organizations/channel-artifacts
+    wait_for_endpoint() {
+      local host="$1"
+      local port="$2"
+      until (echo >"/dev/tcp/${host}/${port}") >/dev/null 2>&1; do
+        echo "waiting for ${host}:${port}"
+        sleep 2
+      done
+    }
+    wait_for_endpoint "$(echo "${ORDERER_ADDRESS}" | cut -d: -f1)" "$(echo "${ORDERER_ADDRESS}" | cut -d: -f2)"
+    wait_for_endpoint "$(echo "${CORE_PEER_ADDRESS}" | cut -d: -f1)" "$(echo "${CORE_PEER_ADDRESS}" | cut -d: -f2)"
+    run_step() {
+      local step="$1"
+      local script="$2"
+      echo "==> ${step}"
+      if [ -s "${script}" ]; then
+        bash "${script}"
+      fi
+    }
+    run_step "channel creation" "/scripts/channel.sh"
+    #run_step "chaincode install and instantiation" "/scripts/lifecycle.sh"
+    #run_step "chaincode invocation" "/scripts/invoke.sh"
+    #run_step "chaincode query" "/scripts/query.sh"

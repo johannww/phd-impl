@@ -25,11 +25,16 @@ spec:
           image: "{{ .Values.images.tools.repository }}:{{ .Values.images.tools.tag }}"
           imagePullPolicy: {{ .Values.images.tools.pullPolicy }}
           command: ["/bin/bash", "/scripts/bootstrap.sh"]
+          env:
+            - name: FABRIC_CHANNEL
+              value: {{ .Values.network.channelName | quote }}
           volumeMounts:
             - name: scripts
               mountPath: /scripts
             - name: crypto
               mountPath: /crypto
+            - name: configtx
+              mountPath: /configtx
             - name: organizations
               mountPath: {{ .Values.operations.workspace }}/organizations
             - name: workspace
@@ -42,6 +47,10 @@ spec:
         - name: crypto
           configMap:
             name: {{ include "fabric-experiments.fullname" . }}-crypto
+            defaultMode: 0755
+        - name: configtx
+          configMap:
+            name: {{ include "fabric-experiments.fullname" . }}-configtx
             defaultMode: 0755
         - name: organizations
           persistentVolumeClaim:
