@@ -5,9 +5,13 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 KUBECONFIG_DIR="${SCRIPT_DIR}/../../vars/kubeconfig"
 FABRIC_TAG="${FABRIC_TAG:-3.1.4}"
 TOOLS_IMAGE="${TOOLS_IMAGE:-ghcr.io/hyperledger/fabric-tools:${FABRIC_TAG}}"
+CARBON_CC_IMAGE="${CARBON_CC_IMAGE:-ghcr.io/johannww/phd-impl/carbon:latest}"
+INTEROP_CC_IMAGE="${INTEROP_CC_IMAGE:-ghcr.io/johannww/phd-impl/interop:latest}"
 RELEASE_NAME="${RELEASE_NAME:-fabric-experiments}"
 NAMESPACE="${NAMESPACE:-fabric-experiments}"
 CHART_DIR="${CHART_DIR:-${SCRIPT_DIR}/../helm}"
+CHAINCODE_CHART_DIR="${CHAINCODE_CHART_DIR:-${CHART_DIR}/charts/chaincode-service}"
+CHAINCODE_RELEASE_NAME="${CHAINCODE_RELEASE_NAME:-${RELEASE_NAME}-chaincode}"
 CPUS="${CPUS:-6}"
 MEMORY="${MEMORY:-12000}"
 
@@ -22,16 +26,28 @@ else
   cp ~/.kube/config "${KUBECONFIG_DIR}/config"
 fi
 
-if minikube image ls | grep -Fq "${TOOLS_IMAGE}"; then
-  echo "Image ${TOOLS_IMAGE} already loaded in Minikube, skipping."
-else
-  echo "Loading ${TOOLS_IMAGE} into Minikube..."
-  minikube image load "${TOOLS_IMAGE}"
-fi
+for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}"; do
+  if minikube image ls | grep -Fq "${image}"; then
+    echo "Image ${image} already loaded in Minikube, skipping."
+  else
+    echo "Loading ${image} into Minikube..."
+    minikube image load "${image}"
+  fi
+done
 
 echo "Installing Helm release ${RELEASE_NAME} in namespace ${NAMESPACE}..."
 helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
   --namespace "${NAMESPACE}" \
+  --wait \
   --create-namespace
+
+. "${SCRIPT_DIR}/package_chaincodes.bash"
+
+echo "Installing Helm release ${CHAINCODE_RELEASE_NAME} in namespace ${NAMESPACE}..."
+helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
+  --namespace "${NAMESPACE}" \
+  --set organizationsClaimName="${RELEASE_NAME}-fabric-experiments-organizations" \
+  --set packageConfigMapName="${CHAINCODE_PACKAGE_CONFIGMAP}" \
+  "${CC_SET_ARGS[@]}"
 
 echo "Done."

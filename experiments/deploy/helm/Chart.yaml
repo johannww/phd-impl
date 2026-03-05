@@ -4,3 +4,9 @@ description: Simple Hyperledger Fabric deployment scaffold for Kubernetes experi
 type: application
 version: 0.1.0
 appVersion: "3.1.4"
+dependencies:
+  - name: chaincode-service
+    alias: chaincodeService
+    version: 0.1.0
+    repository: "file://charts/chaincode-service"
+    condition: chaincodeService.enabled

@@ -1,0 +1,32 @@
+{{- $ns := include "chaincode-service.namespace" . -}}
+{{- $chaincodes := .Values.chaincodes | default (list .Values.chaincode) -}}
+{{- range $cc := $chaincodes }}
+{{- if (default true $cc.enabled) }}
+{{- $ccName := $cc.name | lower -}}
+{{- $ccPort := default 7055 $cc.servicePort -}}
+{{- range $org := $.Values.network.organizations }}
+{{- if gt (int (default 0 $org.peers)) 0 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $ccName }}-{{ $org.name }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "chaincode-service.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: chaincode-runtime
+    app.kubernetes.io/org: {{ $org.name }}
+    app.kubernetes.io/chaincode: {{ $ccName }}
+spec:
+  selector:
+    app.kubernetes.io/component: chaincode-runtime
+    app.kubernetes.io/org: {{ $org.name }}
+    app.kubernetes.io/chaincode: {{ $ccName }}
+  ports:
+    - name: chaincode
+      port: {{ $ccPort }}
+      targetPort: {{ $ccPort }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

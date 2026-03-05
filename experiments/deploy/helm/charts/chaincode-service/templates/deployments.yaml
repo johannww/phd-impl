@@ -1,0 +1,64 @@
+{{- $ns := include "chaincode-service.namespace" . -}}
+{{- $chaincodes := .Values.chaincodes | default (list .Values.chaincode) -}}
+{{- range $cc := $chaincodes }}
+{{- if (default true $cc.enabled) }}
+{{- $ccName := ($cc.name | lower) -}}
+{{- $ccImage := default (dict) $cc.image -}}
+{{- $ccImageRepo := default (printf "ghcr.io/johannww/phd-impl/%s" $ccName) (get $ccImage "repository") -}}
+{{- $ccImageTag := default "latest" (get $ccImage "tag") -}}
+{{- $ccImagePullPolicy := default "IfNotPresent" (get $ccImage "pullPolicy") -}}
+{{- $ccPort := default 7055 $cc.servicePort -}}
+{{- range $org := $.Values.network.organizations }}
+{{- if gt (int (default 0 $org.peers)) 0 }}
+{{- $pkgIDs := default (dict) $cc.packageIds -}}
+{{- $ccID := required (printf "chaincodes[%s].packageIds.%s is required" $ccName $org.name) (get $pkgIDs $org.name) -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $ccName }}-{{ $org.name }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "chaincode-service.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: chaincode-runtime
+    app.kubernetes.io/org: {{ $org.name }}
+    app.kubernetes.io/chaincode: {{ $ccName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: chaincode-runtime
+      app.kubernetes.io/org: {{ $org.name }}
+      app.kubernetes.io/chaincode: {{ $ccName }}
+  template:
+    metadata:
+      labels:
+        {{- include "chaincode-service.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: chaincode-runtime
+        app.kubernetes.io/org: {{ $org.name }}
+        app.kubernetes.io/chaincode: {{ $ccName }}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 0
+      containers:
+        - name: chaincode
+          image: "{{ $ccImageRepo }}:{{ $ccImageTag }}"
+          imagePullPolicy: {{ $ccImagePullPolicy }}
+          command: {{ toJson (default (list) $cc.command) }}
+          args: {{ toJson (default (list) $cc.args) }}
+          env:
+            - name: CHAINCODE_ID
+              value: {{ $ccID | quote }}
+            - name: CORE_CHAINCODE_ID_NAME
+              value: {{ $ccID | quote }}
+            - name: CORE_PEER_LOCALMSPID
+              value: "{{ $org.name | title }}MSP"
+            - name: CHAINCODE_SERVER_ADDRESS
+              value: 0.0.0.0:{{ $ccPort }}
+          ports:
+            - containerPort: {{ $ccPort }}
+              name: chaincode
+{{ end }}
+{{ end }}
+{{ end }}
+{{ end }}

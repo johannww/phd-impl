@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "chaincode-service.fullname" . }}-install
+  namespace: {{ include "chaincode-service.namespace" . }}
+  labels:
+    {{- include "chaincode-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: chaincode-install
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "15"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "chaincode-service.labels" . | nindent 8 }}
+        app.kubernetes.io/component: chaincode-install
+    spec:
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 0
+      containers:
+        - name: chaincode-install
+          image: "{{ .Values.images.tools.repository }}:{{ .Values.images.tools.tag }}"
+          imagePullPolicy: {{ .Values.images.tools.pullPolicy }}
+          command: ["/bin/bash", "/scripts/cc-package-install.sh"]
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: packages
+              mountPath: /packages
+            - name: organizations
+              mountPath: {{ .Values.workspace }}/organizations
+      volumes:
+        - name: scripts
+          configMap:
+            name: {{ include "chaincode-service.fullname" . }}-scripts
+            defaultMode: 0755
+        - name: packages
+          configMap:
+            name: {{ required "packageConfigMapName must be set for chaincode-service install job" .Values.packageConfigMapName }}
+        - name: organizations
+          persistentVolumeClaim:
+            claimName: {{ default (printf "%s-fabric-experiments-organizations" .Release.Name) .Values.organizationsClaimName }}

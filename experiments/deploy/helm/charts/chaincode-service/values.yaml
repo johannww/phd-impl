@@ -1,0 +1,41 @@
+workspace: "/workspace"
+organizationsClaimName: ""
+packageConfigMapName: ""
+
+images:
+  tools:
+    repository: "ghcr.io/hyperledger/fabric-tools"
+    tag: "3.1.4"
+    pullPolicy: IfNotPresent
+
+network:
+  channelName: "carbon"
+  organizations:
+    - name: "org1"
+      peers: 2
+    - name: "org2"
+      orderers: 2
+
+chaincodes:
+  - name: "carbon"
+    version: "1.0"
+    packageLabel: ""
+    packageIds: {}
+    image:
+      repository: "ghcr.io/johannww/phd-impl/carbon"
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    servicePort: 7055
+    command: []
+    args: []
+  - name: "interop"
+    version: "1.0"
+    packageLabel: ""
+    packageIds: {}
+    image:
+      repository: "ghcr.io/johannww/phd-impl/interop"
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    servicePort: 7055
+    command: []
+    args: []

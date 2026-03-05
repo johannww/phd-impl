@@ -1,0 +1,49 @@
+{{- $chaincodes := .Values.chaincodes | default (list .Values.chaincode) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chaincode-service.fullname" . }}-scripts
+  namespace: {{ include "chaincode-service.namespace" . }}
+  labels:
+    {{- include "chaincode-service.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  cc-package-install.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    wait_for_endpoint() {
+      local host="$1"
+      local port="$2"
+      until echo | openssl s_client -connect "${host}:${port}" -servername "${host}" >/dev/null 2>&1; do
+        echo "waiting for ${host}:${port}"
+        sleep 2
+      done
+    }
+{{- range $cc := $chaincodes }}
+{{- if (default true $cc.enabled) }}
+{{- $ccName := ($cc.name | default "chaincode") | lower -}}
+{{- $ccPort := default 7055 $cc.servicePort -}}
+{{- range $org := $.Values.network.organizations }}
+{{- if gt (int (default 0 $org.peers)) 0 }}
+    package_file="/packages/{{ $ccName }}_{{ $org.name }}.tar.gz"
+    if [ ! -s "${package_file}" ]; then
+      echo "missing chaincode package ${package_file}"
+      exit 1
+    fi
+{{- range $i, $_ := until (int (default 0 $org.peers)) }}
+    wait_for_endpoint "{{ $org.name }}-peer-{{ $i }}" "7051"
+    export CORE_PEER_TLS_ENABLED=true
+    export CORE_PEER_ADDRESS="{{ $org.name }}-peer-{{ $i }}:7051"
+    export CORE_PEER_LOCALMSPID="{{ $org.name | title }}MSP"
+    export CORE_PEER_MSPCONFIGPATH="{{ $.Values.workspace }}/organizations/peerOrganizations/{{ $org.name }}/users/Admin@{{ $org.name }}/msp"
+    export CORE_PEER_TLS_ROOTCERT_FILE="{{ $.Values.workspace }}/organizations/peerOrganizations/{{ $org.name }}/peers/peer{{ $i }}.{{ $org.name }}/tls/ca.crt"
+    echo "installing {{ $ccName }} on {{ $org.name }} peer{{ $i }} from ${package_file}"
+    peer lifecycle chaincode install "${package_file}"
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
