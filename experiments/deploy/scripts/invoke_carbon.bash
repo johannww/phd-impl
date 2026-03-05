@@ -40,4 +40,4 @@ peer chaincode invoke \
   -C "${CHANNEL}" -n carbon \
   --peerAddresses "${CORE_PEER_ADDRESS}" \
   --tlsRootCertFiles "${CORE_PEER_TLS_ROOTCERT_FILE}" \
-  -c '{"function":"InitLedger","Args":[]}'
+  -c '{"function":"CheckCredAttr","Args":[]}'
