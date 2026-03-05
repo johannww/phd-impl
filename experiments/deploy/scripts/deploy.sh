@@ -53,4 +53,6 @@ helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
   --set packageConfigMapName="${CHAINCODE_PACKAGE_CONFIGMAP}" \
   "${CC_SET_ARGS[@]}"
 
+. "${SCRIPT_DIR}/fetch_organizations.bash"
+
 echo "Done."
