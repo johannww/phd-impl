@@ -1,0 +1,56 @@
+{{- $ns := include "fabric-experiments.namespace" . -}}
+{{- if not .Values.network.organizations }}
+{{- fail "network.organizations must define at least one organization" }}
+{{- end }}
+{{- range $org := .Values.network.organizations }}
+{{- if and (eq (int (default 0 $org.peers)) 0) (eq (int (default 0 $org.orderers)) 0) }}
+{{- fail (printf "organization '%s' must define peers > 0 or orderers > 0" $org.name) }}
+{{- end }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fabric-experiments.fullname" . }}-crypto
+  namespace: {{ include "fabric-experiments.namespace" . }}
+  labels:
+    {{- include "fabric-experiments.labels" . | nindent 4 }}
+data:
+  crypto-config.yaml: |
+    OrdererOrgs:
+{{- range $org := .Values.network.organizations }}
+{{- if gt (int (default 0 $org.orderers)) 0 }}
+      - Name: {{ $org.name | title }}
+        Domain: {{ $org.name }}.{{ $.Values.global.domain }}
+        EnableNodeOUs: true
+        Specs:
+{{- range $i, $_ := until (int (default 0 $org.orderers)) }}
+          - Hostname: orderer{{ $i }}
+            SANS:
+              - localhost
+              - {{ $org.name }}-orderer-{{ $i }}
+              - {{ $org.name }}-orderer-{{ $i }}.{{ $ns }}
+              - {{ $org.name }}-orderer-{{ $i }}.{{ $ns }}.svc
+              - {{ $org.name }}-orderer-{{ $i }}.{{ $ns }}.svc.cluster.local
+{{- end }}
+{{- end }}
+{{- end }}
+    PeerOrgs:
+{{- range $org := .Values.network.organizations }}
+{{- if gt (int (default 0 $org.peers)) 0 }}
+      - Name: {{ $org.name | title }}
+        Domain: {{ $org.name }}.{{ $.Values.global.domain }}
+        EnableNodeOUs: true
+        Specs:
+{{- range $i, $_ := until (int (default 0 $org.peers)) }}
+          - Hostname: peer{{ $i }}
+            SANS:
+              - localhost
+              - {{ $org.name }}-peer-{{ $i }}
+              - {{ $org.name }}-peer-{{ $i }}.{{ $ns }}
+              - {{ $org.name }}-peer-{{ $i }}.{{ $ns }}.svc
+              - {{ $org.name }}-peer-{{ $i }}.{{ $ns }}.svc.cluster.local
+{{- end }}
+        Users:
+          Count: 1
+{{- end }}
+{{- end }}

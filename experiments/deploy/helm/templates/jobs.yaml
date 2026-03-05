@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "fabric-experiments.fullname" . }}-bootstrap
+  namespace: {{ include "fabric-experiments.namespace" . }}
+  labels:
+    {{- include "fabric-experiments.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bootstrap
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "fabric-experiments.labels" . | nindent 8 }}
+        app.kubernetes.io/component: bootstrap
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: bootstrap
+          image: "{{ .Values.images.tools.repository }}:{{ .Values.images.tools.tag }}"
+          imagePullPolicy: {{ .Values.images.tools.pullPolicy }}
+          command: ["/bin/bash", "/scripts/bootstrap.sh"]
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: crypto
+              mountPath: /crypto
+            - name: organizations
+              mountPath: {{ .Values.operations.workspace }}/organizations
+            - name: workspace
+              mountPath: {{ .Values.operations.workspace }}
+      volumes:
+        - name: scripts
+          configMap:
+            name: {{ include "fabric-experiments.fullname" . }}-scripts
+            defaultMode: 0755
+        - name: crypto
+          configMap:
+            name: {{ include "fabric-experiments.fullname" . }}-crypto
+            defaultMode: 0755
+        - name: organizations
+          persistentVolumeClaim:
+            claimName: {{ include "fabric-experiments.fullname" . }}-organizations
+        - name: workspace
+          emptyDir: {}
