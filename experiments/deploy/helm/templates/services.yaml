@@ -1,0 +1,51 @@
+{{- $ns := include "fabric-experiments.namespace" . -}}
+{{- range $org := .Values.network.organizations }}
+{{- $orgName := $org.name }}
+{{- range $i, $_ := until (int $org.orderers) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $orgName }}-orderer-{{ $i }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fabric-experiments.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: orderer
+    app.kubernetes.io/org: {{ $orgName }}
+spec:
+  type: {{ $.Values.service.type }}
+  selector:
+    app.kubernetes.io/component: orderer
+    app.kubernetes.io/org: {{ $orgName }}
+    app.kubernetes.io/node-id: "orderer-{{ $i }}"
+  ports:
+    - name: orderer
+      port: 7050
+      targetPort: 7050
+    - name: orderer-admin
+      port: 9443
+      targetPort: 9443
+{{- end }}
+{{- range $i, $_ := until (int $org.peers) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $orgName }}-peer-{{ $i }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fabric-experiments.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: peer
+    app.kubernetes.io/org: {{ $orgName }}
+spec:
+  type: {{ $.Values.service.type }}
+  selector:
+    app.kubernetes.io/component: peer
+    app.kubernetes.io/org: {{ $orgName }}
+    app.kubernetes.io/node-id: "peer-{{ $i }}"
+  ports:
+    - name: peer
+      port: 7051
+      targetPort: 7051
+{{- end }}
+{{- end }}
