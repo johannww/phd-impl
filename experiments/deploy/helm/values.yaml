@@ -57,3 +57,38 @@ operations:
     peer chaincode invoke -o ${ORDERER_ADDRESS} --tls --cafile "${ORDERER_TLS_CA}" -C ${FABRIC_CHANNEL} -n carbon -c '{"function":"InitLedger","Args":[]}'
   queryCommands: |
     peer chaincode query -C ${FABRIC_CHANNEL} -n carbon -c '{"function":"GetAllAssets","Args":[]}'
+
+chaincodeService:
+  enabled: false
+  workspace: "/workspace"
+  organizationsClaimName: ""
+  network:
+    channelName: "carbon"
+    organizations:
+      - name: "org1"
+        peers: 2
+      - name: "org2"
+        orderers: 2
+  chaincodes:
+    - name: "carbon"
+      version: "1.0"
+      sequence: 1
+      packageLabel: ""
+      image:
+        repository: "ghcr.io/johannww/phd-impl/carbon"
+        tag: "latest"
+        pullPolicy: IfNotPresent
+      servicePort: 7055
+      command: []
+      args: []
+    - name: "interop"
+      version: "1.0"
+      sequence: 1
+      packageLabel: ""
+      image:
+        repository: "ghcr.io/johannww/phd-impl/interop"
+        tag: "latest"
+        pullPolicy: IfNotPresent
+      servicePort: 7055
+      command: []
+      args: []

@@ -1,7 +1,6 @@
 {{- $ns := include "chaincode-service.namespace" . -}}
 {{- $chaincodes := .Values.chaincodes | default (list .Values.chaincode) -}}
 {{- range $cc := $chaincodes }}
-{{- if (default true $cc.enabled) }}
 {{- $ccName := ($cc.name | lower) -}}
 {{- $ccImage := default (dict) $cc.image -}}
 {{- $ccImageRepo := default (printf "ghcr.io/johannww/phd-impl/%s" $ccName) (get $ccImage "repository") -}}
@@ -58,7 +57,6 @@ spec:
           ports:
             - containerPort: {{ $ccPort }}
               name: chaincode
-{{ end }}
 {{ end }}
 {{ end }}
 {{ end }}

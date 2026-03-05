@@ -1,7 +1,6 @@
 {{- $ns := include "chaincode-service.namespace" . -}}
 {{- $chaincodes := .Values.chaincodes | default (list .Values.chaincode) -}}
 {{- range $cc := $chaincodes }}
-{{- if (default true $cc.enabled) }}
 {{- $ccName := $cc.name | lower -}}
 {{- $ccPort := default 7055 $cc.servicePort -}}
 {{- range $org := $.Values.network.organizations }}
@@ -26,7 +25,6 @@ spec:
     - name: chaincode
       port: {{ $ccPort }}
       targetPort: {{ $ccPort }}
-{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

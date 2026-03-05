@@ -1,4 +1,10 @@
 {{- $chaincodes := .Values.chaincodes | default (list .Values.chaincode) -}}
+{{- $firstOrdererOrg := dict "name" "" -}}
+{{- range $org := .Values.network.organizations }}
+{{- if and (eq (get $firstOrdererOrg "name") "") (gt (int (default 0 $org.orderers)) 0) }}
+{{- $_ := set $firstOrdererOrg "name" $org.name -}}
+{{- end }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -23,7 +29,6 @@ data:
       done
     }
 {{- range $cc := $chaincodes }}
-{{- if (default true $cc.enabled) }}
 {{- $ccName := ($cc.name | default "chaincode") | lower -}}
 {{- $ccPort := default 7055 $cc.servicePort -}}
 {{- range $org := $.Values.network.organizations }}
@@ -46,4 +51,66 @@ data:
 {{- end }}
 {{- end }}
 {{- end }}
+  cc-approve-and-commit.sh: |
+    #!/usr/bin/env bash
+    #set -euo pipefail
+    wait_for_endpoint() {
+      local host="$1"
+      local port="$2"
+      until echo | openssl s_client -connect "${host}:${port}" -servername "${host}" >/dev/null 2>&1; do
+        echo "waiting for ${host}:${port}"
+        sleep 2
+      done
+    }
+    export CORE_PEER_TLS_ENABLED=true
+    export ORDERER_ADDRESS="{{ get $firstOrdererOrg "name" }}-orderer-0:7050"
+    export ORDERER_TLS_CA="{{ $.Values.workspace }}/organizations/ordererOrganizations/{{ get $firstOrdererOrg "name" }}/tlsca/tlsca.{{ get $firstOrdererOrg "name" }}-cert.pem"
+{{- range $cc := $chaincodes }}
+{{- $ccName := $cc.name | lower -}}
+{{- $ccVersion := default "1.0" $cc.version -}}
+{{- $ccSequence := default 1 $cc.sequence }}
+    sequence="{{ $ccSequence }}"
+{{- range $org := $.Values.network.organizations }}
+{{- if gt (int (default 0 $org.peers)) 0 }}
+{{- $pkgIDs := default (dict) $cc.packageIds -}}
+{{- $ccID := required (printf "chaincodes[%s].packageIds.%s is required" $ccName $org.name) (get $pkgIDs $org.name) }}
+    wait_for_endpoint "{{ $org.name }}-peer-0" "7051"
+    export CORE_PEER_ADDRESS="{{ $org.name }}-peer-0:7051"
+    export CORE_PEER_LOCALMSPID="{{ $org.name | title }}MSP"
+    export CORE_PEER_MSPCONFIGPATH="{{ $.Values.workspace }}/organizations/peerOrganizations/{{ $org.name }}/users/Admin@{{ $org.name }}/msp"
+    export CORE_PEER_TLS_ROOTCERT_FILE="{{ $.Values.workspace }}/organizations/peerOrganizations/{{ $org.name }}/peers/peer0.{{ $org.name }}/tls/ca.crt"
+    echo "approving {{ $ccName }} for {{ $org.name }} with package {{ $ccID }}"
+    peer lifecycle chaincode approveformyorg \
+      --orderer "${ORDERER_ADDRESS}" \
+      --tls \
+      --cafile "${ORDERER_TLS_CA}" \
+      --channelID {{ $.Values.network.channelName }} \
+      --name {{ $ccName }} \
+      --version {{ $ccVersion }} \
+      --package-id {{ $ccID }} \
+      --sequence "${sequence}"
+{{- end }}
+{{- end }}
+{{- range $org := $.Values.network.organizations }}
+{{- if gt (int (default 0 $org.peers)) 0 }}
+    wait_for_endpoint "{{ $org.name }}-peer-0" "7051"
+{{- end }}
+{{- end }}
+    echo "committing {{ $ccName }} sequence ${sequence}"
+    commit_args=(
+      --orderer "${ORDERER_ADDRESS}"
+      --tls
+      --cafile "${ORDERER_TLS_CA}"
+      --channelID {{ $.Values.network.channelName }}
+      --name {{ $ccName }}
+      --version {{ $ccVersion }}
+      --sequence "${sequence}"
+    )
+{{- range $org := $.Values.network.organizations }}
+{{- if gt (int (default 0 $org.peers)) 0 }}
+    commit_args+=(--peerAddresses {{ $org.name }}-peer-0:7051)
+    commit_args+=(--tlsRootCertFiles {{ $.Values.workspace }}/organizations/peerOrganizations/{{ $org.name }}/peers/peer0.{{ $org.name }}/tls/ca.crt)
+{{- end }}
+{{- end }}
+    peer lifecycle chaincode commit "${commit_args[@]}"
 {{- end }}
