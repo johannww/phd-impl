@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "fabric-experiments.fullname" . }}-organizations
+  namespace: {{ include "fabric-experiments.namespace" . }}
+  labels:
+    {{- include "fabric-experiments.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "-10"
+spec:
+  accessModes:
+{{- range .Values.storage.organizations.accessModes }}
+    - {{ . }}
+{{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.storage.organizations.size }}
+{{- if .Values.storage.organizations.storageClassName }}
+  storageClassName: {{ .Values.storage.organizations.storageClassName | quote }}
+{{- end }}
