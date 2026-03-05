@@ -1,0 +1,57 @@
+global:
+  fabricVersion: "3.1.4"
+  namespace: ""
+
+images:
+  peer:
+    repository: "ghcr.io/hyperledger/fabric-peer"
+    tag: "3.1.4"
+    pullPolicy: IfNotPresent
+  orderer:
+    repository: "ghcr.io/hyperledger/fabric-orderer"
+    tag: "3.1.4"
+    pullPolicy: IfNotPresent
+  tools:
+    repository: "ghcr.io/hyperledger/fabric-tools"
+    tag: "3.1.4"
+    pullPolicy: IfNotPresent
+
+network:
+  channelName: "carbon"
+  organizations:
+    - name: "org1"
+      peers: 1
+    - name: "org2"
+      orderers: 1
+
+service:
+  type: ClusterIP
+
+storage:
+  organizations:
+    size: "1Gi"
+    accessModes:
+      - ReadWriteMany
+    storageClassName: ""
+
+operations:
+  workspace: "/workspace"
+  certGenerationCommands: |
+    cryptogen generate --config /crypto/crypto-config.yaml --output /workspace/organizations
+  configtxCreateCommands: |
+    configtxgen -profile TwoOrgsChannel -channelID ${FABRIC_CHANNEL} -outputCreateChannelTx ${CHANNEL_TX_FILE}
+  channelCreationCommands: |
+    peer channel create -o ${ORDERER_ADDRESS} -c ${FABRIC_CHANNEL} -f ${CHANNEL_TX_FILE} --outputBlock ${CHANNEL_BLOCK_FILE} --tls --cafile "${ORDERER_TLS_CA}"
+  chaincodeLifecycleCommands: |
+    peer lifecycle chaincode package /workspace/pkg/carbon.tar.gz --path /workspace/chaincodes/carbon --lang golang --label carbon_1.0
+    peer lifecycle chaincode install /workspace/pkg/carbon.tar.gz
+    peer lifecycle chaincode approveformyorg -o ${ORDERER_ADDRESS} --tls --cafile "${ORDERER_TLS_CA}" --channelID ${FABRIC_CHANNEL} --name carbon --version 1.0 --package-id "${CARBON_PACKAGE_ID}" --sequence 1
+    peer lifecycle chaincode commit -o ${ORDERER_ADDRESS} --tls --cafile "${ORDERER_TLS_CA}" --channelID ${FABRIC_CHANNEL} --name carbon --version 1.0 --sequence 1
+    peer lifecycle chaincode package /workspace/pkg/interop.tar.gz --path /workspace/chaincodes/interop --lang golang --label interop_1.0
+    peer lifecycle chaincode install /workspace/pkg/interop.tar.gz
+    peer lifecycle chaincode approveformyorg -o ${ORDERER_ADDRESS} --tls --cafile "${ORDERER_TLS_CA}" --channelID ${FABRIC_CHANNEL} --name interop --version 1.0 --package-id "${INTEROP_PACKAGE_ID}" --sequence 1
+    peer lifecycle chaincode commit -o ${ORDERER_ADDRESS} --tls --cafile "${ORDERER_TLS_CA}" --channelID ${FABRIC_CHANNEL} --name interop --version 1.0 --sequence 1
+  invokeCommands: |
+    peer chaincode invoke -o ${ORDERER_ADDRESS} --tls --cafile "${ORDERER_TLS_CA}" -C ${FABRIC_CHANNEL} -n carbon -c '{"function":"InitLedger","Args":[]}'
+  queryCommands: |
+    peer chaincode query -C ${FABRIC_CHANNEL} -n carbon -c '{"function":"GetAllAssets","Args":[]}'
