@@ -24,12 +24,6 @@ data:
     export FABRIC_CFG_PATH="/configtx"
     export CHANNEL_TX_FILE="{{ .Values.operations.workspace }}/organizations/channel-artifacts/${FABRIC_CHANNEL}.tx"
     export CHANNEL_BLOCK_FILE="{{ .Values.operations.workspace }}/organizations/channel-artifacts/${FABRIC_CHANNEL}.block"
-    export CORE_PEER_ADDRESS="{{ $firstOrg.name }}-peer-0:7051"
-    export CORE_PEER_LOCALMSPID="{{ $firstOrg.name | title }}MSP"
-    export CORE_PEER_MSPCONFIGPATH="{{ .Values.operations.workspace }}/organizations/peerOrganizations/{{ $firstOrg.name }}/users/Admin@{{ $firstOrg.name }}/msp"
-    export CORE_PEER_TLS_ROOTCERT_FILE="{{ .Values.operations.workspace }}/organizations/peerOrganizations/{{ $firstOrg.name }}/peers/peer0.{{ $firstOrg.name }}/tls/ca.crt"
-    export ORDERER_ADDRESS="{{ get $firstOrdererOrg "name" }}-orderer-0:7050"
-    export ORDERER_TLS_CA="{{ .Values.operations.workspace }}/organizations/ordererOrganizations/{{ get $firstOrdererOrg "name" }}/orderers/orderer0.{{ get $firstOrdererOrg "name" }}/msp/tlscacerts/tlsca.{{ get $firstOrdererOrg "name" }}-cert.pem"
   certgen.sh: |
 {{ .Values.operations.certGenerationCommands | indent 4 }}
   configtx.sh: |
