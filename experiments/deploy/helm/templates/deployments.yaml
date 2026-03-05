@@ -1,0 +1,156 @@
+{{- $ns := include "fabric-experiments.namespace" . -}}
+{{- range $org := .Values.network.organizations }}
+{{- $orgName := $org.name }}
+{{- range $i, $_ := until (int (default 0 $org.orderers)) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $orgName }}-orderer-{{ $i }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fabric-experiments.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: orderer
+    app.kubernetes.io/org: {{ $orgName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: orderer
+      app.kubernetes.io/org: {{ $orgName }}
+      app.kubernetes.io/node-id: "orderer-{{ $i }}"
+  template:
+    metadata:
+      labels:
+        {{- include "fabric-experiments.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: orderer
+        app.kubernetes.io/org: {{ $orgName }}
+        app.kubernetes.io/node-id: "orderer-{{ $i }}"
+    spec:
+      terminationGracePeriodSeconds: 0
+      initContainers:
+        - name: wait-for-crypto
+          image: "{{ $.Values.images.tools.repository }}:{{ $.Values.images.tools.tag }}"
+          imagePullPolicy: {{ $.Values.images.tools.pullPolicy }}
+          command: ["/bin/bash", "-ec"]
+          args:
+            - |
+              target="/organizations/ordererOrganizations/{{ $orgName }}/orderers/orderer{{ $i }}.{{ $orgName }}/msp/config.yaml"
+              until [ -f "${target}" ]; do
+                echo "waiting for ${target}"
+                sleep 2
+              done
+          volumeMounts:
+            - name: organizations
+              mountPath: /organizations
+      containers:
+        - name: orderer
+          image: "{{ $.Values.images.orderer.repository }}:{{ $.Values.images.orderer.tag }}"
+          imagePullPolicy: {{ $.Values.images.orderer.pullPolicy }}
+          env:
+            - name: ORDERER_GENERAL_LISTENADDRESS
+              value: "0.0.0.0"
+            - name: ORDERER_GENERAL_BOOTSTRAPMETHOD
+              value: "none"
+            - name: ORDERER_GENERAL_LOCALMSPID
+              value: "{{ $orgName | title }}MSP"
+            - name: ORDERER_GENERAL_LOCALMSPDIR
+              value: /etc/hyperledger/fabric/msp
+            - name: ORDERER_GENERAL_TLS_ENABLED
+              value: "true"
+            - name: ORDERER_GENERAL_TLS_PRIVATEKEY
+              value: /etc/hyperledger/fabric/tls/server.key
+            - name: ORDERER_GENERAL_TLS_CERTIFICATE
+              value: /etc/hyperledger/fabric/tls/server.crt
+            - name: ORDERER_GENERAL_TLS_ROOTCAS
+              value: "[/etc/hyperledger/fabric/tls/ca.crt]"
+            - name: ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY
+              value: /etc/hyperledger/fabric/tls/server.key
+            - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
+              value: /etc/hyperledger/fabric/tls/server.crt
+            - name: ORDERER_GENERAL_CLUSTER_ROOTCAS
+              value: "[/etc/hyperledger/fabric/tls/ca.crt]"
+          volumeMounts:
+            - name: organizations
+              mountPath: /organizations
+            - name: organizations
+              mountPath: /etc/hyperledger/fabric/msp
+              subPath: ordererOrganizations/{{ $orgName }}/orderers/orderer{{ $i }}.{{ $orgName }}/msp
+            - name: organizations
+              mountPath: /etc/hyperledger/fabric/tls
+              subPath: ordererOrganizations/{{ $orgName }}/orderers/orderer{{ $i }}.{{ $orgName }}/tls
+          ports:
+            - containerPort: 7050
+              name: orderer
+      volumes:
+        - name: organizations
+          persistentVolumeClaim:
+            claimName: {{ include "fabric-experiments.fullname" $ }}-organizations
+{{- end }}
+{{- range $i, $_ := until (int (default 0 $org.peers)) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $orgName }}-peer-{{ $i }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fabric-experiments.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: peer
+    app.kubernetes.io/org: {{ $orgName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: peer
+      app.kubernetes.io/org: {{ $orgName }}
+      app.kubernetes.io/node-id: "peer-{{ $i }}"
+  template:
+    metadata:
+      labels:
+        {{- include "fabric-experiments.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: peer
+        app.kubernetes.io/org: {{ $orgName }}
+        app.kubernetes.io/node-id: "peer-{{ $i }}"
+    spec:
+      terminationGracePeriodSeconds: 0
+      initContainers:
+        - name: wait-for-crypto
+          image: "{{ $.Values.images.tools.repository }}:{{ $.Values.images.tools.tag }}"
+          imagePullPolicy: {{ $.Values.images.tools.pullPolicy }}
+          command: ["/bin/bash", "-ec"]
+          args:
+            - |
+              target="/organizations/peerOrganizations/{{ $orgName }}/peers/peer{{ $i }}.{{ $orgName }}/msp/config.yaml"
+              until [ -f "${target}" ]; do
+                echo "waiting for ${target}"
+                sleep 2
+              done
+          volumeMounts:
+            - name: organizations
+              mountPath: /organizations
+      containers:
+        - name: peer
+          image: "{{ $.Values.images.peer.repository }}:{{ $.Values.images.peer.tag }}"
+          imagePullPolicy: {{ $.Values.images.peer.pullPolicy }}
+          env:
+            - name: CORE_PEER_LOCALMSPID
+              value: "{{ $orgName | title }}MSP"
+          volumeMounts:
+            - name: organizations
+              mountPath: /organizations
+            - name: organizations
+              mountPath: /etc/hyperledger/fabric/msp
+              subPath: peerOrganizations/{{ $orgName }}/peers/peer{{ $i }}.{{ $orgName }}/msp
+            - name: organizations
+              mountPath: /etc/hyperledger/fabric/tls
+              subPath: peerOrganizations/{{ $orgName }}/peers/peer{{ $i }}.{{ $orgName }}/tls
+          ports:
+            - containerPort: 7051
+              name: peer
+      volumes:
+        - name: organizations
+          persistentVolumeClaim:
+            claimName: {{ include "fabric-experiments.fullname" $ }}-organizations
+{{- end }}
+{{- end }}
