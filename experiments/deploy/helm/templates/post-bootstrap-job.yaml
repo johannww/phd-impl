@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "fabric-experiments.fullname" . }}-post-bootstrap
+  namespace: {{ include "fabric-experiments.namespace" . }}
+  labels:
+    {{- include "fabric-experiments.labels" . | nindent 4 }}
+    app.kubernetes.io/component: post-bootstrap
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "fabric-experiments.labels" . | nindent 8 }}
+        app.kubernetes.io/component: post-bootstrap
+    spec:
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 0
+      containers:
+        - name: post-bootstrap
+          image: "{{ .Values.images.tools.repository }}:{{ .Values.images.tools.tag }}"
+          imagePullPolicy: {{ .Values.images.tools.pullPolicy }}
+          command: ["/bin/bash", "/scripts/post-bootstrap.sh"]
+          env:
+            - name: FABRIC_CHANNEL
+              value: {{ .Values.network.channelName | quote }}
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: configtx
+              mountPath: /configtx
+            - name: organizations
+              mountPath: {{ .Values.operations.workspace }}/organizations
+            - name: workspace
+              mountPath: {{ .Values.operations.workspace }}
+      volumes:
+        - name: scripts
+          configMap:
+            name: {{ include "fabric-experiments.fullname" . }}-scripts
+            defaultMode: 0755
+        - name: organizations
+          persistentVolumeClaim:
+            claimName: {{ include "fabric-experiments.fullname" . }}-organizations
+        - name: configtx
+          configMap:
+            name: {{ include "fabric-experiments.fullname" . }}-configtx
+            defaultMode: 0755
+        - name: workspace
+          emptyDir: {}
