@@ -7,6 +7,8 @@ if ! command -v peer &>/dev/null; then
   mkdir -p "${HOME}/.local/bin"
   find "${FABRIC_SRC_DIR}/build/bin" -maxdepth 1 -type f -exec cp -f {} "${HOME}/.local/bin/" \;
   echo "Fabric binaries installed to ~/.local/bin — ensure it is on your PATH."
+  mkdir -p "${SCRIPT_DIR}/../../vars"
+  cp "${FABRIC_SRC_DIR}/sampleconfig/core.yaml" ${SCRIPT_DIR}/../../vars/core.yaml
   rm -rf "${FABRIC_SRC_DIR}"
 else
   echo "Fabric peer binary found on PATH, skipping build."
