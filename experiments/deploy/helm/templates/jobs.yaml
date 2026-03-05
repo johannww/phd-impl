@@ -6,6 +6,10 @@ metadata:
   labels:
     {{- include "fabric-experiments.labels" . | nindent 4 }}
     app.kubernetes.io/component: bootstrap
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   backoffLimit: 0
   template:
@@ -15,6 +19,7 @@ spec:
         app.kubernetes.io/component: bootstrap
     spec:
       restartPolicy: Never
+      terminationGracePeriodSeconds: 0
       containers:
         - name: bootstrap
           image: "{{ .Values.images.tools.repository }}:{{ .Values.images.tools.tag }}"
