@@ -22,6 +22,7 @@ data:
     set -euo pipefail
     export CORE_PEER_TLS_ENABLED=true
     export FABRIC_CFG_PATH="/configtx"
+    export FABRIC_CHANNEL="{{ .Values.network.channelName }}"
     export CHANNEL_TX_FILE="{{ .Values.operations.workspace }}/organizations/channel-artifacts/${FABRIC_CHANNEL}.tx"
     export CHANNEL_BLOCK_FILE="{{ .Values.operations.workspace }}/organizations/channel-artifacts/${FABRIC_CHANNEL}.block"
   certgen.sh: |
