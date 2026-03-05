@@ -39,7 +39,9 @@ operations:
   certGenerationCommands: |
     cryptogen generate --config /crypto/crypto-config.yaml --output /workspace/organizations
   configtxCreateCommands: |
+    export FABRIC_CFG_PATH=/configtx
     configtxgen -profile TwoOrgsChannel -channelID ${FABRIC_CHANNEL} -outputCreateChannelTx ${CHANNEL_TX_FILE}
+    configtxgen -profile TwoOrgsChannel -channelID ${FABRIC_CHANNEL} -outputBlock ${CHANNEL_BLOCK_FILE}
   channelCreationCommands: |
     peer channel create -o ${ORDERER_ADDRESS} -c ${FABRIC_CHANNEL} -f ${CHANNEL_TX_FILE} --outputBlock ${CHANNEL_BLOCK_FILE} --tls --cafile "${ORDERER_TLS_CA}"
   chaincodeLifecycleCommands: |

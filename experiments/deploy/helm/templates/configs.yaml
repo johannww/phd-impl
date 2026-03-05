@@ -21,7 +21,6 @@ data:
     #!/usr/bin/env bash
     set -euo pipefail
     export CORE_PEER_TLS_ENABLED=true
-    export FABRIC_CFG_PATH="/configtx"
     export FABRIC_CHANNEL="{{ .Values.network.channelName }}"
     export CHANNEL_TX_FILE="{{ .Values.operations.workspace }}/organizations/channel-artifacts/${FABRIC_CHANNEL}.tx"
     export CHANNEL_BLOCK_FILE="{{ .Values.operations.workspace }}/organizations/channel-artifacts/${FABRIC_CHANNEL}.block"
@@ -51,7 +50,7 @@ data:
       fi
     }
     run_step "certificate generation" "/scripts/certgen.sh"
-    run_step "configtx create" "/scripts/configtx.sh"
+    run_step "configtx create and genesis block" "/scripts/configtx.sh"
   post-bootstrap.sh: |
     #!/usr/bin/env bash
     set -euo pipefail
