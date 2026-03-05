@@ -53,7 +53,7 @@ data:
 {{- end }}
   cc-approve-and-commit.sh: |
     #!/usr/bin/env bash
-    #set -euo pipefail
+    set -euo pipefail
     wait_for_endpoint() {
       local host="$1"
       local port="$2"
