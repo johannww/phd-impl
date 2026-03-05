@@ -15,6 +15,8 @@ CHAINCODE_RELEASE_NAME="${CHAINCODE_RELEASE_NAME:-${RELEASE_NAME}-chaincode}"
 CPUS="${CPUS:-6}"
 MEMORY="${MEMORY:-12000}"
 
+. "${SCRIPT_DIR}/install_fabric_binaries.bash"
+
 MINIKUBE_STATUS="$(minikube status --format '{{.Host}}' 2>/dev/null || true)"
 if [[ "${MINIKUBE_STATUS}" == "Running" ]]; then
   echo "Minikube is already running."
