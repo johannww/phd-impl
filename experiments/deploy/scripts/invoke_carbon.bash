@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-ORG_DIR="${ORG_DIR:-${SCRIPT_DIR}/../../vars/organizations}"
+ORG_DIR="${ORG_DIR:-${SCRIPT_DIR}/../vars/organizations}"
 
 PEER_ORG="org1"
 ORDERER_ORG="org2"
@@ -23,7 +23,7 @@ export ORDERER_ADDRESS="${CLUSTER_IP}:${ORDERER_NODE_PORT}"
 export ORDERER_TLS_CA="${ORG_DIR}/ordererOrganizations/${ORDERER_ORG}/orderers/orderer0.${ORDERER_ORG}/tls/ca.crt"
 
 echo "Invoking carbon chaincode (InitLedger) via ${CLUSTER_IP}..."
-export FABRIC_CFG_PATH="${SCRIPT_DIR}/../../vars"
+export FABRIC_CFG_PATH="${SCRIPT_DIR}/../vars"
 peer chaincode invoke \
   -o "${ORDERER_ADDRESS}" --cafile "${ORDERER_TLS_CA}" --tls \
   -C "${CHANNEL}" -n carbon \
