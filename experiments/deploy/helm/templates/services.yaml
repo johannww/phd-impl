@@ -1,7 +1,8 @@
 {{- $ns := include "fabric-experiments.namespace" . -}}
 {{- range $org := .Values.network.organizations }}
 {{- $orgName := $org.name }}
-{{- range $i, $_ := until (int $org.orderers) }}
+{{- $base := int (default 30050 $org.nodePortBase) }}
+{{- range $i, $_ := until (int (default 0 $org.orderers)) }}
 ---
 apiVersion: v1
 kind: Service
@@ -13,7 +14,7 @@ metadata:
     app.kubernetes.io/component: orderer
     app.kubernetes.io/org: {{ $orgName }}
 spec:
-  type: {{ $.Values.service.type }}
+  type: NodePort
   selector:
     app.kubernetes.io/component: orderer
     app.kubernetes.io/org: {{ $orgName }}
@@ -22,11 +23,12 @@ spec:
     - name: orderer
       port: 7050
       targetPort: 7050
+      nodePort: {{ add $base $i }}
     - name: orderer-admin
       port: 9443
       targetPort: 9443
 {{- end }}
-{{- range $i, $_ := until (int $org.peers) }}
+{{- range $i, $_ := until (int (default 0 $org.peers)) }}
 ---
 apiVersion: v1
 kind: Service
@@ -38,7 +40,7 @@ metadata:
     app.kubernetes.io/component: peer
     app.kubernetes.io/org: {{ $orgName }}
 spec:
-  type: {{ $.Values.service.type }}
+  type: NodePort
   selector:
     app.kubernetes.io/component: peer
     app.kubernetes.io/org: {{ $orgName }}
@@ -47,5 +49,6 @@ spec:
     - name: peer
       port: 7051
       targetPort: 7051
+      nodePort: {{ add $base $i }}
 {{- end }}
 {{- end }}

@@ -65,6 +65,7 @@ data:
     export CORE_PEER_TLS_ENABLED=true
     export ORDERER_ADDRESS="{{ get $firstOrdererOrg "name" }}-orderer-0:7050"
     export ORDERER_TLS_CA="{{ $.Values.workspace }}/organizations/ordererOrganizations/{{ get $firstOrdererOrg "name" }}/tlsca/tlsca.{{ get $firstOrdererOrg "name" }}-cert.pem"
+    wait_for_endpoint "{{ get $firstOrdererOrg "name" }}-orderer-0" "7050"
 {{- range $cc := $chaincodes }}
 {{- $ccName := $cc.name | lower -}}
 {{- $ccVersion := default "1.0" $cc.version -}}

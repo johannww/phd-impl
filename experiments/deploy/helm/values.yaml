@@ -21,11 +21,10 @@ network:
   organizations:
     - name: "org1"
       peers: 2
+      nodePortBase: 30060
     - name: "org2"
       orderers: 2
-
-service:
-  type: ClusterIP
+      nodePortBase: 30050
 
 storage:
   organizations:
