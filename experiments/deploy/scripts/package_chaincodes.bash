@@ -1,7 +1,7 @@
 VALUES_FILE="${VALUES_FILE:-${SCRIPT_DIR}/../helm/values.yaml}"
 CHAINCODE_PACKAGE_CONFIGMAP="${CHAINCODE_PACKAGE_CONFIGMAP:-${CHAINCODE_RELEASE_NAME}-packages}"
 
-PKG_DIR="${SCRIPT_DIR}/chaincode-packages"
+PKG_DIR="${SCRIPT_DIR}/../vars/chaincode-packages"
 mkdir -p "${PKG_DIR}"
 rm -f "${PKG_DIR}"/*.tar.gz
 
