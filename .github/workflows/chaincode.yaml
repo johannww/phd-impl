@@ -2,6 +2,7 @@ on:
   push:
     branches:
       - main
+      - experiments
     paths:
       - "chaincodes/carbon/**"
       - ".github/workflows/chaincode.yaml"
