@@ -35,6 +35,9 @@ data:
               - {{ $org.name }}-orderer-{{ $i }}.{{ $ns }}
               - {{ $org.name }}-orderer-{{ $i }}.{{ $ns }}.svc
               - {{ $org.name }}-orderer-{{ $i }}.{{ $ns }}.svc.cluster.local
+{{- range $.Values.network.externalIPs }}
+              - {{ . }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -53,6 +56,9 @@ data:
               - {{ $org.name }}-peer-{{ $i }}.{{ $ns }}
               - {{ $org.name }}-peer-{{ $i }}.{{ $ns }}.svc
               - {{ $org.name }}-peer-{{ $i }}.{{ $ns }}.svc.cluster.local
+{{- range $.Values.network.externalIPs }}
+              - {{ . }}
+{{- end }}
 {{- end }}
         Users:
           Count: 1
