@@ -37,9 +37,12 @@ for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}"; do
   fi
 done
 
+MINIKUBE_IP="$(minikube ip)"
+
 echo "Installing Helm release ${RELEASE_NAME} in namespace ${NAMESPACE}..."
 helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
   --namespace "${NAMESPACE}" \
+  --set "network.externalIPs={${MINIKUBE_IP}}" \
   --wait \
   --create-namespace
 

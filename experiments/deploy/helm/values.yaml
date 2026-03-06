@@ -18,6 +18,7 @@ images:
 
 network:
   channelName: "carbon"
+  externalIPs: []
   organizations:
     - name: "org1"
       peers: 2
