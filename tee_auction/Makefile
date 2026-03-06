@@ -1,7 +1,7 @@
 # The order of commands follows the description in the README.md
 
 REGISTRY_NAME=carbonchain
-REGISTRY=carbonchain.azurecr.io
+REGISTRY=ghcr.io/johannww/phd-exp
 
 all: registry docker policy deploy verify-policy-image-layers
 

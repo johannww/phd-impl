@@ -1,10 +1,11 @@
 .PHONY: cc cc-docker app test test-no-cache docs
+REPO := "johannww/phd-exp"
 
 cc:
 	go build -o /dev/null ./cmd/carbon/main.go
 	
 cc-docker:
-	docker build -t ghcr.io/johannww/phd-impl/carbon:latest .
+	docker build -t ghcr.io/$(REPO)/carbon:latest .
 
 app:
 	go build -o /dev/null ./cmd/application/main.go

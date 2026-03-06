@@ -39,7 +39,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ghcr.io/${{ github.repository }}/tee_auction
+          images: ghcr.io/${{ github.repository }}/carbon_auction
 
       - name: Configure git for private modules
         env:
@@ -56,7 +56,7 @@ jobs:
           push: true
           context: "tee_auction/"
           file: "tee_auction/Dockerfile"
-          tags: ghcr.io/${{ github.repository }}/tee_auction:latest
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/tee_auction:latest
+          tags: ghcr.io/${{ github.repository }}/carbon_auction:latest
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/carbon_auction:latest
           cache-to: type=inline
 

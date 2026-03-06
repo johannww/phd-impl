@@ -3,7 +3,7 @@
 {{- range $cc := $chaincodes }}
 {{- $ccName := ($cc.name | lower) -}}
 {{- $ccImage := default (dict) $cc.image -}}
-{{- $ccImageRepo := default (printf "ghcr.io/johannww/phd-impl/%s" $ccName) (get $ccImage "repository") -}}
+{{- $ccImageRepo := (get $ccImage "repository") -}}
 {{- $ccImageTag := default "latest" (get $ccImage "tag") -}}
 {{- $ccImagePullPolicy := default "IfNotPresent" (get $ccImage "pullPolicy") -}}
 {{- $ccPort := default 7055 $cc.servicePort -}}

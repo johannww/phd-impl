@@ -75,7 +75,7 @@ chaincodeService:
       sequence: 1
       packageLabel: ""
       image:
-        repository: "ghcr.io/johannww/phd-impl/carbon"
+        repository: "ghcr.io/johannww/phd-exp/carbon"
         tag: "latest"
         pullPolicy: IfNotPresent
       servicePort: 7055
@@ -86,7 +86,7 @@ chaincodeService:
       sequence: 1
       packageLabel: ""
       image:
-        repository: "ghcr.io/johannww/phd-impl/interop"
+        repository: "ghcr.io/johannww/phd-exp/interop"
         tag: "latest"
         pullPolicy: IfNotPresent
       servicePort: 7055

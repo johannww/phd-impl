@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+REPO=${REPO:-"johannww/phd-exp"}
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 KUBECONFIG_DIR="${SCRIPT_DIR}/../../vars/kubeconfig"
 FABRIC_TAG="${FABRIC_TAG:-3.1.4}"
 TOOLS_IMAGE="${TOOLS_IMAGE:-ghcr.io/hyperledger/fabric-tools:${FABRIC_TAG}}"
-CARBON_CC_IMAGE="${CARBON_CC_IMAGE:-ghcr.io/johannww/phd-impl/carbon:latest}"
-INTEROP_CC_IMAGE="${INTEROP_CC_IMAGE:-ghcr.io/johannww/phd-impl/interop:latest}"
+CARBON_CC_IMAGE="${CARBON_CC_IMAGE:-ghcr.io/$REPO/carbon:latest}"
+INTEROP_CC_IMAGE="${INTEROP_CC_IMAGE:-ghcr.io/$REPO/interop:latest}"
 RELEASE_NAME="${RELEASE_NAME:-fabric-experiments}"
 NAMESPACE="${NAMESPACE:-fabric-experiments}"
 CHART_DIR="${CHART_DIR:-${SCRIPT_DIR}/../helm}"
