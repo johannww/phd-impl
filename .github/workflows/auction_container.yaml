@@ -13,7 +13,7 @@ on:
 
 jobs:
   # I had to grant package access in: https://github.com/johannww?tab=packages
-  docker-chaincode-build:
+  docker-confidential-container-build:
     env:
       GOPRIVATE: github.com/${{ github.repository }}
     runs-on: ubuntu-latest
