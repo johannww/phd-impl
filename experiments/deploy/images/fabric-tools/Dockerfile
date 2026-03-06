@@ -17,10 +17,13 @@ RUN apt update && apt install -y \
 RUN curl -sL https://go.dev/dl/go${GO_VER}.${TARGETOS}-${TARGETARCH}.tar.gz | tar zxf - -C /usr/local
 ENV PATH="/usr/local/go/bin:$PATH"
 
-RUN git clone https://github.com/hyperledger/fabric.git
+# TODO: switch back to the official repo once the PR is merged and released
+# RUN git clone https://github.com/hyperledger/fabric.git
+# Using my branch that adapted cryptogen to support certificates with attributes
+RUN git clone https://github.com/johannww/fabric-1.git fabric
 
 RUN cd fabric && \
-    git checkout v${FABRIC_VER} && \
+    git checkout v${FABRIC_VER}-cryptogen-attrs && \
     make native FABRIC_VER=${FABRIC_VER}
 
 

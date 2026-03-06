@@ -62,5 +62,12 @@ data:
 {{- end }}
         Users:
           Count: 1
+          Attrs:
+            price_viewer: "true"
+            virtual_token_minter: "true"
+            interop_relayer: "true"
+            policy_setter: "true"
+            tee_configurer: "true"
+            credit_minter: "true"
 {{- end }}
 {{- end }}
