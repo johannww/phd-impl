@@ -67,8 +67,8 @@
         "imageRegistryCredentials": [
           {
             "server": "ghcr.io",
-            "username": REGISTRY_USER,
-            "password": REGISTRY_PASS
+            "username": "REGISTRY_USER",
+            "password": "REGISTRY_PASS"
           }
         ],
         "confidentialComputeProperties": {
