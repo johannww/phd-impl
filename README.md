@@ -4,7 +4,7 @@ This repository is an ongoing implementation of a Blockchain-based Emission Trad
 
 # Techonologies used
 
-- [Hyperledger Fabric](https://github.com/hyperledger/fabric) v2.5.12
+- [Hyperledger Fabric](https://github.com/hyperledger/fabric) v3.1.4
     - For the main blockchain network
 - [Hyperledger Cacti](https://github.com/hyperledger-cacti/cacti)
     - For interoperability between different blockchains
