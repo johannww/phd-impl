@@ -29,6 +29,11 @@ else
   cp ~/.kube/config "${KUBECONFIG_DIR}/config"
 fi
 
+if ! docker image inspect "${TOOLS_IMAGE}" > /dev/null 2>&1; then
+    echo "Building custom ${TOOLS_IMAGE}"
+    ${SCRIPT_DIR}/../images/fabric-tools/build.sh
+fi
+
 for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}"; do
   if minikube image ls | grep -Fq "${image}"; then
     echo "Image ${image} already loaded in Minikube, skipping."
