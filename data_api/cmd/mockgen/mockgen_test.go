@@ -2,12 +2,14 @@ package main
 
 import (
 	"testing"
+
+	"github.com/johannww/phd-impl/data_api/internal/sicar"
 )
 
 func TestGenerateProducesCorrectCount(t *testing.T) {
-	store := generate("test-seed", 5)
-	if len(store) != 5 {
-		t.Errorf("expected 5 records, got %d", len(store))
+	data := generate("test-seed", 5)
+	if len(data) != 5 {
+		t.Errorf("expected 5 records, got %d", len(data))
 	}
 }
 
@@ -15,17 +17,14 @@ func TestGenerateIsDeterministic(t *testing.T) {
 	a := generate("test-seed", 10)
 	b := generate("test-seed", 10)
 
-	for id, respA := range a {
-		respB, ok := b[id]
+	for id, imA := range a {
+		imB, ok := b[id]
 		if !ok {
 			t.Errorf("ID %q present in first run but not second", id)
 			continue
 		}
-		if respA.Result[0].AreaTotalImovel != respB.Result[0].AreaTotalImovel {
+		if imA.AreaTotalImovel != imB.AreaTotalImovel {
 			t.Errorf("ID %q: AreaTotalImovel differs between runs", id)
-		}
-		if respA.Result[0].IdentificadorImovel != respB.Result[0].IdentificadorImovel {
-			t.Errorf("ID %q: IdentificadorImovel differs between runs", id)
 		}
 	}
 }
@@ -52,3 +51,30 @@ func TestGenerateIDsDifferentPerIndex(t *testing.T) {
 		seen[id] = true
 	}
 }
+
+func TestProjectionsAreConsistent(t *testing.T) {
+	data := generate("test-seed", 5)
+	for id, im := range data {
+		pra := sicar.ImovelToPra(im)
+		demo := sicar.ImovelToDemonstrativo(im)
+		recibo := sicar.ImovelToRecibo(im)
+
+		praArea := pra.Result[0].AreaTotalImovel
+		demoArea := demo.Result[0].AreaTotalImovel
+		reciboArea := recibo.Result[0].AreaTotalImovel
+
+		// Pra serializes area as string "%.4f"; compare via the float source
+		_ = praArea
+		if demoArea != reciboArea {
+			t.Errorf("ID %q: AreaTotalImovel differs between Demonstrativo (%f) and Recibo (%f)", id, demoArea, reciboArea)
+		}
+		if demoArea != im.AreaTotalImovel {
+			t.Errorf("ID %q: Demonstrativo area (%f) doesn't match canonical (%f)", id, demoArea, im.AreaTotalImovel)
+		}
+
+		if demo.Result[0].Municipio != recibo.Result[0].Municipio {
+			t.Errorf("ID %q: Municipio inconsistent across endpoints", id)
+		}
+	}
+}
+

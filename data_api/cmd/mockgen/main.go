@@ -10,8 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/johannww/phd-impl/data_api/internal/imovel"
 	"github.com/johannww/phd-impl/data_api/internal/mock"
-	"github.com/johannww/phd-impl/data_api/internal/sicar"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	seed := flag.String("seed", "data-api-mock", "seed for ID generation")
 	flag.Parse()
 
-	store := generate(*seed, *n)
+	data := generate(*seed, *n)
 
 	if err := os.MkdirAll(filepath.Dir(*out), 0755); err != nil {
 		log.Fatalf("mkdir: %v", err)
@@ -34,18 +34,18 @@ func main() {
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
-	if err := enc.Encode(store); err != nil {
+	if err := enc.Encode(data); err != nil {
 		log.Fatalf("encode: %v", err)
 	}
 
-	log.Printf("wrote %d records to %s", len(store), *out)
+	log.Printf("wrote %d records to %s", *n, *out)
 }
 
-func generate(seed string, n int) sicar.Store {
-	store := make(sicar.Store, n)
+func generate(seed string, n int) imovel.Store {
+	store := make(imovel.Store, n)
 	for i := range n {
 		id := generateID(seed, i)
-		store[id] = mock.SicarImovel(id)
+		store[id] = mock.Imovel(id)
 	}
 	return store
 }

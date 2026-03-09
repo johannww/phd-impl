@@ -7,10 +7,11 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Store maps codigoImovel to its pre-loaded response.
-type Store map[string]SicarResponse
+type Store = map[string]PraResponse
+type DemonstrativoStore = map[string]DemonstrativoResponse
+type ReciboStore = map[string]ReciboResponse
 
-func Routes(store Store) func(chi.Router) {
+func routesByID[T any](store map[string]T) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Get("/{codigoImovel}", func(w http.ResponseWriter, r *http.Request) {
 			id := chi.URLParam(r, "codigoImovel")
@@ -24,3 +25,7 @@ func Routes(store Store) func(chi.Router) {
 		})
 	}
 }
+
+func Routes(store Store) func(chi.Router)              { return routesByID(store) }
+func DemonstrativoRoutes(store DemonstrativoStore) func(chi.Router) { return routesByID(store) }
+func ReciboRoutes(store ReciboStore) func(chi.Router)  { return routesByID(store) }
