@@ -31,6 +31,7 @@ DNS.2 = ${SICAR_SERVICE_NAME}.${SICAR_NAMESPACE}.svc.cluster.local
 DNS.3 = ${SICAR_SERVICE_NAME}.${SICAR_NAMESPACE}.svc
 DNS.4 = localhost
 IP.1  = 127.0.0.1
+IP.2  = $(minikube ip)
 EOF
 
   openssl genrsa -out "${SICAR_CERT_DIR}/server.key" 2048 2>/dev/null
