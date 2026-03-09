@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/johannww/phd-impl/data_api/internal/sicar"
@@ -63,10 +64,11 @@ func TestProjectionsAreConsistent(t *testing.T) {
 		demoArea := demo.Result[0].AreaTotalImovel
 		reciboArea := recibo.Result[0].AreaTotalImovel
 
-		// Pra serializes area as string "%.4f"; compare via the float source
-		_ = praArea
-		if demoArea != reciboArea {
-			t.Errorf("ID %q: AreaTotalImovel differs between Demonstrativo (%f) and Recibo (%f)", id, demoArea, reciboArea)
+		if praArea != fmt.Sprintf("%.4f", im.AreaTotalImovel) {
+			t.Errorf("ID %q: Pra area string %q doesn't match canonical float formatted as %%.4f", id, praArea)
+		}
+		if reciboArea != fmt.Sprintf("%g", im.AreaTotalImovel) {
+			t.Errorf("ID %q: Recibo area string %q doesn't match canonical float formatted as %%g", id, reciboArea)
 		}
 		if demoArea != im.AreaTotalImovel {
 			t.Errorf("ID %q: Demonstrativo area (%f) doesn't match canonical (%f)", id, demoArea, im.AreaTotalImovel)
