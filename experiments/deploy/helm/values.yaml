@@ -16,7 +16,7 @@ images:
     tag: "3.1.4"
     pullPolicy: IfNotPresent
 
-network:
+network: &defaultNetwork
   channelName: "carbon"
   externalIPs: []
   organizations:
@@ -62,13 +62,7 @@ chaincodeService:
   enabled: false
   workspace: "/workspace"
   organizationsClaimName: ""
-  network:
-    channelName: "carbon"
-    organizations:
-      - name: "org1"
-        peers: 2
-      - name: "org2"
-        orderers: 2
+  network: *defaultNetwork
   chaincodes:
     - name: "carbon"
       version: "1.0"
