@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-SICAR_CERT_DIR="${SCRIPT_DIR}/../../vars/sicar"
+SICAR_CERT_DIR="${SCRIPT_DIR}/../vars/sicar"
 SICAR_NAMESPACE="${NAMESPACE:-fabric-experiments}"
 SICAR_SERVICE_NAME="sicar-mock"
 SICAR_CERT_SECRET="${SICAR_SERVICE_NAME}-tls"

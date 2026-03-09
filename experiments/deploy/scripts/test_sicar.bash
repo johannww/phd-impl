@@ -7,7 +7,7 @@
 #
 # Environment variables:
 #   NAMESPACE   Kubernetes namespace (default: fabric-experiments)
-#   CA_CERT     Path to the SICAR CA cert (default: vars/sicar-ca.crt)
+#   CA_CERT     Path to the SICAR CA cert (default: vars/sicar/ca.crt)
 #   SICAR_JSON  Path to the canonical sicar.json (default: vars/organizations/sicar/sicar.json)
 #   SICAR_PORT  NodePort of the sicar-mock service (default: 30443)
 set -euo pipefail
@@ -15,7 +15,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 VARS_DIR="${VARS_DIR:-${SCRIPT_DIR}/../vars}"
 SICAR_JSON="${SICAR_JSON:-${VARS_DIR}/organizations/sicar/sicar.json}"
-CA_CERT="${CA_CERT:-${VARS_DIR}/sicar-ca.crt}"
+CA_CERT="${CA_CERT:-${VARS_DIR}/sicar/ca.crt}"
 NAMESPACE="${NAMESPACE:-fabric-experiments}"
 SICAR_PORT="${SICAR_PORT:-30443}"
 
