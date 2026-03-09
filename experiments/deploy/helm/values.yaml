@@ -103,3 +103,4 @@ sicar:
     count: 100
     seed: "sicar-dev"
   servicePort: 8443
+  nodePort: 30443
