@@ -1,0 +1,41 @@
+{
+  "result": [
+    {
+      "identificadorImovel": 12579165,
+      "codigoImovel": "TO-1714203-1C6DC93596CE4193A5E8519DDED552A4",
+      "situacaoImovel": "RE",
+      "tipoImovel": "AST",
+      "dataCadastro": "",
+      "nomeImovel": "JACUBINHA",
+      "codigoMunicipio": 1714203,
+      "municipio": "Natividade",
+      "unidadefederativa": "TO",
+      "coordenadaImovelX": -51.8516375657968,
+      "coordenadaImovelY": 0.282749156200535,
+      "areaTotalImovel": "6326.184",
+      "moduloFiscal": "1.1297",
+      "protocolo": "TO-1714203-037F2BE93ECB15CA6F2D256AAD97F2FB",
+      "informacoesAdicionais": "Foi detectada uma diferença entre a área do imóvel rural declarada conforme documentação comprobatória de propriedade/posse/concessão [1111.0 hectares] e a área do imóvel rural identificada em representação gráfica [1.111,7294 hectares].",
+      "geoImovel": "MULTIPOLYGON(((-51.865440320485 0.298197106149128,-51.8377743427669 0.299603850778863,-51.8373054278903 0.267717639171532,-51.8659092353616 0.265841979665218,-51.865440320485 0.298197106149128)))",
+      "proprietarios": {
+        "tipoPessoa": "PF",
+        "cpfCnpj": "03662243601",
+        "nomeProprietario": "Pessoa teste SFB",
+        "nomeFantasia": "Empresa teste SFB"
+      },
+      "areaServidaoAdministrativa": 0,
+      "areaLiquidaImovel": 0,
+      "areaPreservacaoPermanente": 909.1799,
+      "areaUsoRestrito": 0,
+      "areaConsolidada": 1675.4077,
+      "areaRemanescenteVegetacaoNativa": 4067.6421,
+      "areaReservaLegal": 2182.3045,
+      "matricula": "M-2.096",
+      "dataMatricula": "",
+      "livroMatricula": "2-J",
+      "folhaMatricula": "79",
+      "municipioCartorio": "Natividade",
+      "ufCartorio": "TO"
+    }
+  ]
+}

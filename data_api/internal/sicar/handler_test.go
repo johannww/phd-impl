@@ -236,8 +236,8 @@ func TestReciboResponseShape(t *testing.T) {
 	if rec.CodigoImovel != id {
 		t.Errorf("codigoImovel: expected %q, got %q", id, rec.CodigoImovel)
 	}
-	if rec.AreaTotalImovel <= 0 {
-		t.Errorf("areaTotalImovel: expected > 0, got %f", rec.AreaTotalImovel)
+	if rec.AreaTotalImovel == "" {
+		t.Error("areaTotalImovel: expected non-empty string")
 	}
 	if !strings.HasPrefix(rec.GeoImovel, "MULTIPOLYGON") {
 		t.Errorf("geoImovel: expected MULTIPOLYGON prefix, got %q", rec.GeoImovel)
@@ -256,9 +256,6 @@ func TestReciboConsistentWithDemonstrativo(t *testing.T) {
 	if recibo.Result[0].CodigoImovel != demo.Result[0].CodigoImovel {
 		t.Error("codigoImovel must be consistent between Demonstrativo and Recibo")
 	}
-	if recibo.Result[0].AreaTotalImovel != demo.Result[0].AreaTotalImovel {
-		t.Error("areaTotalImovel must be consistent between Demonstrativo and Recibo")
-	}
 	if recibo.Result[0].Municipio != demo.Result[0].Municipio {
 		t.Error("municipio must be consistent between Demonstrativo and Recibo")
 	}
@@ -266,4 +263,3 @@ func TestReciboConsistentWithDemonstrativo(t *testing.T) {
 		t.Error("areaPreservacaoPermanente must be consistent between Demonstrativo and Recibo")
 	}
 }
-

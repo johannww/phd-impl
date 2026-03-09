@@ -1,0 +1,30 @@
+{
+  "result": [
+    {
+      "identificadorimovel": 2345678,
+      "codigoimovel": "UF-9999999-A38E4A53E2494858B5FD8386DF178392",
+      "codigoversao": "1.9.2",
+      "tipoorigem": "EST",
+      "protocolo": "UF-1234567-A38E4A53E2494858B5FD8386DF178392",
+      "dataultimoprotocolo": "01/01/2024",
+      "statusimovel": "RE",
+      "tipoimovel": "IRU",
+      "cpfcadastrante": "01234567890",
+      "nomecadastrante": "JOSE CADASTRANTE",
+      "nomeimovel": "FAZENDA DO CADASTRANTE",
+      "fracaoideal": null,
+      "identificadormunicipio": 5102504,
+      "municipio": "Cáceres",
+      "areatotalimovel": "1234.5678",
+      "numeromodulosfiscais": "12.3456",
+      "datacriacaoregistro": "01/01/2024",
+      "dataatualizacaoregistro": "01/06/2024",
+      "areatotal": "MULTIPOLYGON(((-99.99999999 -00.00000000,-99.99999999 -99.99999999,-00.00000000 -99.99999999,-00.00000000 -00.00000000,-99.99999999 -00.00000000)))",
+      "declaracaoanterior": null,
+      "declaracaoposterior": 1234567,
+      "situacao": false,
+      "situacaomigracao": true,
+      "aderiupra": "Não"
+    }
+  ]
+}

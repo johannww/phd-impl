@@ -47,7 +47,6 @@ func ImovelToDemonstrativo(im imovel.Imovel) DemonstrativoResponse {
 			{
 				ImovelBase: ImovelBase{
 					CodigoImovel:      im.CodigoImovel,
-					AreaTotalImovel:   im.AreaTotalImovel,
 					CodigoMunicipio:   im.CodigoMunicipio,
 					Municipio:         im.Municipio,
 					UnidadeFederativa: im.UnidadeFederativa,
@@ -60,6 +59,7 @@ func ImovelToDemonstrativo(im imovel.Imovel) DemonstrativoResponse {
 					AreaPreservacaoPermanente:       im.AreaPreservacaoPermanente,
 					AreaUsoRestrito:                 im.AreaUsoRestrito,
 				},
+				AreaTotalImovel:               im.AreaTotalImovel,
 				SituacaoImovel:                im.StatusImovel,
 				DescricaoEtapaCadastro:        im.DescricaoEtapaCadastro,
 				QuantidadeModulosFiscais:       fmt.Sprintf("%.4f", im.NumeroModulosFiscais),
@@ -94,7 +94,6 @@ func ImovelToRecibo(im imovel.Imovel) ReciboResponse {
 			{
 				ImovelBase: ImovelBase{
 					CodigoImovel:      im.CodigoImovel,
-					AreaTotalImovel:   im.AreaTotalImovel,
 					CodigoMunicipio:   im.CodigoMunicipio,
 					Municipio:         im.Municipio,
 					UnidadeFederativa: im.UnidadeFederativa,
@@ -107,6 +106,7 @@ func ImovelToRecibo(im imovel.Imovel) ReciboResponse {
 					AreaPreservacaoPermanente:       im.AreaPreservacaoPermanente,
 					AreaUsoRestrito:                 im.AreaUsoRestrito,
 				},
+				AreaTotalImovel:       fmt.Sprintf("%g", im.AreaTotalImovel),
 				IdentificadorImovel:   im.IdentificadorImovel,
 				SituacaoImovel:        im.StatusImovel,
 				TipoImovel:            im.TipoImovel,

@@ -2,12 +2,11 @@ package sicar
 
 // ImovelBase holds fields shared between Demonstrativo and Recibo (camelCase APIs).
 type ImovelBase struct {
-	CodigoImovel      string  `json:"codigoImovel"`
-	AreaTotalImovel   float64 `json:"areaTotalImovel"`
-	CodigoMunicipio   int     `json:"codigoMunicipio"`
-	Municipio         string  `json:"municipio"`
-	UnidadeFederativa string  `json:"unidadeFederativa"`
-	DataCadastro      string  `json:"dataCadastro"`
+	CodigoImovel      string `json:"codigoImovel"`
+	CodigoMunicipio   int    `json:"codigoMunicipio"`
+	Municipio         string `json:"municipio"`
+	UnidadeFederativa string `json:"unidadeFederativa"`
+	DataCadastro      string `json:"dataCadastro"`
 }
 
 // AreaAmbiental holds preservation and land-use breakdown fields
@@ -59,6 +58,7 @@ type PraResponse struct {
 type DemonstrativoImovel struct {
 	ImovelBase
 	AreaAmbiental
+	AreaTotalImovel                                          float64 `json:"areaTotalImovel"`
 	SituacaoImovel                                           string  `json:"situacaoImovel"`
 	DescricaoEtapaCadastro                                   string  `json:"descricaoEtapaCadastro"`
 	QuantidadeModulosFiscais                                 string  `json:"quantidadeModulosFiscais"`
@@ -99,6 +99,7 @@ type ReciboProprietario struct {
 type ReciboImovel struct {
 	ImovelBase
 	AreaAmbiental
+	AreaTotalImovel       string             `json:"areaTotalImovel"`
 	IdentificadorImovel   int                `json:"identificadorImovel"`
 	SituacaoImovel        string             `json:"situacaoImovel"`
 	TipoImovel            string             `json:"tipoImovel"`

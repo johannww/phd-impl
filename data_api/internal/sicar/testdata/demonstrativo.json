@@ -1,0 +1,39 @@
+{
+  "result": [
+    {
+        "situacaoImovel":"PE",
+        "codigoImovel":"SC-4210100-EA1F3824FC3D4148B83F921E253C6DCD",
+        "descricaoEtapaCadastro":"Aguardando análise, não passível de revisão de dados",
+        "areaTotalImovel":95.5569,
+        "quantidadeModulosFiscais":"5.9723",
+        "dataCadastro":"12/06/2015",
+        "dataUltimaAtualizacaoCadastro":"01/12/2022",
+        "codigoMunicipio":2902005,
+        "municipio":"Mafra",
+        "unidadeFederativa":"SC",
+        "coordenadaImovelX":-49.6610956240856,
+        "coordenadaImovelY":-26.3179762554547,
+        "areaRemanescenteVegetacaoNativa":32.8631417737116,
+        "areaConsolidada":62.634481425266,
+        "areaServidaoAdministrativa":0,
+        "situacaoReservaLegal":"Não analisada",
+        "areaReservaLegalAverbada":"0.0000",
+        "areaReservaLegalAprovadaNaoAverbada":"0.0000",
+        "areaReservaLegalProposta":"11.9533",
+        "areaReservaLegalDeclaradaProprietarioPossuidor":12.8,
+        "areaPreservacaoPermanente":16.5969602125317,
+        "areaPreservacaoPermanenteAreaRuralConsolida":"0.1422",
+        "areaPreservacaoPermanenteAreaRemanescenteVegetacaoNativa":"16.4547",
+        "areaUsoRestritoDeclividade":0,
+        "areaReservaLegalExcedentePassivo":7.15,
+        "areaUsoRestrito":0,
+        "areaReservaLegalRecompor":0,
+        "areaPreservacaoPermanenteRecompor":0.07,
+        "areaUsoRestritoRecompor":0,
+        "sobreposicoesTerraIndigena":0,
+        "sobreposicoesUnidadeConservacao":0,
+        "sobreposicoesAreasEmbargadas":0.4086,
+        "poligonoAreaImovel": "MULTIPOLYGON(((-99.99999999 -00.00000000,-99.99999999 -99.99999999,-00.00000000 -99.99999999,-00.00000000 -00.00000000,-99.99999999 -00.00000000)))"
+    }
+  ]
+}
