@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func EnsureCert(certFile, keyFile string) error {
+func EnsureCert(certFile, keyFile string, extraDNSNames ...string) error {
 	if _, err := os.Stat(certFile); err == nil {
 		if _, err := os.Stat(keyFile); err == nil {
 			return nil
@@ -31,6 +31,8 @@ func EnsureCert(certFile, keyFile string) error {
 		return err
 	}
 
+	dnsNames := append([]string{"localhost"}, extraDNSNames...)
+
 	tmpl := &x509.Certificate{
 		SerialNumber: serial,
 		Subject:      pkix.Name{CommonName: "data-api"},
@@ -39,7 +41,7 @@ func EnsureCert(certFile, keyFile string) error {
 		KeyUsage:     x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
-		DNSNames:     []string{"localhost"},
+		DNSNames:     dnsNames,
 	}
 
 	certDER, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)

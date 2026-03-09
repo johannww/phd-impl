@@ -92,3 +92,14 @@ chaincodeService:
       servicePort: 7055
       command: []
       args: []
+
+sicar:
+  enabled: true
+  image:
+    repository: "ghcr.io/johannww/phd-exp/data-api"
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  mockgen:
+    count: 100
+    seed: "sicar-dev"
+  servicePort: 8443

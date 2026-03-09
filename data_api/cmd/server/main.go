@@ -19,6 +19,12 @@ func main() {
 	keyFile := getenv("KEY_FILE", "server.key")
 	dataFilePath := getenv("DATA_FILE", "data/sicar.json")
 
+	// Extra DNS SANs for the TLS cert — set to the Kubernetes service name in-cluster.
+	var extraDNS []string
+	if svc := os.Getenv("CERT_SERVICE_NAME"); svc != "" {
+		extraDNS = append(extraDNS, svc)
+	}
+
 	store, err := loadData(dataFilePath)
 	if err != nil {
 		log.Fatalf("load data: %v", err)
@@ -34,7 +40,7 @@ func main() {
 		reciboStore[id] = sicar.ImovelToRecibo(im)
 	}
 
-	if err := cert.EnsureCert(certFile, keyFile); err != nil {
+	if err := cert.EnsureCert(certFile, keyFile, extraDNS...); err != nil {
 		log.Fatalf("cert: %v", err)
 	}
 	tlsCfg, err := cert.LoadTLSConfig(certFile, keyFile)

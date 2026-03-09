@@ -1,0 +1,84 @@
+{{- if .Values.sicar.enabled }}
+{{- $ns := include "fabric-experiments.namespace" . }}
+{{- $serviceName := "sicar-mock" }}
+{{- $tlsSecret := printf "%s-tls" $serviceName }}
+{{- $orgsPVC := printf "%s-organizations" (include "fabric-experiments.fullname" .) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $serviceName }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fabric-experiments.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sicar-mock
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: sicar-mock
+  template:
+    metadata:
+      labels:
+        {{- include "fabric-experiments.labels" . | nindent 8 }}
+        app.kubernetes.io/component: sicar-mock
+    spec:
+      initContainers:
+        - name: mockgen
+          image: "{{ .Values.sicar.image.repository }}:{{ .Values.sicar.image.tag }}"
+          imagePullPolicy: {{ .Values.sicar.image.pullPolicy }}
+          command: ["/usr/local/bin/mockgen"]
+          args:
+            - "-out=/organizations/sicar/sicar.json"
+            - "-n={{ .Values.sicar.mockgen.count }}"
+            - "-seed={{ .Values.sicar.mockgen.seed }}"
+          volumeMounts:
+            - name: organizations
+              mountPath: /organizations
+      containers:
+        - name: sicar-mock
+          image: "{{ .Values.sicar.image.repository }}:{{ .Values.sicar.image.tag }}"
+          imagePullPolicy: {{ .Values.sicar.image.pullPolicy }}
+          command: ["/usr/local/bin/server"]
+          env:
+            - name: ADDR
+              value: ":8443"
+            - name: DATA_FILE
+              value: /organizations/sicar/sicar.json
+            - name: CERT_FILE
+              value: /certs/tls.crt
+            - name: KEY_FILE
+              value: /certs/tls.key
+          ports:
+            - containerPort: 8443
+              name: https
+          volumeMounts:
+            - name: organizations
+              mountPath: /organizations
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+      volumes:
+        - name: organizations
+          persistentVolumeClaim:
+            claimName: {{ $orgsPVC }}
+        - name: certs
+          secret:
+            secretName: {{ $tlsSecret }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $serviceName }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "fabric-experiments.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sicar-mock
+spec:
+  selector:
+    app.kubernetes.io/component: sicar-mock
+  ports:
+    - name: https
+      port: {{ .Values.sicar.servicePort }}
+      targetPort: 8443
+{{- end }}

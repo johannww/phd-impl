@@ -8,6 +8,7 @@ FABRIC_TAG="${FABRIC_TAG:-3.1.4}"
 TOOLS_IMAGE="${TOOLS_IMAGE:-ghcr.io/hyperledger/fabric-tools:${FABRIC_TAG}}"
 CARBON_CC_IMAGE="${CARBON_CC_IMAGE:-ghcr.io/$REPO/carbon:latest}"
 INTEROP_CC_IMAGE="${INTEROP_CC_IMAGE:-ghcr.io/$REPO/interop:latest}"
+SICAR_IMAGE="${SICAR_IMAGE:-ghcr.io/$REPO/data-api:latest}"
 RELEASE_NAME="${RELEASE_NAME:-fabric-experiments}"
 NAMESPACE="${NAMESPACE:-fabric-experiments}"
 CHART_DIR="${CHART_DIR:-${SCRIPT_DIR}/../helm}"
@@ -34,7 +35,7 @@ if ! docker image inspect "${TOOLS_IMAGE}" > /dev/null 2>&1; then
     ${SCRIPT_DIR}/../images/fabric-tools/build.sh
 fi
 
-for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}"; do
+for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}" "${SICAR_IMAGE}"; do
   if minikube image ls | grep -Fq "${image}"; then
     echo "Image ${image} already loaded in Minikube, skipping."
   else
@@ -44,6 +45,10 @@ for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}"; do
 done
 
 MINIKUBE_IP="$(minikube ip)"
+
+kubectl get namespace "${NAMESPACE}" > /dev/null 2>&1 || kubectl create namespace "${NAMESPACE}"
+
+. "${SCRIPT_DIR}/generate_sicar_cert.bash"
 
 echo "Installing Helm release ${RELEASE_NAME} in namespace ${NAMESPACE}..."
 helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
