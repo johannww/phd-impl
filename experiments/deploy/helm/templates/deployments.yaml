@@ -80,6 +80,10 @@ spec:
               value: /etc/hyperledger/fabric/tls/server.crt
             - name: ORDERER_ADMIN_TLS_CLIENTROOTCAS
               value: "[/etc/hyperledger/fabric/tls/ca.crt]"
+            - name: ORDERER_OPERATIONS_LISTENADDRESS
+              value: "0.0.0.0:8443"
+            - name: ORDERER_METRICS_PROVIDER
+              value: "prometheus"
           volumeMounts:
             - name: organizations
               mountPath: /organizations
@@ -94,6 +98,8 @@ spec:
               name: orderer
             - containerPort: 9443
               name: orderer-admin
+            - containerPort: 8443
+              name: metrics
       volumes:
         - name: organizations
           persistentVolumeClaim:
@@ -150,6 +156,10 @@ spec:
               value: "true"
             - name: CORE_PEER_LOCALMSPID
               value: "{{ $orgName | title }}MSP"
+            - name: CORE_OPERATIONS_LISTENADDRESS
+              value: "0.0.0.0:9443"
+            - name: CORE_METRICS_PROVIDER
+              value: "prometheus"
           volumeMounts:
             - name: organizations
               mountPath: /organizations
@@ -162,6 +172,8 @@ spec:
           ports:
             - containerPort: 7051
               name: peer
+            - containerPort: 9443
+              name: metrics
       volumes:
         - name: organizations
           persistentVolumeClaim:

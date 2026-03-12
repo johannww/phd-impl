@@ -25,6 +25,9 @@ spec:
     - name: chaincode
       port: {{ $ccPort }}
       targetPort: {{ $ccPort }}
+    - name: metrics
+      port: 9443
+      targetPort: 9443
 {{- end }}
 {{- end }}
 {{- end }}

@@ -27,6 +27,10 @@ spec:
     - name: orderer-admin
       port: 9443
       targetPort: 9443
+    - name: metrics
+      port: 8443
+      targetPort: 8443
+      nodePort: {{ add (add $base $i) 1000 }}
 {{- end }}
 {{- range $i, $_ := until (int (default 0 $org.peers)) }}
 ---
@@ -50,5 +54,9 @@ spec:
       port: 7051
       targetPort: 7051
       nodePort: {{ add $base $i }}
+    - name: metrics
+      port: 9443
+      targetPort: 9443
+      nodePort: {{ add (add $base $i) 1000 }}
 {{- end }}
 {{- end }}
