@@ -639,6 +639,64 @@ func (stub *MockStub) GetPrivateDataValidationParameter(collection, key string) 
 	return stub.getPrivateDataValidationParameter(collection, key)
 }
 
+// GetAllStatesCompositeKeyWithPagination ...
+func (stub *MockStub) GetAllStatesCompositeKeyWithPagination(pageSize int32,
+	bookmark string) (shim.StateQueryIteratorInterface, *pb.QueryResponseMetadata, error) {
+	panic("GetAllStatesCompositeKeyWithPagination is not tested yet")
+	stub.mutex.Lock()
+	defer stub.mutex.Unlock()
+	return nil, nil, nil
+}
+
+// StartWriteBatch enables a mode where all changes are not immediately forwarded to the peer
+func (stub *MockStub) StartWriteBatch() {
+	panic("StartWriteBatch is not tested yet")
+	stub.mutex.Lock()
+	defer stub.mutex.Unlock()
+}
+
+// FinishWriteBatch sends accumulated changes in large batches to the peer
+func (stub *MockStub) FinishWriteBatch() error {
+	panic("FinishWriteBatch is not tested yet")
+	stub.mutex.Lock()
+	defer stub.mutex.Unlock()
+	return nil
+}
+
+// GetMultipleStates retrieves the values of the specified keys from the ledger
+func (stub *MockStub) GetMultipleStates(keys ...string) ([][]byte, error) {
+	panic("GetMultipleStates is not tested yet")
+	stub.mutex.Lock()
+	defer stub.mutex.Unlock()
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	result := make([][]byte, len(keys))
+	for i, key := range keys {
+		result[i] = stub.State[key]
+	}
+	return result, nil
+}
+
+// GetMultiplePrivateData retrieves the values of the specified keys from the specified collection
+func (stub *MockStub) GetMultiplePrivateData(collection string, keys ...string) ([][]byte, error) {
+	panic("GetMultiplePrivateData is not tested yet")
+	stub.mutex.Lock()
+	defer stub.mutex.Unlock()
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	result := make([][]byte, len(keys))
+	collectionData, exists := stub.PvtState[collection]
+	if !exists {
+		return result, nil
+	}
+	for i, key := range keys {
+		result[i] = collectionData[key]
+	}
+	return result, nil
+}
+
 // NewMockStub Constructor to initialise the internal State map
 func NewMockStub(name string, cc shim.Chaincode) *MockStub {
 	s := new(MockStub)
