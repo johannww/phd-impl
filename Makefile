@@ -10,6 +10,12 @@ docker:
 	$(MAKE) -C ./chaincodes/interop cc-docker
 	$(MAKE) -C tee_auction docker
 	$(MAKE) -C ./data_api docker
+
+.PHONY: experiments
+experiments:
+	cd ./experiments/deploy; \
+	./scripts/deploy.sh; \
+	./scripts/shutdown.sh
 	
 ai-list-structs:
 	./scripts/gopls_get_structs.sh ./chaincodes/carbon/
