@@ -56,8 +56,8 @@ github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0 h1:rmUoBmciB0GL/miqcbJmJ
 github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0/go.mod h1:FeWeO/jwGjiME7ak3GufqKIcwkejtzrDG4QxbfKydWs=
 github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6 h1:IMpCMJCFktzPLWepq/V48vZJ8VY5rY7gX220aBdBbKQ=
 github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6/go.mod h1:bJnwzfv03oZQeCc863pdGTDgf5nmCy6Za3RAE7d2XsQ=
-github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20250520213033-d967d6ea1875 h1:vA+pnVjgETHFIwZemJrB+EEgXdr2x1lc45MPUqR/UkA=
-github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20250520213033-d967d6ea1875/go.mod h1:PHHaFffjw7p7n9bmCfcm7RqDqYdivNEsJdiNIKZo5Lk=
+github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20260312205853-66761a7083ff h1:IS0R3wjPOOqilIjOflQTEmm3m2zMOMHfZCioHkhyKag=
+github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20260312205853-66761a7083ff/go.mod h1:c3zA3gOL/V53a0v1TGgHe8nifeH6daG/UrmJs79I9pI=
 github.com/johannww/fabric-gateway v0.0.0-20250923165604-c4252b48f5f1 h1:vp+/nOE9F5VQUR8TtPnwaDS+Nj6mGpCGDZ0rm1Bmw30=
 github.com/johannww/fabric-gateway v0.0.0-20250923165604-c4252b48f5f1/go.mod h1:oNc3G95RYZKSOFAzThQc9PFHPZ4E7Odv3VUYQ5SHda4=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=

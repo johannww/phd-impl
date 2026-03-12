@@ -3,7 +3,7 @@ module github.com/johannww/phd-impl/chaincodes/interop
 go 1.24.4
 
 require (
-	github.com/hyperledger/fabric-chaincode-go/v2 v2.0.0
+	github.com/hyperledger/fabric-chaincode-go/v2 v2.3.0
 	github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0
 	github.com/johannww/phd-impl/chaincodes/carbon v0.0.0-20250831185049-8495b62111bf
 	github.com/stretchr/testify v1.10.0
@@ -48,7 +48,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/hyperledger/fabric-chaincode-go/v2 v2.0.0 => github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20250520213033-d967d6ea1875
+replace github.com/hyperledger/fabric-chaincode-go/v2 v2.3.0 => github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20260312205853-66761a7083ff
 
 replace github.com/johannww/phd-impl/chaincodes/carbon v0.0.0-20250831185049-8495b62111bf => ../carbon
 

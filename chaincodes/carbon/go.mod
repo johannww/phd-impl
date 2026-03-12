@@ -6,7 +6,7 @@ require (
 	github.com/IBM/idemix v0.0.0-20250313153527-832db18b9478
 	github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250820140128-4814b442cf71
 	github.com/golang/protobuf v1.5.4
-	github.com/hyperledger/fabric-chaincode-go/v2 v2.0.0
+	github.com/hyperledger/fabric-chaincode-go/v2 v2.3.0
 	github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0
 	github.com/hyperledger/fabric-gateway v1.7.1
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6
@@ -77,7 +77,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/hyperledger/fabric-chaincode-go/v2 v2.0.0 => github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20250520213033-d967d6ea1875
+replace github.com/hyperledger/fabric-chaincode-go/v2 v2.3.0 => github.com/johannww/fabric-chaincode-go/v2 v2.0.0-20260312205853-66761a7083ff
 
 // replace github.com/hyperledger/fabric-gateway v1.7.1 => /home/johann/prj/dtr/fabric-repos/fabric-gateway/
 
