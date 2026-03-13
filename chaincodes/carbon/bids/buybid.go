@@ -36,8 +36,15 @@ type BuyBid struct {
 
 var _ ccstate.WorldStateManager = (*BuyBid)(nil)
 
-func (b *BuyBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) error {
+func (b *BuyBid) canReadPrivateBidData(stub shim.ChaincodeStubInterface) bool {
 	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
+		return true
+	}
+	return identities.GetID(stub) == b.BuyerID
+}
+
+func (b *BuyBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) error {
+	if b.canReadPrivateBidData(stub) {
 		privatePrice := &PrivatePrice{}
 		err := privatePrice.FromWorldState(stub, (*b.GetID())[0], BUY_BID_PVT)
 		if err != nil {
@@ -50,7 +57,7 @@ func (b *BuyBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) error {
 }
 
 func (b *BuyBid) FetchPrivateQuantity(stub shim.ChaincodeStubInterface) error {
-	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
+	if b.canReadPrivateBidData(stub) {
 		privateQuantity := &PrivateQuantity{}
 		err := privateQuantity.FromWorldState(stub, (*b.GetID())[0])
 		if err != nil {
