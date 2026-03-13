@@ -3,6 +3,7 @@ package contract
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
@@ -22,66 +23,144 @@ const (
 type CarbonContract struct {
 	contractapi.Contract
 	pApplier *policies.PolicyApplierImpl
+	// TODOHP: review metrics
+	metrics TxMetrics
 }
 
 func NewCarbonContract() *CarbonContract {
 	carbonContract := new(CarbonContract)
 	carbonContract.pApplier = policies.NewPolicyApplier()
+	carbonContract.metrics = NewPrometheusTxMetrics()
 	return carbonContract
+}
+
+func (c *CarbonContract) withMetricsErr(txName string, fn func() error) error {
+	start := time.Now()
+	err := fn()
+	if c.metrics != nil {
+		c.metrics.Observe(txName, err == nil, time.Since(start))
+	}
+	return err
+}
+
+func (c *CarbonContract) withMetricsStringResult(txName string, fn func() (string, error)) (out string, err error) {
+	start := time.Now()
+	defer func() {
+		if c.metrics != nil {
+			c.metrics.Observe(txName, err == nil, time.Since(start))
+		}
+	}()
+	return fn()
+}
+
+func (c *CarbonContract) withMetricsSerializedAuctionDataResult(
+	txName string,
+	fn func() (*auction.SerializedAuctionData, error),
+) (out *auction.SerializedAuctionData, err error) {
+	start := time.Now()
+	defer func() {
+		if c.metrics != nil {
+			c.metrics.Observe(txName, err == nil, time.Since(start))
+		}
+	}()
+	return fn()
+}
+
+func (c *CarbonContract) withMetricsMatchedBidsResult(
+	txName string,
+	fn func() ([]*bids.MatchedBid, error),
+) (out []*bids.MatchedBid, err error) {
+	start := time.Now()
+	defer func() {
+		if c.metrics != nil {
+			c.metrics.Observe(txName, err == nil, time.Since(start))
+		}
+	}()
+	return fn()
+}
+
+func (c *CarbonContract) withMetricsBoolValue(txName string, fn func() bool) bool {
+	start := time.Now()
+	out := fn()
+	if c.metrics != nil {
+		c.metrics.Observe(txName, true, time.Since(start))
+	}
+	return out
+}
+
+func (c *CarbonContract) withMetricsStringValue(txName string, fn func() string) string {
+	start := time.Now()
+	out := fn()
+	if c.metrics != nil {
+		c.metrics.Observe(txName, true, time.Since(start))
+	}
+	return out
 }
 
 // TODO: This is only a test function
 func (c *CarbonContract) CreateBuyBid(ctx contractapi.TransactionContextInterface, key string, value string) error {
-	stub := ctx.GetStub()
-	err := bids.PublishBuyBidWithPublicQuanitity(stub, 2)
-	// _, err = state.GetStatesByRangeCompositeKey(stub, "buyBid", []string{"a"}, []string{"ac"})
-	return err
+	return c.withMetricsErr("CreateBuyBid", func() error {
+		stub := ctx.GetStub()
+		err := bids.PublishBuyBidWithPublicQuanitity(stub, 2)
+		// _, err = state.GetStatesByRangeCompositeKey(stub, "buyBid", []string{"a"}, []string{"ac"})
+		return err
+	})
 }
 
 // TODO: implement
 func (c *CarbonContract) CreateSellBid(ctx contractapi.TransactionContextInterface) (string, error) {
-	return "Not Implemented Yet", nil
+	return c.withMetricsStringResult("CreateSellBid", func() (string, error) {
+		return "Not Implemented Yet", nil
+	})
 }
 
 // TODO: implement
 func (c *CarbonContract) PublishData(ctx contractapi.TransactionContextInterface) error {
-	return nil
+	return c.withMetricsErr("PublishData", func() error { return nil })
 }
 
 // TODO: implement
 func (c *CarbonContract) MintCreditsForRange(ctx contractapi.TransactionContextInterface) error {
-	return nil
+	return c.withMetricsErr("MintCreditsForRange", func() error { return nil })
 }
 
 func (c *CarbonContract) BurnCredit(ctx contractapi.TransactionContextInterface, mintCreditID []string, burnQuantity int64) error {
-	return credits.BurnQuantity(ctx.GetStub(), mintCreditID, burnQuantity)
+	return c.withMetricsErr("BurnCredit", func() error {
+		return credits.BurnQuantity(ctx.GetStub(), mintCreditID, burnQuantity)
+	})
 }
 
 // TODO: implement
 func (c *CarbonContract) LockAuctionSemaphore(ctx contractapi.TransactionContextInterface) error {
-	return nil
+	return c.withMetricsErr("LockAuctionSemaphore", func() error { return nil })
 }
 
 // TODO: implement
 func (c *CarbonContract) UnlockAuctionSemaphore(ctx contractapi.TransactionContextInterface) error {
-	return nil
+	return c.withMetricsErr("UnlockAuctionSemaphore", func() error { return nil })
 }
 
 func (c *CarbonContract) SetAuctionType(
 	ctx contractapi.TransactionContextInterface,
 	auctionType auction.AuctionType,
 ) error {
-	return auctionType.ToWorldState(ctx.GetStub())
+	return c.withMetricsErr("SetAuctionType", func() error {
+		return auctionType.ToWorldState(ctx.GetStub())
+	})
 }
 
 func (c *CarbonContract) PublishExpectedTEECCEPolicy(ctx contractapi.TransactionContextInterface, base64CcePolicy string) error {
-	return tee.ExpectedCCEPolicyToWorldState(ctx.GetStub(), base64CcePolicy)
+	return c.withMetricsErr("PublishExpectedTEECCEPolicy", func() error {
+		return tee.ExpectedCCEPolicyToWorldState(ctx.GetStub(), base64CcePolicy)
+	})
 }
 
 // PublishInitialTEEReport stores the initial TEE report containing the
 // confidential container's public key for communication and verification
 func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionContextInterface, reportJsonBytes []byte) error {
-	return tee.InitialReportToWorldState(ctx.GetStub(), reportJsonBytes)
+	return c.withMetricsErr("PublishInitialTEEReport", func() error {
+		return tee.InitialReportToWorldState(ctx.GetStub(), reportJsonBytes)
+	})
 }
 
 // CommitDataForTEEAuction commits the auction data to the world state
@@ -89,138 +168,158 @@ func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionCont
 // Thus, private data is not shared with the world state.
 // To retrieve the auction data, use RetrieveDataForTEEAuction instead.
 func (c *CarbonContract) CommitDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) error {
-	if cid.AssertAttributeValue(ctx.GetStub(), identities.PriceViewer, "true") != nil {
-		return fmt.Errorf("caller does not have the %s attribute, "+
-			"which is required to commit auction data", identities.PriceViewer)
-	}
+	return c.withMetricsErr("CommitDataForTEEAuction", func() error {
+		if cid.AssertAttributeValue(ctx.GetStub(), identities.PriceViewer, "true") != nil {
+			return fmt.Errorf("caller does not have the %s attribute, "+
+				"which is required to commit auction data", identities.PriceViewer)
+		}
 
-	auctionID, err := auction.IncrementAuctionID(ctx.GetStub())
-	if err != nil {
-		return fmt.Errorf("could not increment auction ID: %v", err)
-	}
+		auctionID, err := auction.IncrementAuctionID(ctx.GetStub())
+		if err != nil {
+			return fmt.Errorf("could not increment auction ID: %v", err)
+		}
 
-	auctionData := &auction.AuctionData{}
-	err = auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
-	if err != nil {
-		return fmt.Errorf("could not retrieve auction data: %v", err)
-	}
+		auctionData := &auction.AuctionData{}
+		err = auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
+		if err != nil {
+			return fmt.Errorf("could not retrieve auction data: %v", err)
+		}
 
-	auctionData.AuctionID = auctionID
+		auctionData.AuctionID = auctionID
 
-	serializedAD, err := auctionData.ToSerializedAuctionData()
-	if err != nil {
-		return fmt.Errorf("could not serialize auction data: %v", err)
-	}
+		serializedAD, err := auctionData.ToSerializedAuctionData()
+		if err != nil {
+			return fmt.Errorf("could not serialize auction data: %v", err)
+		}
 
-	err = serializedAD.CommitmentToWorldState(ctx.GetStub(), endRFC339Timestamp)
-	return err
+		err = serializedAD.CommitmentToWorldState(ctx.GetStub(), endRFC339Timestamp)
+		return err
+	})
 }
 
 // RetrieveDataForTEEAuction retrieves the auction data from the world state.
 // WARN: CALL THIS AS READ-ONLY OPERATION not to expose private data.
 func (c *CarbonContract) RetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.SerializedAuctionData, error) {
-	auctionData := &auction.AuctionData{}
-	err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve auction data: %v", err)
-	}
+	return c.withMetricsSerializedAuctionDataResult("RetrieveDataForTEEAuction", func() (*auction.SerializedAuctionData, error) {
+		auctionData := &auction.AuctionData{}
+		err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve auction data: %v", err)
+		}
 
-	serializedAD, err := auctionData.ToSerializedAuctionData()
-	if err != nil {
-		return nil, fmt.Errorf("could not serialize auction data: %v", err)
-	}
+		serializedAD, err := auctionData.ToSerializedAuctionData()
+		if err != nil {
+			return nil, fmt.Errorf("could not serialize auction data: %v", err)
+		}
 
-	// Verify the commitment to the world state
-	err = serializedAD.CommitmentFromWorldState(ctx.GetStub(), endRFC339Timestamp)
-	if !serializedAD.ValidateHash() {
-		return nil, fmt.Errorf("auction data hash does not match the commitment in the world state")
-	}
+		// Verify the commitment to the world state
+		err = serializedAD.CommitmentFromWorldState(ctx.GetStub(), endRFC339Timestamp)
+		if !serializedAD.ValidateHash() {
+			return nil, fmt.Errorf("auction data hash does not match the commitment in the world state")
+		}
 
-	return serializedAD, err
+		return serializedAD, err
+	})
 }
 
 func (c *CarbonContract) PublishTEEAuctionResults(
 	ctx contractapi.TransactionContextInterface,
 	serializedResultsPub *tee_auction.SerializedAuctionResultTEE,
 ) error {
-	transient, err := ctx.GetStub().GetTransient()
-	if err != nil {
-		return fmt.Errorf("could not get transient: %v", err)
-	}
-	serializedResultPvtBytes := transient[SERIALIZED_RESULT_TEE_PVT_KEY]
-	if len(serializedResultPvtBytes) == 0 {
-		return fmt.Errorf("serialized result pvt not found in transient")
-	}
+	return c.withMetricsErr("PublishTEEAuctionResults", func() error {
+		transient, err := ctx.GetStub().GetTransient()
+		if err != nil {
+			return fmt.Errorf("could not get transient: %v", err)
+		}
+		serializedResultPvtBytes := transient[SERIALIZED_RESULT_TEE_PVT_KEY]
+		if len(serializedResultPvtBytes) == 0 {
+			return fmt.Errorf("serialized result pvt not found in transient")
+		}
 
-	var serializedResultsPvt tee_auction.SerializedAuctionResultTEE
-	err = json.Unmarshal(serializedResultPvtBytes, &serializedResultsPub)
-	if err != nil {
-		return fmt.Errorf("could not unmarshal serialized result pvt: %v", err)
-	}
+		var serializedResultsPvt tee_auction.SerializedAuctionResultTEE
+		err = json.Unmarshal(serializedResultPvtBytes, &serializedResultsPub)
+		if err != nil {
+			return fmt.Errorf("could not unmarshal serialized result pvt: %v", err)
+		}
 
-	err1 := tee.VerifyTEEResult(ctx.GetStub(), serializedResultsPub)
-	err2 := tee.VerifyTEEResult(ctx.GetStub(), &serializedResultsPvt)
-	if err1 != nil || err2 != nil {
-		return fmt.Errorf("could not verify TEE auction result: %v, %v", err1, err2)
-	}
+		err1 := tee.VerifyTEEResult(ctx.GetStub(), serializedResultsPub)
+		err2 := tee.VerifyTEEResult(ctx.GetStub(), &serializedResultsPvt)
+		if err1 != nil || err2 != nil {
+			return fmt.Errorf("could not verify TEE auction result: %v, %v", err1, err2)
+		}
 
-	err = auction.ProcessOffChainAuctionResult(ctx.GetStub(),
-		serializedResultsPub.ResultBytes,
-		serializedResultsPvt.ResultBytes)
-	if err != nil {
-		return fmt.Errorf("could not process off-chain auction result: %v", err)
-	}
+		err = auction.ProcessOffChainAuctionResult(ctx.GetStub(),
+			serializedResultsPub.ResultBytes,
+			serializedResultsPvt.ResultBytes)
+		if err != nil {
+			return fmt.Errorf("could not process off-chain auction result: %v", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (c *CarbonContract) CheckCredAttr(ctx contractapi.TransactionContextInterface, attrName string) (string, error) {
-	stub := ctx.GetStub()
-	attrValue, found, err := cid.GetAttributeValue(stub, attrName)
-	if err != nil {
-		return "", err
-	}
+	return c.withMetricsStringResult("CheckCredAttr", func() (string, error) {
+		stub := ctx.GetStub()
+		attrValue, found, err := cid.GetAttributeValue(stub, attrName)
+		if err != nil {
+			return "", err
+		}
 
-	if !found {
-		return "", fmt.Errorf("Attribute '%s' not found", attrName)
-	}
+		if !found {
+			return "", fmt.Errorf("Attribute '%s' not found", attrName)
+		}
 
-	return attrValue, nil
+		return attrValue, nil
+	})
 }
 
 // SetActivePolicies sets the list of active policies in the world state
 func (c *CarbonContract) SetActivePolicies(ctx contractapi.TransactionContextInterface, activePolicies []policies.Name) error {
-	stub := ctx.GetStub()
-	err := c.pApplier.SetActivePolicies(stub, activePolicies)
-	return err
+	return c.withMetricsErr("SetActivePolicies", func() error {
+		stub := ctx.GetStub()
+		err := c.pApplier.SetActivePolicies(stub, activePolicies)
+		return err
+	})
 }
 
 // AppendActivePolicy adds a new policy to the list of active policies in the world state
 func (c *CarbonContract) AppendActivePolicy(ctx contractapi.TransactionContextInterface, policy policies.Name) error {
-	stub := ctx.GetStub()
-	err := c.pApplier.AppendActivePolicy(stub, policies.Name(policy))
-	return err
+	return c.withMetricsErr("AppendActivePolicy", func() error {
+		stub := ctx.GetStub()
+		err := c.pApplier.AppendActivePolicy(stub, policies.Name(policy))
+		return err
+	})
 }
 
 // DeleteActivePolicy removes a policy from the list of active policies in the world state
 func (c *CarbonContract) DeleteActivePolicy(ctx contractapi.TransactionContextInterface, policy policies.Name) error {
-	stub := ctx.GetStub()
-	err := policies.DeleteActivePolicy(stub, policies.Name(policy))
-	return err
+	return c.withMetricsErr("DeleteActivePolicy", func() error {
+		stub := ctx.GetStub()
+		err := policies.DeleteActivePolicy(stub, policies.Name(policy))
+		return err
+	})
 }
 
 // GetActivePolicies retrieves the list of caller's matched bids.
 // It uses cid.GetID function to determine the id
 func (c *CarbonContract) GetCallerMatchedBids(ctx contractapi.TransactionContextInterface) ([]*bids.MatchedBid, error) {
-	return bids.GetCallerMatchedBids(ctx.GetStub())
+	return c.withMetricsMatchedBidsResult("GetCallerMatchedBids", func() ([]*bids.MatchedBid, error) {
+		return bids.GetCallerMatchedBids(ctx.GetStub())
+	})
 }
 
 func (c *CarbonContract) CreditIsLocked(ctx contractapi.TransactionContextInterface, creditID []string, lockID string) bool {
-	return credits.CreditIsLocked(ctx.GetStub(), creditID, lockID)
+	return c.withMetricsBoolValue("CreditIsLocked", func() bool {
+		return credits.CreditIsLocked(ctx.GetStub(), creditID, lockID)
+	})
 }
 
 func (c *CarbonContract) ChainIDCreditIsLockedFor(ctx contractapi.TransactionContextInterface, creditID []string, lockID string) string {
-	return credits.ChainIDCreditIsLockedFor(ctx.GetStub(), creditID, lockID)
+	return c.withMetricsStringValue("ChainIDCreditIsLockedFor", func() string {
+		return credits.ChainIDCreditIsLockedFor(ctx.GetStub(), creditID, lockID)
+	})
 }
 
 func (c *CarbonContract) LockCredit(ctx contractapi.TransactionContextInterface,
@@ -228,9 +327,13 @@ func (c *CarbonContract) LockCredit(ctx contractapi.TransactionContextInterface,
 	quantity int64,
 	destChainID string,
 ) (lockID string, err error) {
-	return credits.LockCredit(ctx.GetStub(), creditID, quantity, destChainID)
+	return c.withMetricsStringResult("LockCredit", func() (string, error) {
+		return credits.LockCredit(ctx.GetStub(), creditID, quantity, destChainID)
+	})
 }
 
 func (c *CarbonContract) UnlockCredit(ctx contractapi.TransactionContextInterface, creditID []string, lockID string) error {
-	return credits.UnlockCredit(ctx.GetStub(), creditID, lockID)
+	return c.withMetricsErr("UnlockCredit", func() error {
+		return credits.UnlockCredit(ctx.GetStub(), creditID, lockID)
+	})
 }
