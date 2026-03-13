@@ -34,7 +34,7 @@ func TestBidWithNoWallet(t *testing.T) {
 func TestBid(t *testing.T) {
 	stub := mocks.NewMockStub("carbon", nil)
 	possibleIds := setup.SetupIdentities(stub)
-	stub.Creator = possibleIds[setup.REGULAR_ID]
+	stub.Creator = possibleIds[setup.IDEMIX_ID]
 
 	stub.TransientMap = map[string][]byte{
 		"price": []byte("1000"),
@@ -46,20 +46,23 @@ func TestBid(t *testing.T) {
 	err := bids.PublishBuyBidWithPublicQuanitity(stub, 100)
 	require.NoError(t, err, "Error publishing buy bid")
 
-	creatorId, _ := cid.GetID(stub)
+	creatorId := identities.GetID(stub)
 	protoTs, _ := stub.GetTxTimestamp()
 	lastInsertTimestamp := utils.TimestampRFC3339UtcString(protoTs)
 	buyBid := &bids.BuyBid{}
 
 	err = buyBid.FromWorldState(stub, []string{lastInsertTimestamp, creatorId})
 	t.Log(buyBid.PrivatePrice)
-	if err != nil || buyBid.PrivatePrice != nil {
-		t.Fatalf(`PrivatePrice should be nil or error should not happen.
-		REGULAR_ID should not be able to see it: %v`, err)
-	}
+	require.NoError(t, err)
+	require.NotNil(t, buyBid.PrivatePrice, "Bid owner should be able to see private price")
+
+	stub.Creator = possibleIds[setup.REGULAR_ID]
+	buyBid = &bids.BuyBid{} // reset buyBid
+	err = buyBid.FromWorldState(stub, []string{lastInsertTimestamp, creatorId})
+	require.NoError(t, err)
+	require.Nil(t, buyBid.PrivatePrice, "Non bid owner should not be able to see private price")
 
 	stub.Creator = possibleIds[identities.PriceViewer]
-	creatorId, _ = cid.GetID(stub)
 	buyBid = &bids.BuyBid{}
 
 	err = buyBid.FromWorldState(stub, []string{lastInsertTimestamp, creatorId})
