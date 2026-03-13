@@ -8,6 +8,7 @@ import (
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
 	"github.com/gin-gonic/gin"
 	"github.com/johannww/phd-impl/tee_auction/go/api/handlers"
+	"github.com/johannww/phd-impl/tee_auction/go/api/metrics"
 	"github.com/johannww/phd-impl/tee_auction/go/report"
 )
 
@@ -24,20 +25,26 @@ func (server *AuctionServer) SetupRouter(
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.Default()
+	// TODOHP:  review
+	r.Use(metrics.Middleware())
 
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
 
+	r.GET("/metrics", metrics.Handler())
+
 	r.GET("/report", func(c *gin.Context) {
 		if server.DeserializedReport == nil {
 			var err error
 			server.DeserializedReport, err = report.DeserializedReport(server.ReportBytes)
 			if err != nil {
+				metrics.ObserveReportDeserialize("error")
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to deserialize report"})
 				return
 			}
+			metrics.ObserveReportDeserialize("ok")
 			server.DeserializedReport = server.DeserializedReport
 		}
 
