@@ -7,6 +7,9 @@ cc:
 cc-docker:
 	docker build -t ghcr.io/$(REPO)/carbon:latest .
 
+run:
+	CORE_CHAINCODE_ID_NAME=carbon:0.1 CORE_PEER_LOCAL_MSPID=test CHAINCODE_SERVER_ADDRESS=0.0.0.0:7055 go run ./cmd/carbon/main.go
+
 app:
 	go build -o /dev/null ./cmd/application/main.go
 
