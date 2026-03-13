@@ -1,5 +1,5 @@
 #!/bin/env bash
-# rm -rf blind_repo
+rm -rf blind_repo
 mkdir blind_repo
 
 COPIABLE=(
