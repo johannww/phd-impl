@@ -3,7 +3,7 @@ set -euo pipefail
 
 REPO=${REPO:-"johannww/phd-exp"}
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-KUBECONFIG_DIR="${SCRIPT_DIR}/../../vars/kubeconfig"
+KUBECONFIG_DIR="${SCRIPT_DIR}/../vars/kubeconfig"
 FABRIC_TAG="${FABRIC_TAG:-3.1.4}"
 TOOLS_IMAGE="${TOOLS_IMAGE:-ghcr.io/hyperledger/fabric-tools:${FABRIC_TAG}}"
 CARBON_CC_IMAGE="${CARBON_CC_IMAGE:-ghcr.io/$REPO/carbon:latest}"
