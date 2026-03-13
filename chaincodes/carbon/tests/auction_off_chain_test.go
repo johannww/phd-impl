@@ -2,6 +2,7 @@ package carbon_tests
 
 import (
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -118,6 +119,7 @@ func TestOffChainCoupledAuction(t *testing.T) {
 	verifyMultiplierMultiplyAsExpected(t, mergedMatchedBids,
 		[]policies.PolicyFunc{thirtyPercentPolicy, thirtyPercentPolicy})
 	verifyPrivateDataIsInPrivatePart(t, auctionResultPub, auctionResultPvt)
+	verifyAdjustedBidsConsistency(t, mergedMatchedBids, auctionResult.AdjustedSellBids, auctionResult.AdjustedBuyBids)
 
 }
 
@@ -173,6 +175,14 @@ func verifyPrivateDataIsInPrivatePart(t *testing.T, auctionResultPub, auctionRes
 		require.Nil(t, pubMatchedBid.PrivatePrice, "Public part of matched bid %d should not have private price", i)
 		require.NotNil(t, privMatchedBid.PrivateMultiplier, "Private part of matched bid %d should have private multiplier", i)
 		require.NotNil(t, privMatchedBid.PrivatePrice, "Private part of matched bid %d should have private price", i)
+	}
+
+	for i, pubBuyBid := range auctionResultPub.AdjustedBuyBids {
+		privBuyBid := auctionResultPvt.AdjustedBuyBids[i]
+		require.Nil(t, pubBuyBid.PrivatePrice, "Public part of adjusted buy bid %d should not have private price", i)
+		require.Nil(t, pubBuyBid.PrivateQuantity, "Public part of adjusted buy bid %d should not have private quantity", i)
+		require.NotNil(t, privBuyBid.PrivatePrice, "Private part of adjusted buy bid %d should have private price", i)
+		require.NotNil(t, privBuyBid.PrivateQuantity, "Private part of adjusted buy bid %d should have private quantity", i)
 	}
 }
 
@@ -277,4 +287,60 @@ func genRandomBidsForMintCredits(testData *utils_test.TestData, issueStart time.
 	}
 
 	return issueTsStr
+}
+
+func verifyAdjustedBidsConsistency(
+	t *testing.T,
+	mergedMatchedBids []*bids.MatchedBid,
+	adjSellBids []*bids.SellBid,
+	adjBuyBids []*bids.BuyBid,
+) {
+	sellMatchedTotal := make(map[string]int64)
+	sellInitialQuantity := make(map[string]int64)
+	buyMatchedTotal := make(map[string]int64)
+	buyInitialQuantity := make(map[string]int64)
+
+	for _, mb := range mergedMatchedBids {
+		require.NotNil(t, mb.SellBid)
+		require.NotNil(t, mb.BuyBid)
+		require.NotNil(t, mb.BuyBid.PrivateQuantity)
+
+		sellID := strings.Join((*mb.SellBid.GetID())[0], "|")
+		buyID := strings.Join((*mb.BuyBid.GetID())[0], "|")
+
+		sellMatchedTotal[sellID] += mb.Quantity
+		buyMatchedTotal[buyID] += mb.Quantity
+
+		// Get the maximum initial quantity, as this represents the initial quantity before any matches, which is what the adjusted quantity should be based on
+		if mb.SellBid.Quantity > sellInitialQuantity[sellID] {
+			sellInitialQuantity[sellID] = mb.SellBid.Quantity
+		}
+		if mb.BuyBid.PrivateQuantity.AskQuantity > buyInitialQuantity[buyID] {
+			buyInitialQuantity[buyID] = mb.BuyBid.PrivateQuantity.AskQuantity
+		}
+	}
+
+	seenAdjustedSell := make(map[string]bool)
+	for _, sb := range adjSellBids {
+		sellID := strings.Join((*sb.GetID())[0], "|")
+		seenAdjustedSell[sellID] = true
+		expectedAdjusted := sellInitialQuantity[sellID] - sellMatchedTotal[sellID]
+		require.Equalf(t, expectedAdjusted, sb.Quantity,
+			"adjusted sell quantity for %s should match initial-minus-matched", sellID)
+	}
+
+	seenAdjustedBuy := make(map[string]bool)
+	for _, bb := range adjBuyBids {
+		require.NotNil(t, bb.PrivateQuantity)
+		buyID := strings.Join((*bb.GetID())[0], "|")
+		seenAdjustedBuy[buyID] = true
+		expectedAdjusted := buyInitialQuantity[buyID] - buyMatchedTotal[buyID]
+		require.Equalf(t, expectedAdjusted, bb.PrivateQuantity.AskQuantity,
+			"adjusted buy quantity for %s should match initial-minus-matched", buyID)
+	}
+
+	require.Equal(t, len(sellMatchedTotal), len(seenAdjustedSell),
+		"adjusted sell bids should contain exactly the bids that were matched")
+	require.Equal(t, len(buyMatchedTotal), len(seenAdjustedBuy),
+		"adjusted buy bids should contain exactly the bids that were matched")
 }

@@ -19,7 +19,8 @@ type OffChainCoupledAuctionResult struct {
 	AuctionID          uint64             `json:"auctionID"`
 	MatchedBidsPublic  []*bids.MatchedBid `json:"matchedBidsPublic"`
 	MatchedBidsPrivate []*bids.MatchedBid `json:"matchedBidsPrivate"`
-	// TODOHP: add adjusted bids to the result
+	AdjustedSellBids   []*bids.SellBid    `json:"adjustedSellBids"`
+	AdjustedBuyBids    []*bids.BuyBid     `json:"adjustedBuyBids"`
 }
 
 func (r *OffChainCoupledAuctionResult) MergeIntoSingleMatchedBids() ([]*bids.MatchedBid, error) {
@@ -100,6 +101,10 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 		return 0
 	})
 
+	// Track which bids have been adjusted (participated in matching)
+	adjustedSellBidsMap := make(map[int]bool)
+	adjustedBuyBidsMap := make(map[int]bool)
+
 	// 3. Match bids with highest multipliers first
 	for _, mult := range multArray {
 		sellBid := data.SellBids[mult.SellBidIndex]
@@ -129,8 +134,9 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 		sellBid.Quantity -= matchQuantity
 		buyBid.PrivateQuantity.AskQuantity -= matchQuantity
 
-		data.BuyBids[mult.BuyBidIndex] = buyBid
-		data.SellBids[mult.SellBidIndex] = sellBid
+		// Mark these bids as adjusted
+		adjustedSellBidsMap[mult.SellBidIndex] = true
+		adjustedBuyBidsMap[mult.BuyBidIndex] = true
 
 		public.MatchedBidsPublic = append(public.MatchedBidsPublic, matchedBidPublic)
 		private.MatchedBidsPrivate = append(private.MatchedBidsPrivate, matchedBidPrivate)
@@ -140,7 +146,58 @@ func (a *AuctionCoupledRunner) RunCoupled(data *AuctionData, pApplier policies.P
 	// 4. Shuffle matched bids to break the link between buyers and sellers. This is important because the order of matched bids implies a higher multiplier, which can lead to privacy issues.
 	shuffleMatchedBids(public.MatchedBidsPublic, private.MatchedBidsPrivate)
 
+	// 5. Collect adjusted bids
+	a.collectAdjustedBids(
+		public,
+		private,
+		data.SellBids,
+		data.BuyBids,
+		adjustedSellBidsMap,
+		adjustedBuyBidsMap)
+
 	return public, private, nil
+}
+
+// collectAdjustedBids collects the bids that participated in the auction.
+// It returns only the bids whose indices are marked in the provided maps.
+func (a *AuctionCoupledRunner) collectAdjustedBids(
+	public *OffChainCoupledAuctionResult,
+	private *OffChainCoupledAuctionResult,
+	sellBids []*bids.SellBid,
+	buyBids []*bids.BuyBid,
+	adjustedSellBidsMap map[int]bool,
+	adjustedBuyBidsMap map[int]bool,
+) {
+	for _, result := range []*OffChainCoupledAuctionResult{public, private} {
+		result.AdjustedSellBids = make([]*bids.SellBid, 0, len(adjustedSellBidsMap))
+		result.AdjustedBuyBids = make([]*bids.BuyBid, 0, len(adjustedBuyBidsMap))
+	}
+
+	for i, sellBid := range sellBids {
+		if !adjustedSellBidsMap[i] {
+			continue
+		}
+
+		public.AdjustedSellBids = append(public.AdjustedSellBids, sellBid)
+	}
+
+	for i, buyBid := range buyBids {
+		if !adjustedBuyBidsMap[i] {
+			continue
+		}
+
+		buyBidPrivate := &bids.BuyBid{
+			PrivateQuantity: buyBid.PrivateQuantity,
+			PrivatePrice:    buyBid.PrivatePrice,
+		}
+		buyBidPublic := &bids.BuyBid{
+			BuyerID:   buyBid.BuyerID,
+			Timestamp: buyBid.Timestamp,
+		}
+
+		public.AdjustedBuyBids = append(public.AdjustedBuyBids, buyBidPublic)
+		private.AdjustedBuyBids = append(private.AdjustedBuyBids, buyBidPrivate)
+	}
 }
 
 // mountPublicAndPrivateMatchedBid creates the public and private parts of a matched bid.
@@ -255,10 +312,22 @@ func NewSingleCoupledResults(
 		return nil, fmt.Errorf("matched bids length mismatch between public and private results")
 	}
 
+	mergedAdjustedBuyBids := make([]*bids.BuyBid, len(pubResult.AdjustedBuyBids))
+	for i := range pubResult.AdjustedBuyBids {
+		mergedAdjustedBuyBids[i] = &bids.BuyBid{
+			BuyerID:         pubResult.AdjustedBuyBids[i].BuyerID,
+			Timestamp:       pubResult.AdjustedBuyBids[i].Timestamp,
+			PrivateQuantity: pvtResult.AdjustedBuyBids[i].PrivateQuantity,
+			PrivatePrice:    pvtResult.AdjustedBuyBids[i].PrivatePrice,
+		}
+	}
+
 	mergedResult := &OffChainCoupledAuctionResult{
 		AuctionID:          pubResult.AuctionID,
 		MatchedBidsPublic:  pubResult.MatchedBidsPublic,
 		MatchedBidsPrivate: pvtResult.MatchedBidsPrivate,
+		AdjustedSellBids:   pubResult.AdjustedSellBids,
+		AdjustedBuyBids:    mergedAdjustedBuyBids,
 	}
 	return mergedResult, nil
 }
