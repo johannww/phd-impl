@@ -222,10 +222,38 @@ func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity
 }
 
 func RetractBuyBid(stub shim.ChaincodeStubInterface, bidID []string) error {
+	if len(bidID) < 2 {
+		return fmt.Errorf("invalid bid ID: expected at least 2 attributes")
+	}
+
 	mockBid := &BuyBid{
 		Timestamp: bidID[0],
 		BuyerID:   bidID[1],
 	}
-	err := mockBid.DeleteFromWorldState(stub)
-	return err
+
+	callerID := identities.GetID(stub)
+	if callerID != mockBid.BuyerID {
+		return fmt.Errorf("caller is not the bid owner")
+	}
+
+	if err := mockBid.FromWorldState(stub, bidID); err != nil {
+		return fmt.Errorf("could not get buy bid from world state: %v", err)
+	}
+
+	quantity := mockBid.AskQuantity
+	if quantity == 0 {
+		quantity = mockBid.PrivateQuantity.AskQuantity
+	}
+
+	reservedFunds := mockBid.PrivatePrice.Price * quantity
+	buyerWallet := &payment.VirtualTokenWallet{}
+	if err := buyerWallet.FromWorldState(stub, []string{mockBid.BuyerID}); err != nil {
+		return fmt.Errorf("could not get buyer wallet from world state: %v", err)
+	}
+	buyerWallet.Quantity += reservedFunds
+	if err := buyerWallet.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not update buyer wallet: %v", err)
+	}
+
+	return mockBid.DeleteFromWorldState(stub)
 }

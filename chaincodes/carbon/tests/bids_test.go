@@ -74,6 +74,52 @@ func TestBid(t *testing.T) {
 	}
 }
 
+func TestRetractBidRefundsWalletAndDeletesBid(t *testing.T) {
+	stub := mocks.NewMockStub("carbon", nil)
+	possibleIds := setup.SetupIdentities(stub)
+	stub.Creator = possibleIds[setup.IDEMIX_ID]
+
+	initialWallet := int64(200000000)
+	price := int64(1000)
+	quantity := int64(100)
+
+	stub.MockTransactionStart("tx1")
+	createAndStoreWalletForCreator(t, stub, initialWallet)
+	stub.TransientMap = map[string][]byte{
+		"price": []byte(strconv.FormatInt(price, 10)),
+	}
+	err := bids.PublishBuyBidWithPublicQuanitity(stub, quantity)
+	require.NoError(t, err, "Error publishing buy bid")
+
+	creatorID := identities.GetID(stub)
+	protoTs, err := stub.GetTxTimestamp()
+	require.NoError(t, err)
+	bidTS := utils.TimestampRFC3339UtcString(protoTs)
+	bidID := []string{bidTS, creatorID}
+
+	// Wallet should be debited after placing the bid.
+	wallet := &payment.VirtualTokenWallet{}
+	err = wallet.FromWorldState(stub, []string{creatorID})
+	require.NoError(t, err)
+	require.Equal(t, initialWallet-price*quantity, wallet.Quantity)
+
+	err = bids.RetractBuyBid(stub, bidID)
+	require.NoError(t, err, "Error retracting buy bid")
+	stub.MockTransactionEnd("tx1")
+
+	// Wallet should be restored after retract.
+	stub.MockTransactionStart("tx2")
+	err = wallet.FromWorldState(stub, []string{creatorID})
+	require.NoError(t, err)
+	require.Equal(t, initialWallet, wallet.Quantity)
+
+	// Bid should be deleted.
+	buyBid := &bids.BuyBid{}
+	err = buyBid.FromWorldState(stub, bidID)
+	require.Error(t, err, "buy bid should be deleted after retract")
+	stub.MockTransactionEnd("tx2")
+}
+
 func TestBidBatchRecover(t *testing.T) {
 	stub := mocks.NewMockStub("carbon", nil)
 	possibleIds := setup.SetupIdentities(stub)
