@@ -14,22 +14,46 @@ func processCoupledAuctionResult(stub shim.ChaincodeStubInterface,
 		return fmt.Errorf("could not merge coupled public and private results: %v", err)
 	}
 	err = storeCoupledMatchedBids(stub, result)
+	if err != nil {
+		return fmt.Errorf("could not store coupled matched bids: %v", err)
+	}
+
+	err = storeAdjustedBids(stub, result)
+
 	return err
 }
 
-// TODOHP: calculate and store adjusted sell and buy bids for coupled auction results
 func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainCoupledAuctionResult) error {
-	for i := range result.MatchedBidsPublic {
-		mbPub := result.MatchedBidsPublic[i]
-		mbPvt := result.MatchedBidsPrivate[i]
-		err := mbPub.ToWorldState(stub)
+	mergedMbs, err := result.MergeIntoSingleMatchedBids()
+	if err != nil {
+		return fmt.Errorf("could not merge coupled auction results into single matched bids: %v", err)
+	}
+
+	for _, mergedMb := range mergedMbs {
+		err = mergedMb.ToWorldState(stub)
 		if err != nil {
-			return fmt.Errorf("could not store public part of matched bid %d: %v", i, err)
-		}
-		err = mbPvt.ToWorldState(stub)
-		if err != nil {
-			return fmt.Errorf("could not store private part of matched bid %d: %v", i, err)
+			return fmt.Errorf("could not store merged matched bid: %v", err)
 		}
 	}
+	return nil
+}
+
+func storeAdjustedBids(stub shim.ChaincodeStubInterface, result *OffChainCoupledAuctionResult) error {
+	mergedAdjustedSellBids, mergedAdjustedBuyBids := result.MergeIntoSingleAdjustedBids()
+
+	for _, mergedAdjustedSellBid := range mergedAdjustedSellBids {
+		err := mergedAdjustedSellBid.ToWorldState(stub)
+		if err != nil {
+			return fmt.Errorf("could not store merged adjusted sell bid: %v", err)
+		}
+	}
+
+	for _, mergedAdjustedBuyBid := range mergedAdjustedBuyBids {
+		err := mergedAdjustedBuyBid.ToWorldState(stub)
+		if err != nil {
+			return fmt.Errorf("could not store merged adjusted buy bid: %v", err)
+		}
+	}
+
 	return nil
 }

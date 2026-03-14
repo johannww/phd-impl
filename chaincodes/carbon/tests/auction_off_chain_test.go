@@ -1,6 +1,7 @@
 package carbon_tests
 
 import (
+	"encoding/json"
 	"math/rand"
 	"strings"
 	"testing"
@@ -150,6 +151,14 @@ func TestOffChainCoupledAuction(t *testing.T) {
 	adjustedSellBids, adjustedBuyBids := auctionResult.MergeIntoSingleAdjustedBids()
 	verifyAdjustedBidsConsistency(t, mergedMatchedBids, adjustedSellBids, adjustedBuyBids)
 
+	stub.MockTransactionStart("process-auction-result-tx")
+	resultPubBytes, err := json.Marshal(auctionResultPub)
+	require.NoError(t, err, "Failed to marshal public auction result")
+	resultPvtBytes, err := json.Marshal(auctionResultPvt)
+	require.NoError(t, err, "Failed to marshal private auction result")
+	err = auction.ProcessOffChainAuctionResult(stub, resultPubBytes, resultPvtBytes)
+	require.NoError(t, err, "Failed to process off-chain auction result")
+	stub.MockTransactionEnd("process-auction-result-tx")
 }
 
 // verifyMultiplierMultiplyAsExpected tests the multiplying logic.
