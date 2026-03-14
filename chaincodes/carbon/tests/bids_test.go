@@ -12,6 +12,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
+	utils_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/utils"
 	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -72,6 +73,72 @@ func TestBid(t *testing.T) {
 		t.Logf("Creator's %s: %s", identities.PriceViewer, value)
 		t.Fatal("PrivatePrice should be 1000. identities.PriceViewer should be able to see it")
 	}
+}
+
+func TestSellBidOwnerCanReadPrivatePrice(t *testing.T) {
+	nOwners := 1
+	nChunks := 3
+	nCompanies := 0
+	startTimestamp := "2023-01-01T00:00:00Z"
+	endTimestamp := "2023-01-01T00:05:00Z"
+	issueInterval := 30 * time.Second
+	stub, testdata := genTestDataAndStub(
+		nOwners, nChunks, nCompanies,
+		startTimestamp, endTimestamp, issueInterval,
+	)
+	stub.MockTransactionStart("tx1")
+	testdata.SaveToWorldState(stub)
+	stub.MockTransactionEnd("tx1")
+
+	possibleIds := *testdata.Identities
+	ownerID := possibleIds[utils_test.OWNER_PREFIX+"0"]
+	stub.Creator = ownerID
+	creditID := (*testdata.MintCredits[0].GetID())[0]
+	sellerID := identities.GetID(stub)
+
+	sellQuantity := int64(4000)
+	stub.TransientMap = map[string][]byte{
+		"price": []byte("1234"),
+	}
+
+	stub.MockTransactionStart("tx-sell-1")
+	err := bids.PublishSellBid(stub, sellQuantity, creditID)
+	require.NoError(t, err)
+	protoTs, err := stub.GetTxTimestamp()
+	require.NoError(t, err)
+	bidTS := utils.TimestampRFC3339UtcString(protoTs)
+	stub.MockTransactionEnd("tx-sell-1")
+
+	bidKey := []string{bidTS, sellerID}
+
+	// Owner can read private price.
+	stub.MockTransactionStart("tx-sell-owner-read")
+	stub.Creator = ownerID
+	ownerView := &bids.SellBid{}
+	err = ownerView.FromWorldState(stub, bidKey)
+	require.NoError(t, err)
+	require.NotNil(t, ownerView.PrivatePrice, "seller owner should be able to read private sell price")
+	require.Equal(t, int64(1234), ownerView.PrivatePrice.Price)
+	stub.MockTransactionEnd("tx-sell-owner-read")
+
+	// Non-owner/non-PriceViewer cannot read private price.
+	stub.MockTransactionStart("tx-sell-other-read")
+	stub.Creator = possibleIds[setup.IDEMIX_ID]
+	otherView := &bids.SellBid{}
+	err = otherView.FromWorldState(stub, bidKey)
+	require.NoError(t, err)
+	require.Nil(t, otherView.PrivatePrice, "non-owner without PriceViewer should not read private sell price")
+	stub.MockTransactionEnd("tx-sell-other-read")
+
+	// PriceViewer can still read private price.
+	stub.MockTransactionStart("tx-sell-priceviewer-read")
+	stub.Creator = possibleIds[identities.PriceViewer]
+	adminView := &bids.SellBid{}
+	err = adminView.FromWorldState(stub, bidKey)
+	require.NoError(t, err)
+	require.NotNil(t, adminView.PrivatePrice, "PriceViewer should read private sell price")
+	require.Equal(t, int64(1234), adminView.PrivatePrice.Price)
+	stub.MockTransactionEnd("tx-sell-priceviewer-read")
 }
 
 func TestRetractBidRefundsWalletAndDeletesBid(t *testing.T) {
