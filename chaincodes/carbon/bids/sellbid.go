@@ -218,10 +218,28 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID [
 }
 
 func RetractSellBid(stub shim.ChaincodeStubInterface, bidID []string) error {
-	mockBid := &SellBid{
-		CreditID:  bidID[0:2],
-		Timestamp: bidID[2],
+	if len(bidID) < 2 {
+		return fmt.Errorf("invalid bid ID: expected at least 2 attributes")
 	}
-	err := mockBid.DeleteFromWorldState(stub)
-	return err
+
+	mockBid := &SellBid{
+		Timestamp: bidID[0],
+		SellerID:  bidID[1],
+	}
+
+	callerID := identities.GetID(stub)
+	if callerID != mockBid.SellerID {
+		return fmt.Errorf("caller is not the bid owner")
+	}
+
+	if err := mockBid.FromWorldState(stub, bidID); err != nil {
+		return fmt.Errorf("could not get sell bid from world state: %v", err)
+	}
+
+	mockBid.Credit.Quantity += mockBid.Quantity
+	if err := mockBid.Credit.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not update credit quantity: %v", err)
+	}
+
+	return mockBid.DeleteFromWorldState(stub)
 }

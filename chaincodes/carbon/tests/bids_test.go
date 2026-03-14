@@ -7,6 +7,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
+	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/state"
@@ -136,6 +137,7 @@ func TestSellBidOwnerCanReadPrivatePrice(t *testing.T) {
 	ownerID := possibleIds[utils_test.OWNER_PREFIX+"0"]
 	stub.Creator = ownerID
 	creditID := (*testdata.MintCredits[0].GetID())[0]
+	initialCreditQuantity := testdata.MintCredits[0].Quantity
 	sellerID := identities.GetID(stub)
 
 	sellQuantity := int64(4000)
@@ -181,6 +183,31 @@ func TestSellBidOwnerCanReadPrivatePrice(t *testing.T) {
 	require.NotNil(t, adminView.PrivatePrice, "PriceViewer should read private sell price")
 	require.Equal(t, int64(1234), adminView.PrivatePrice.Price)
 	stub.MockTransactionEnd("tx-sell-priceviewer-read")
+
+	// Non-owner cannot retract the sell bid.
+	stub.MockTransactionStart("tx-sell-other-retract")
+	stub.Creator = possibleIds[setup.IDEMIX_ID]
+	err = bids.RetractSellBid(stub, bidKey)
+	require.Error(t, err, "non-owner should not be able to retract sell bid")
+	stub.MockTransactionEnd("tx-sell-other-retract")
+
+	// Owner retracts sell bid, which restores credit quantity and deletes the bid.
+	stub.MockTransactionStart("tx-sell-owner-retract")
+	stub.Creator = ownerID
+	err = bids.RetractSellBid(stub, bidKey)
+	require.NoError(t, err)
+
+	credit := &credits.MintCredit{}
+	err = credit.FromWorldState(stub, creditID)
+	require.NoError(t, err)
+	require.Equal(t, initialCreditQuantity, credit.Quantity, "credit quantity should be restored after sell bid retract")
+	stub.MockTransactionEnd("tx-sell-owner-retract")
+
+	stub.MockTransactionStart("tx-sell-check-deleted")
+	deletedBid := &bids.SellBid{}
+	err = deletedBid.FromWorldState(stub, bidKey)
+	require.Error(t, err, "sell bid should be deleted after retract")
+	stub.MockTransactionEnd("tx-sell-check-deleted")
 }
 
 func TestRetractBidRefundsWalletAndDeletesBid(t *testing.T) {
