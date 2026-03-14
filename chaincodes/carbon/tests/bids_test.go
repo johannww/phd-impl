@@ -73,6 +73,48 @@ func TestBid(t *testing.T) {
 		t.Logf("Creator's %s: %s", identities.PriceViewer, value)
 		t.Fatal("PrivatePrice should be 1000. identities.PriceViewer should be able to see it")
 	}
+
+	// Also validate private-quantity flow in the same test.
+	stub.MockTransactionEnd("tx1")
+	stub.MockTransactionStart("tx2")
+	stub.TxTimestamp = timestamppb.New(protoTs.AsTime().Add(1 * time.Second))
+	stub.Creator = possibleIds[setup.IDEMIX_ID]
+	stub.TransientMap = map[string][]byte{
+		"price":    []byte("1100"),
+		"quantity": []byte("75"),
+	}
+
+	err = bids.PublishBuyBidWithPrivateQuantity(stub)
+	require.NoError(t, err, "Error publishing buy bid with private quantity")
+
+	privateProtoTs, _ := stub.GetTxTimestamp()
+	privateInsertTimestamp := utils.TimestampRFC3339UtcString(privateProtoTs)
+
+	// Owner should see private price and private quantity, while public quantity remains hidden.
+	privateQtyBid := &bids.BuyBid{}
+	err = privateQtyBid.FromWorldState(stub, []string{privateInsertTimestamp, creatorId})
+	require.NoError(t, err)
+	require.Equal(t, int64(0), privateQtyBid.AskQuantity)
+	require.NotNil(t, privateQtyBid.PrivatePrice)
+	require.NotNil(t, privateQtyBid.PrivateQuantity)
+	require.Equal(t, int64(75), privateQtyBid.PrivateQuantity.AskQuantity)
+
+	// Non-owner/non-PriceViewer should not see private fields.
+	stub.Creator = possibleIds[setup.REGULAR_ID]
+	otherViewPrivateQtyBid := &bids.BuyBid{}
+	err = otherViewPrivateQtyBid.FromWorldState(stub, []string{privateInsertTimestamp, creatorId})
+	require.NoError(t, err)
+	require.Nil(t, otherViewPrivateQtyBid.PrivatePrice)
+	require.Nil(t, otherViewPrivateQtyBid.PrivateQuantity)
+
+	// PriceViewer should see private fields.
+	stub.Creator = possibleIds[identities.PriceViewer]
+	priceViewerPrivateQtyBid := &bids.BuyBid{}
+	err = priceViewerPrivateQtyBid.FromWorldState(stub, []string{privateInsertTimestamp, creatorId})
+	require.NoError(t, err)
+	require.NotNil(t, priceViewerPrivateQtyBid.PrivatePrice)
+	require.NotNil(t, priceViewerPrivateQtyBid.PrivateQuantity)
+	require.Equal(t, int64(75), priceViewerPrivateQtyBid.PrivateQuantity.AskQuantity)
 }
 
 func TestSellBidOwnerCanReadPrivatePrice(t *testing.T) {

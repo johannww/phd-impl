@@ -97,12 +97,18 @@ func (c *CarbonContract) withMetricsStringValue(txName string, fn func() string)
 	return out
 }
 
-// TODO: This is only a test function
-func (c *CarbonContract) CreateBuyBid(ctx contractapi.TransactionContextInterface, key string, value string) error {
-	return c.withMetricsErr("CreateBuyBid", func() error {
+func (c *CarbonContract) CreateBuyBidPublicQuantity(ctx contractapi.TransactionContextInterface, quantity int64) error {
+	return c.withMetricsErr("CreateBuyBidPublicQuantity", func() error {
 		stub := ctx.GetStub()
-		err := bids.PublishBuyBidWithPublicQuanitity(stub, 2)
-		// _, err = state.GetStatesByRangeCompositeKey(stub, "buyBid", []string{"a"}, []string{"ac"})
+		err := bids.PublishBuyBidWithPublicQuanitity(stub, quantity)
+		return err
+	})
+}
+
+func (c *CarbonContract) CreateBuyBidPrivateQuantity(ctx contractapi.TransactionContextInterface) error {
+	return c.withMetricsErr("CreateBuyBidPrivateQuantity", func() error {
+		stub := ctx.GetStub()
+		err := bids.PublishBuyBidWithPrivateQuantity(stub)
 		return err
 	})
 }

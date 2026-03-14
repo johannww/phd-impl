@@ -33,6 +33,13 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 	}
 
 	var err error
+	var auctionType AuctionType = ""
+	err = auctionType.FromWorldState(stub, []string{})
+	if err != nil {
+		return fmt.Errorf("could not get auction type: %v", err)
+	}
+	a.Coupled = auctionType == AUCTION_COUPLED
+
 	a.BuyBids, err = state.GetStatesByRangeCompositeKey[bids.BuyBid](stub, bids.BUY_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
 	if err != nil {
 		return fmt.Errorf("could not get buy bids: %v", err)
@@ -48,6 +55,12 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 	for _, buyBid := range a.BuyBids {
 		if err := buyBid.FetchPrivatePrice(stub); err != nil {
 			return err
+		}
+
+		if a.Coupled {
+			if err := buyBid.FetchPrivateQuantity(stub); err != nil {
+				return err
+			}
 		}
 
 		if a.CompaniesPvt[buyBid.BuyerID] != nil {
@@ -77,13 +90,6 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 			return err
 		}
 	}
-
-	var auctionType AuctionType = ""
-	err = auctionType.FromWorldState(stub, []string{})
-	if err != nil {
-		return fmt.Errorf("could not get auction type: %v", err)
-	}
-	a.Coupled = auctionType == AUCTION_COUPLED
 
 	//Get Policies
 	a.ActivePolicies, err = policies.GetActivePolicies(stub)

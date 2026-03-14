@@ -105,9 +105,16 @@ func (b *BuyBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 			return fmt.Errorf("could not put private price in world state: %v", err)
 		}
 	}
+	if b.PrivateQuantity != nil {
+		err := b.PrivateQuantity.ToWorldState(stub)
+		if err != nil {
+			return fmt.Errorf("could not put private quantity in world state: %v", err)
+		}
+	}
 
-	copyB := *b              // Create a copy of BuyBid to avoid modifying the original
-	copyB.PrivatePrice = nil // Temporarily unset PrivatePrice to avoid storing it in the public world state
+	copyB := *b                 // Create a copy of BuyBid to avoid modifying the original
+	copyB.PrivatePrice = nil    // Temporarily unset PrivatePrice to avoid storing it in the public world state
+	copyB.PrivateQuantity = nil // Temporarily unset PrivateQuantity to avoid storing it in the public world state
 
 	var err error
 	if err = ccstate.PutStateWithCompositeKey(stub, BUY_BID_PREFIX, copyB.GetID(), copyB); err != nil {
@@ -168,7 +175,7 @@ func (b *BuyBid) DeepCopy() *BuyBid {
 	return &copyB
 }
 
-func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity int64) error {
+func publishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, withPrivateQuantity bool) error {
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
 		return err
@@ -199,11 +206,20 @@ func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity
 	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
 
 	buyBid := &BuyBid{
-		BuyerID:     buyerID,
-		Timestamp:   bidTSStr,
-		AskQuantity: quantity,
+		BuyerID:   buyerID,
+		Timestamp: bidTSStr,
+	}
+	if withPrivateQuantity {
+		buyBid.PrivateQuantity = &PrivateQuantity{
+			AskQuantity: quantity,
+		}
+	} else {
+		buyBid.AskQuantity = quantity
 	}
 	bidID := *(buyBid.GetID())
+	if buyBid.PrivateQuantity != nil {
+		buyBid.PrivateQuantity.BidID = bidID[0]
+	}
 
 	privatePrice := &PrivatePrice{
 		Price: price,
@@ -219,6 +235,22 @@ func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity
 	}
 
 	return nil
+}
+
+func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity int64) error {
+	return publishBuyBid(stub, quantity, false)
+}
+
+func PublishBuyBidWithPrivateQuantity(stub shim.ChaincodeStubInterface) error {
+	quantityBytes, err := ccstate.GetTransientData(stub, "quantity")
+	if err != nil {
+		return err
+	}
+	quantity, err := strconv.ParseInt(string(quantityBytes), 10, 64)
+	if err != nil {
+		return fmt.Errorf("could not parse quantity: %v", err)
+	}
+	return publishBuyBid(stub, quantity, true)
 }
 
 func RetractBuyBid(stub shim.ChaincodeStubInterface, bidID []string) error {

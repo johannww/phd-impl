@@ -302,6 +302,9 @@ func genRandomBidsForMintCredits(testData *utils_test.TestData, issueStart time.
 			BuyerID:     buyerIds[buyerIdIndex].Pseudonym,
 			AskQuantity: bidAskQuantity,
 			Timestamp:   issueTsStr,
+			PrivateQuantity: &bids.PrivateQuantity{
+				AskQuantity: bidAskQuantity,
+			},
 			PrivatePrice: &bids.PrivatePrice{
 				Price: buyPrice,
 			},
