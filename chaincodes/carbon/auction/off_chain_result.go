@@ -25,4 +25,3 @@ func ProcessOffChainAuctionResult(stub shim.ChaincodeStubInterface, resultBytesP
 	}
 	return processCoupledAuctionResult(stub, coupledResultPub, coupledResultPvt)
 }
-
