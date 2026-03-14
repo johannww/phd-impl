@@ -74,6 +74,8 @@ type MockStub struct {
 
 	Decorations map[string][]byte
 
+	writeBatch *mockWriteBatch
+
 	mutex sync.Mutex
 }
 
@@ -217,6 +219,14 @@ func (stub *MockStub) GetPrivateDataHash(collection, key string) ([]byte, error)
 func (stub *MockStub) PutPrivateData(collection string, key string, value []byte) error {
 	stub.mutex.Lock()
 	defer stub.mutex.Unlock()
+	if stub.writeBatch != nil {
+		stub.writeBatch.putState(collection, key, value)
+		return nil
+	}
+	return stub.putPrivateDataLogic(collection, key, value)
+}
+
+func (stub *MockStub) putPrivateDataLogic(collection string, key string, value []byte) error {
 	m, in := stub.PvtState[collection]
 	if !in {
 		stub.PvtState[collection] = make(map[string][]byte)
@@ -232,6 +242,14 @@ func (stub *MockStub) PutPrivateData(collection string, key string, value []byte
 func (stub *MockStub) DelPrivateData(collection string, key string) error {
 	stub.mutex.Lock()
 	defer stub.mutex.Unlock()
+	if stub.writeBatch != nil {
+		stub.writeBatch.delState(collection, key)
+		return nil
+	}
+	return stub.delPrivateDataLogic(collection, key)
+}
+
+func (stub *MockStub) delPrivateDataLogic(collection string, key string) error {
 	// DelPrivateData ...
 	m, in := stub.PvtState[collection]
 	if !in {
@@ -295,9 +313,17 @@ func (stub *MockStub) delStateLogic(key string) {
 func (stub *MockStub) PutState(key string, value []byte) error {
 	stub.mutex.Lock()
 	defer stub.mutex.Unlock()
+	return stub.putStateLogic(key, value)
+}
+
+func (stub *MockStub) putStateLogic(key string, value []byte) error {
 	if stub.TxID == "" {
 		err := errors.New("cannot PutState without a transactions - call stub.MockTransactionStart()?")
 		return err
+	}
+	if stub.writeBatch != nil {
+		stub.writeBatch.putState("", key, value)
+		return nil
 	}
 
 	// If the value is nil or empty, delete the key
@@ -339,6 +365,10 @@ func (stub *MockStub) PutState(key string, value []byte) error {
 func (stub *MockStub) DelState(key string) error {
 	stub.mutex.Lock()
 	defer stub.mutex.Unlock()
+	if stub.writeBatch != nil {
+		stub.writeBatch.delState("", key)
+		return nil
+	}
 	stub.delStateLogic(key)
 
 	return nil
@@ -591,6 +621,11 @@ func (stub *MockStub) SetEvent(name string, payload []byte) error {
 }
 
 func (stub *MockStub) setPrivateDataValidationParameter(collection, key string, ep []byte) error {
+	if stub.writeBatch != nil {
+		stub.writeBatch.putValidationParameter(collection, key, ep)
+		return nil
+	}
+
 	m, in := stub.EndorsementPolicies[collection]
 	if !in {
 		stub.EndorsementPolicies[collection] = make(map[string][]byte)
@@ -650,16 +685,55 @@ func (stub *MockStub) GetAllStatesCompositeKeyWithPagination(pageSize int32,
 
 // StartWriteBatch enables a mode where all changes are not immediately forwarded to the peer
 func (stub *MockStub) StartWriteBatch() {
-	panic("StartWriteBatch is not tested yet")
 	stub.mutex.Lock()
 	defer stub.mutex.Unlock()
+	if stub.writeBatch == nil {
+		stub.writeBatch = newMockWriteBatch()
+	}
 }
 
 // FinishWriteBatch sends accumulated changes in large batches to the peer
 func (stub *MockStub) FinishWriteBatch() error {
-	panic("FinishWriteBatch is not tested yet")
 	stub.mutex.Lock()
 	defer stub.mutex.Unlock()
+	if stub.writeBatch == nil {
+		return nil
+	}
+
+	for key, record := range stub.writeBatch.writes {
+		switch record.Operation {
+		case mockBatchPutState:
+			if key.Collection == "" {
+				previousBatch := stub.writeBatch
+				stub.writeBatch = nil
+				err := stub.putStateLogic(key.Key, record.Value)
+				stub.writeBatch = previousBatch
+				if err != nil {
+					return err
+				}
+			} else {
+				if err := stub.putPrivateDataLogic(key.Collection, key.Key, record.Value); err != nil {
+					return err
+				}
+			}
+		case mockBatchDelState:
+			if key.Collection == "" {
+				stub.delStateLogic(key.Key)
+			} else {
+				if err := stub.delPrivateDataLogic(key.Collection, key.Key); err != nil {
+					return err
+				}
+			}
+		case mockBatchPutValidationParameter:
+			if stub.EndorsementPolicies[key.Collection] == nil {
+				stub.EndorsementPolicies[key.Collection] = make(map[string][]byte)
+			}
+			stub.EndorsementPolicies[key.Collection][key.Key] = record.Value
+		default:
+			return fmt.Errorf("unsupported write batch operation: %d", record.Operation)
+		}
+	}
+	stub.writeBatch = nil
 	return nil
 }
 
