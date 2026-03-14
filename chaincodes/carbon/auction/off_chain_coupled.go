@@ -178,7 +178,17 @@ func (a *AuctionCoupledRunner) collectAdjustedBids(
 			continue
 		}
 
-		public.AdjustedSellBids = append(public.AdjustedSellBids, sellBid)
+		sellBidPublic := &bids.SellBid{
+			SellerID:  sellBid.SellerID,
+			CreditID:  sellBid.CreditID,
+			Timestamp: sellBid.Timestamp,
+			Quantity:  sellBid.Quantity,
+		}
+		sellBidPrivate := &bids.SellBid{
+			PrivatePrice: sellBid.PrivatePrice,
+		}
+		public.AdjustedSellBids = append(public.AdjustedSellBids, sellBidPublic)
+		private.AdjustedSellBids = append(private.AdjustedSellBids, sellBidPrivate)
 	}
 
 	for i, buyBid := range buyBids {
@@ -310,6 +320,17 @@ func NewSingleCoupledResults(
 
 	if len(pubResult.MatchedBidsPublic) != len(pvtResult.MatchedBidsPrivate) {
 		return nil, fmt.Errorf("matched bids length mismatch between public and private results")
+	}
+
+	mergedAdjustedSellBids := make([]*bids.SellBid, len(pubResult.AdjustedSellBids))
+	for i := range pubResult.AdjustedSellBids {
+		mergedAdjustedSellBids[i] = &bids.SellBid{
+			SellerID:     pubResult.AdjustedSellBids[i].SellerID,
+			CreditID:     pubResult.AdjustedSellBids[i].CreditID,
+			Timestamp:    pubResult.AdjustedSellBids[i].Timestamp,
+			Quantity:     pubResult.AdjustedSellBids[i].Quantity,
+			PrivatePrice: pvtResult.AdjustedSellBids[i].PrivatePrice,
+		}
 	}
 
 	mergedAdjustedBuyBids := make([]*bids.BuyBid, len(pubResult.AdjustedBuyBids))
