@@ -107,10 +107,13 @@ func (c *CarbonContract) CreateBuyBid(ctx contractapi.TransactionContextInterfac
 	})
 }
 
-// TODO: implement
-func (c *CarbonContract) CreateSellBid(ctx contractapi.TransactionContextInterface) (string, error) {
-	return c.withMetricsStringResult("CreateSellBid", func() (string, error) {
-		return "Not Implemented Yet", nil
+func (c *CarbonContract) CreateSellBid(
+	ctx contractapi.TransactionContextInterface,
+	quantity int64,
+	creditID []string,
+) error {
+	return c.withMetricsErr("CreateSellBid", func() error {
+		return bids.PublishSellBid(ctx.GetStub(), quantity, creditID)
 	})
 }
 
