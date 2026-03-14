@@ -19,9 +19,9 @@ type OffChainCoupledAuctionResult struct {
 	AuctionID               uint64             `json:"auctionID"`
 	MatchedBidsPublic       []*bids.MatchedBid `json:"matchedBidsPublic"`
 	MatchedBidsPrivate      []*bids.MatchedBid `json:"matchedBidsPrivate"`
-	AdjustedSellBidsPublic  []*bids.SellBid    `json:"adjustedSellBids"`
+	AdjustedSellBidsPublic  []*bids.SellBid    `json:"adjustedSellBidsPublic"`
 	AdjustedSellBidsPrivate []*bids.SellBid    `json:"adjustedSellBidsPrivate"`
-	AdjustedBuyBidsPublic   []*bids.BuyBid     `json:"adjustedBuyBids"`
+	AdjustedBuyBidsPublic   []*bids.BuyBid     `json:"adjustedBuyBidsPublic"`
 	AdjustedBuyBidsPrivate  []*bids.BuyBid     `json:"adjustedBuyBidsPrivate"`
 }
 
