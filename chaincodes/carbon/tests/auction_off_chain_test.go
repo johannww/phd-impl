@@ -16,7 +16,16 @@ import (
 )
 
 func TestOffChainIndependentAuction(t *testing.T) {
-	stub, testData := genTestDataAndStub()
+	nOwners := 10
+	nChunks := 3
+	nCompanies := 5
+	startTimestamp := "2023-01-01T00:00:00Z"
+	endTimestamp := "2023-01-01T00:30:00Z"
+	issueInterval := 30 * time.Second
+	stub, testData := genTestDataAndStub(
+		nOwners, nChunks, nCompanies,
+		startTimestamp, endTimestamp, issueInterval,
+	)
 
 	issueStart, err := time.Parse(time.RFC3339, "2023-01-01T00:31:00Z")
 	require.NoError(t, err)
@@ -46,7 +55,16 @@ func TestOffChainIndependentAuction(t *testing.T) {
 }
 
 func TestOffChainIndependentAuctionWithRandomBids(t *testing.T) {
-	stub, testData := genTestDataAndStub()
+	nOwners := 10
+	nChunks := 3
+	nCompanies := 5
+	startTimestamp := "2023-01-01T00:00:00Z"
+	endTimestamp := "2023-01-01T00:30:00Z"
+	issueInterval := 30 * time.Second
+	stub, testData := genTestDataAndStub(
+		nOwners, nChunks, nCompanies,
+		startTimestamp, endTimestamp, issueInterval,
+	)
 
 	issueStart, err := time.Parse(time.RFC3339, "2023-01-01T00:31:00Z")
 	require.NoError(t, err)
@@ -76,7 +94,16 @@ func TestOffChainIndependentAuctionWithRandomBids(t *testing.T) {
 }
 
 func TestOffChainCoupledAuction(t *testing.T) {
-	stub, testData := genTestDataAndStub()
+	nOwners := 10
+	nChunks := 3
+	nCompanies := 5
+	startTimestamp := "2023-01-01T00:00:00Z"
+	endTimestamp := "2023-01-01T00:30:00Z"
+	issueInterval := 30 * time.Second
+	stub, testData := genTestDataAndStub(
+		nOwners, nChunks, nCompanies,
+		startTimestamp, endTimestamp, issueInterval,
+	)
 
 	issueStart, err := time.Parse(time.RFC3339, "2023-01-01T00:31:00Z")
 	require.NoError(t, err)
@@ -206,13 +233,11 @@ func verifyBidsQuantityConsistency(
 	require.Equal(t, totalBuyBidQuantity, totalMatched+totalAdjusted, "Sum of matched and adjusted bids quantities must equal total bids quantity")
 }
 
-func genTestDataAndStub() (*mocks.MockStub, *utils_test.TestData) {
-	nOwners := 10
-	nChunks := 3
-	nCompanies := 5
-	startTimestamp := "2023-01-01T00:00:00Z"
-	endTimestamp := "2023-01-01T00:30:00Z"
-	issueInterval := 30 * time.Second
+func genTestDataAndStub(
+	nOwners int, nChunks int, nCompanies int,
+	startTimestamp string, endTimestamp string,
+	issueInterval time.Duration,
+) (*mocks.MockStub, *utils_test.TestData) {
 	testData := utils_test.GenData(
 		nOwners, nChunks, nCompanies,
 		startTimestamp, endTimestamp, issueInterval,
