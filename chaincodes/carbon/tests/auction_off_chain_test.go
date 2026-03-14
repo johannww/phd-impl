@@ -146,7 +146,9 @@ func TestOffChainCoupledAuction(t *testing.T) {
 	verifyMultiplierMultiplyAsExpected(t, mergedMatchedBids,
 		[]policies.PolicyFunc{thirtyPercentPolicy, thirtyPercentPolicy})
 	verifyPrivateDataIsInPrivatePart(t, auctionResultPub, auctionResultPvt)
-	verifyAdjustedBidsConsistency(t, mergedMatchedBids, auctionResult.AdjustedSellBids, auctionResult.AdjustedBuyBids)
+
+	adjustedSellBids, adjustedBuyBids := auctionResult.MergeIntoSingleAdjustedBids()
+	verifyAdjustedBidsConsistency(t, mergedMatchedBids, adjustedSellBids, adjustedBuyBids)
 
 }
 
@@ -204,12 +206,18 @@ func verifyPrivateDataIsInPrivatePart(t *testing.T, auctionResultPub, auctionRes
 		require.NotNil(t, privMatchedBid.PrivatePrice, "Private part of matched bid %d should have private price", i)
 	}
 
-	for i, pubBuyBid := range auctionResultPub.AdjustedBuyBids {
-		privBuyBid := auctionResultPvt.AdjustedBuyBids[i]
+	for i, pubBuyBid := range auctionResultPub.AdjustedBuyBidsPublic {
+		privBuyBid := auctionResultPvt.AdjustedBuyBidsPrivate[i]
 		require.Nil(t, pubBuyBid.PrivatePrice, "Public part of adjusted buy bid %d should not have private price", i)
 		require.Nil(t, pubBuyBid.PrivateQuantity, "Public part of adjusted buy bid %d should not have private quantity", i)
 		require.NotNil(t, privBuyBid.PrivatePrice, "Private part of adjusted buy bid %d should have private price", i)
 		require.NotNil(t, privBuyBid.PrivateQuantity, "Private part of adjusted buy bid %d should have private quantity", i)
+	}
+
+	for i, pubSellBid := range auctionResultPub.AdjustedSellBidsPublic {
+		privSellBid := auctionResultPvt.AdjustedSellBidsPrivate[i]
+		require.Nil(t, pubSellBid.PrivatePrice, "Public part of adjusted sell bid %d should not have private price", i)
+		require.NotNil(t, privSellBid.PrivatePrice, "Private part of adjusted sell bid %d should have private price", i)
 	}
 }
 

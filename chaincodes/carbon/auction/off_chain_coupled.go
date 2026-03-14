@@ -16,11 +16,13 @@ import (
 // It contains the public and private part of the matched bids.
 // WARN: MatchedBidsPrivate must be sent as TransientData to avoid leaking private information.
 type OffChainCoupledAuctionResult struct {
-	AuctionID          uint64             `json:"auctionID"`
-	MatchedBidsPublic  []*bids.MatchedBid `json:"matchedBidsPublic"`
-	MatchedBidsPrivate []*bids.MatchedBid `json:"matchedBidsPrivate"`
-	AdjustedSellBids   []*bids.SellBid    `json:"adjustedSellBids"`
-	AdjustedBuyBids    []*bids.BuyBid     `json:"adjustedBuyBids"`
+	AuctionID               uint64             `json:"auctionID"`
+	MatchedBidsPublic       []*bids.MatchedBid `json:"matchedBidsPublic"`
+	MatchedBidsPrivate      []*bids.MatchedBid `json:"matchedBidsPrivate"`
+	AdjustedSellBidsPublic  []*bids.SellBid    `json:"adjustedSellBids"`
+	AdjustedSellBidsPrivate []*bids.SellBid    `json:"adjustedSellBidsPrivate"`
+	AdjustedBuyBidsPublic   []*bids.BuyBid     `json:"adjustedBuyBids"`
+	AdjustedBuyBidsPrivate  []*bids.BuyBid     `json:"adjustedBuyBidsPrivate"`
 }
 
 func (r *OffChainCoupledAuctionResult) MergeIntoSingleMatchedBids() ([]*bids.MatchedBid, error) {
@@ -41,6 +43,35 @@ func (r *OffChainCoupledAuctionResult) MergeIntoSingleMatchedBids() ([]*bids.Mat
 		merged[i].SellBid.PrivatePrice = r.MatchedBidsPrivate[i].SellBid.PrivatePrice
 	}
 	return merged, nil
+}
+
+func (r *OffChainCoupledAuctionResult) MergeIntoSingleAdjustedBids() (
+	mergedAdjustedSellBids []*bids.SellBid,
+	mergedAdjustedBuyBids []*bids.BuyBid,
+) {
+
+	mergedAdjustedSellBids = make([]*bids.SellBid, len(r.AdjustedSellBidsPublic))
+	for i := range r.AdjustedSellBidsPublic {
+		mergedAdjustedSellBids[i] = &bids.SellBid{
+			SellerID:     r.AdjustedSellBidsPublic[i].SellerID,
+			CreditID:     r.AdjustedSellBidsPublic[i].CreditID,
+			Timestamp:    r.AdjustedSellBidsPublic[i].Timestamp,
+			Quantity:     r.AdjustedSellBidsPublic[i].Quantity,
+			PrivatePrice: r.AdjustedSellBidsPrivate[i].PrivatePrice,
+		}
+	}
+
+	mergedAdjustedBuyBids = make([]*bids.BuyBid, len(r.AdjustedBuyBidsPublic))
+	for i := range r.AdjustedBuyBidsPublic {
+		mergedAdjustedBuyBids[i] = &bids.BuyBid{
+			BuyerID:         r.AdjustedBuyBidsPublic[i].BuyerID,
+			Timestamp:       r.AdjustedBuyBidsPublic[i].Timestamp,
+			PrivateQuantity: r.AdjustedBuyBidsPrivate[i].PrivateQuantity,
+			PrivatePrice:    r.AdjustedBuyBidsPrivate[i].PrivatePrice,
+		}
+	}
+
+	return
 }
 
 // Multiplier represents a multiplier for a pair of bids.
@@ -168,10 +199,10 @@ func (a *AuctionCoupledRunner) collectAdjustedBids(
 	adjustedSellBidsMap map[int]bool,
 	adjustedBuyBidsMap map[int]bool,
 ) {
-	for _, result := range []*OffChainCoupledAuctionResult{public, private} {
-		result.AdjustedSellBids = make([]*bids.SellBid, 0, len(adjustedSellBidsMap))
-		result.AdjustedBuyBids = make([]*bids.BuyBid, 0, len(adjustedBuyBidsMap))
-	}
+	public.AdjustedSellBidsPublic = make([]*bids.SellBid, 0, len(adjustedSellBidsMap))
+	public.AdjustedSellBidsPublic = make([]*bids.SellBid, 0, len(adjustedBuyBidsMap))
+	private.AdjustedSellBidsPrivate = make([]*bids.SellBid, 0, len(adjustedSellBidsMap))
+	private.AdjustedBuyBidsPrivate = make([]*bids.BuyBid, 0, len(adjustedBuyBidsMap))
 
 	for i, sellBid := range sellBids {
 		if !adjustedSellBidsMap[i] {
@@ -187,8 +218,8 @@ func (a *AuctionCoupledRunner) collectAdjustedBids(
 		sellBidPrivate := &bids.SellBid{
 			PrivatePrice: sellBid.PrivatePrice,
 		}
-		public.AdjustedSellBids = append(public.AdjustedSellBids, sellBidPublic)
-		private.AdjustedSellBids = append(private.AdjustedSellBids, sellBidPrivate)
+		public.AdjustedSellBidsPublic = append(public.AdjustedSellBidsPublic, sellBidPublic)
+		private.AdjustedSellBidsPrivate = append(private.AdjustedSellBidsPrivate, sellBidPrivate)
 	}
 
 	for i, buyBid := range buyBids {
@@ -205,8 +236,8 @@ func (a *AuctionCoupledRunner) collectAdjustedBids(
 			Timestamp: buyBid.Timestamp,
 		}
 
-		public.AdjustedBuyBids = append(public.AdjustedBuyBids, buyBidPublic)
-		private.AdjustedBuyBids = append(private.AdjustedBuyBids, buyBidPrivate)
+		public.AdjustedBuyBidsPublic = append(public.AdjustedBuyBidsPublic, buyBidPublic)
+		private.AdjustedBuyBidsPrivate = append(private.AdjustedBuyBidsPrivate, buyBidPrivate)
 	}
 }
 
@@ -322,33 +353,14 @@ func NewSingleCoupledResults(
 		return nil, fmt.Errorf("matched bids length mismatch between public and private results")
 	}
 
-	mergedAdjustedSellBids := make([]*bids.SellBid, len(pubResult.AdjustedSellBids))
-	for i := range pubResult.AdjustedSellBids {
-		mergedAdjustedSellBids[i] = &bids.SellBid{
-			SellerID:     pubResult.AdjustedSellBids[i].SellerID,
-			CreditID:     pubResult.AdjustedSellBids[i].CreditID,
-			Timestamp:    pubResult.AdjustedSellBids[i].Timestamp,
-			Quantity:     pubResult.AdjustedSellBids[i].Quantity,
-			PrivatePrice: pvtResult.AdjustedSellBids[i].PrivatePrice,
-		}
-	}
-
-	mergedAdjustedBuyBids := make([]*bids.BuyBid, len(pubResult.AdjustedBuyBids))
-	for i := range pubResult.AdjustedBuyBids {
-		mergedAdjustedBuyBids[i] = &bids.BuyBid{
-			BuyerID:         pubResult.AdjustedBuyBids[i].BuyerID,
-			Timestamp:       pubResult.AdjustedBuyBids[i].Timestamp,
-			PrivateQuantity: pvtResult.AdjustedBuyBids[i].PrivateQuantity,
-			PrivatePrice:    pvtResult.AdjustedBuyBids[i].PrivatePrice,
-		}
-	}
-
 	mergedResult := &OffChainCoupledAuctionResult{
-		AuctionID:          pubResult.AuctionID,
-		MatchedBidsPublic:  pubResult.MatchedBidsPublic,
-		MatchedBidsPrivate: pvtResult.MatchedBidsPrivate,
-		AdjustedSellBids:   pubResult.AdjustedSellBids,
-		AdjustedBuyBids:    mergedAdjustedBuyBids,
+		AuctionID:               pubResult.AuctionID,
+		MatchedBidsPublic:       pubResult.MatchedBidsPublic,
+		MatchedBidsPrivate:      pvtResult.MatchedBidsPrivate,
+		AdjustedSellBidsPublic:  pubResult.AdjustedSellBidsPublic,
+		AdjustedSellBidsPrivate: pvtResult.AdjustedSellBidsPrivate,
+		AdjustedBuyBidsPublic:   pubResult.AdjustedBuyBidsPublic,
+		AdjustedBuyBidsPrivate:  pvtResult.AdjustedBuyBidsPrivate,
 	}
 	return mergedResult, nil
 }
