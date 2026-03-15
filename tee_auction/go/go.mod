@@ -1,8 +1,6 @@
 module github.com/johannww/phd-impl/tee_auction/go
 
-go 1.24.4
-
-toolchain go1.24.6
+go 1.26.0
 
 require (
 	github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250820140128-4814b442cf71
