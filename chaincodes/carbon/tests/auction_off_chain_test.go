@@ -11,6 +11,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
+	"github.com/johannww/phd-impl/chaincodes/carbon/state"
 	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
 	utils_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/utils"
 	"github.com/stretchr/testify/require"
@@ -159,6 +160,14 @@ func TestOffChainCoupledAuction(t *testing.T) {
 	err = auction.ProcessOffChainAuctionResult(stub, resultPubBytes, resultPvtBytes)
 	require.NoError(t, err, "Failed to process off-chain auction result")
 	stub.MockTransactionEnd("process-auction-result-tx")
+
+	// verify matched bids exist in world state after processing auction result
+	stub.MockTransactionStart("get-matched-bids-tx")
+	matchedBids, err := state.GetStatesByPartialCompositeKey[bids.MatchedBid](stub, bids.MATCHED_BID_PREFIX, []string{})
+	require.NoError(t, err, "Failed to get matched bids from world state")
+	require.NotZero(t, len(matchedBids), "There should be matched bids in world state after processing auction result")
+	require.Equal(t, len(mergedMatchedBids), len(matchedBids), "Number of matched bids in world state should match number of merged matched bids")
+	stub.MockTransactionEnd("get-matched-bids-tx")
 }
 
 // verifyMultiplierMultiplyAsExpected tests the multiplying logic.
