@@ -6,9 +6,9 @@
 package mocks
 
 import (
-	"container/list"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"unicode/utf8"
@@ -44,8 +44,12 @@ type MockStub struct {
 	// State keeps name value pairs
 	State map[string][]byte
 
-	// Keys stores the list of mapped values in lexical order
-	Keys *list.List
+	// keySet tracks existing public-state keys.
+	keySet map[string]struct{}
+	// sortedKeys caches keySet in lexical order for range iterators.
+	sortedKeys []string
+	// sortedKeysDirty marks when sortedKeys cache needs rebuild.
+	sortedKeysDirty bool
 
 	// registered list of other MockStub chaincodes that can be called from this MockStub
 	Invokables map[string]*MockStub
@@ -299,13 +303,25 @@ func (stub *MockStub) GetState(key string) ([]byte, error) {
 	return value, nil
 }
 
-func (stub *MockStub) delStateLogic(key string) {
-	delete(stub.State, key)
+func (stub *MockStub) getSortedKeysLocked() []string {
+	if !stub.sortedKeysDirty {
+		return stub.sortedKeys
+	}
+	sorted := make([]string, 0, len(stub.keySet))
+	for key := range stub.keySet {
+		sorted = append(sorted, key)
+	}
+	sort.Strings(sorted)
+	stub.sortedKeys = sorted
+	stub.sortedKeysDirty = false
+	return stub.sortedKeys
+}
 
-	for elem := stub.Keys.Front(); elem != nil; elem = elem.Next() {
-		if strings.Compare(key, elem.Value.(string)) == 0 {
-			stub.Keys.Remove(elem)
-		}
+func (stub *MockStub) delStateLogic(key string) {
+	if _, exists := stub.State[key]; exists {
+		delete(stub.State, key)
+		delete(stub.keySet, key)
+		stub.sortedKeysDirty = true
 	}
 }
 
@@ -332,30 +348,9 @@ func (stub *MockStub) putStateLogic(key string, value []byte) error {
 		return nil
 	}
 	stub.State[key] = value
-
-	// insert key into ordered list of keys
-	for elem := stub.Keys.Front(); elem != nil; elem = elem.Next() {
-		elemValue := elem.Value.(string)
-		comp := strings.Compare(key, elemValue)
-		if comp < 0 {
-			// key < elem, insert it before elem
-			stub.Keys.InsertBefore(key, elem)
-			break
-		} else if comp == 0 {
-			// keys exists, no need to change
-			break
-		} else { // comp > 0
-			// key > elem, keep looking unless this is the end of the list
-			if elem.Next() == nil {
-				stub.Keys.PushBack(key)
-				break
-			}
-		}
-	}
-
-	// special case for empty Keys list
-	if stub.Keys.Len() == 0 {
-		stub.Keys.PushFront(key)
+	if _, exists := stub.keySet[key]; !exists {
+		stub.keySet[key] = struct{}{}
+		stub.sortedKeysDirty = true
 	}
 
 	return nil
@@ -385,7 +380,8 @@ func (stub *MockStub) GetStateByRange(startKey, endKey string) (shim.StateQueryI
 	// if err := validateSimpleKeys(startKey, endKey); err != nil {
 	// 	return nil, err
 	// }
-	return NewMockStateRangeQueryIterator(stub, startKey, endKey), nil
+	keysSnapshot := append([]string(nil), stub.getSortedKeysLocked()...)
+	return NewMockStateRangeQueryIterator(stub, startKey, endKey, keysSnapshot), nil
 }
 
 // To ensure that simple keys do not go into composite key namespace,
@@ -436,7 +432,8 @@ func (stub *MockStub) GetStateByPartialCompositeKey(objectType string, attribute
 	if err != nil {
 		return nil, err
 	}
-	return NewMockStateRangeQueryIterator(stub, partialCompositeKey, partialCompositeKey+string(utf8.MaxRune)), nil
+	keysSnapshot := append([]string(nil), stub.getSortedKeysLocked()...)
+	return NewMockStateRangeQueryIterator(stub, partialCompositeKey, partialCompositeKey+string(utf8.MaxRune), keysSnapshot), nil
 }
 
 // CreateCompositeKey combines the list of attributes
@@ -473,22 +470,21 @@ func (stub *MockStub) GetStateByRangeWithPagination(startKey, endKey string, pag
 	}
 
 	metadata := &pb.QueryResponseMetadata{Bookmark: ""}
-	stateIterator := NewMockStateRangeQueryIterator(stub, startKey, endKey)
+	keysSnapshot := append([]string(nil), stub.getSortedKeysLocked()...)
+	stateIterator := NewMockStateRangeQueryIterator(stub, startKey, endKey, keysSnapshot)
 
-	for elem := stub.Keys.Front(); elem != nil; elem = elem.Next() {
-		elementKey := elem.Value.(string)
-		if strings.Compare(elementKey, endKey) < 0 &&
-			strings.Compare(elementKey, startKey) >= 0 {
-			stateIterator.Current = elem
+	startIdx := len(keysSnapshot)
+	for i, elementKey := range keysSnapshot {
+		if strings.Compare(elementKey, endKey) < 0 && strings.Compare(elementKey, startKey) >= 0 {
+			startIdx = i
 			break
 		}
 	}
+	stateIterator.Current = startIdx
 
-	elem := stateIterator.Current
-	for ; elem != nil; elem = elem.Next() {
-		elementKey := elem.Value.(string)
-		if strings.Compare(elementKey, endKey) > 0 ||
-			strings.Compare(elementKey, startKey) < 0 {
+	for i := startIdx; i < len(keysSnapshot); i++ {
+		elementKey := keysSnapshot[i]
+		if strings.Compare(elementKey, endKey) > 0 || strings.Compare(elementKey, startKey) < 0 {
 			continue
 		}
 		if metadata.FetchedRecordsCount == pageSize {
@@ -777,10 +773,12 @@ func NewMockStub(name string, cc shim.Chaincode) *MockStub {
 	s.Name = name
 	s.cc = cc
 	s.State = make(map[string][]byte)
+	s.keySet = make(map[string]struct{})
+	s.sortedKeys = []string{}
+	s.sortedKeysDirty = false
 	s.PvtState = make(map[string]map[string][]byte)
 	s.EndorsementPolicies = make(map[string]map[string][]byte)
 	s.Invokables = make(map[string]*MockStub)
-	s.Keys = list.New()
 	s.ChaincodeEventsChannel = make(chan *pb.ChaincodeEvent, 100) //define large capacity for non-blocking setEvent calls.
 	s.Decorations = make(map[string][]byte)
 	s.mutex = sync.Mutex{}
@@ -798,7 +796,8 @@ type MockStateRangeQueryIterator struct {
 	Stub     *MockStub
 	StartKey string
 	EndKey   string
-	Current  *list.Element
+	Keys     []string
+	Current  int
 }
 
 // HasNext returns true if the range query iterator contains additional keys
@@ -809,25 +808,23 @@ func (iter *MockStateRangeQueryIterator) HasNext() bool {
 		return false
 	}
 
-	if iter.Current == nil {
+	if iter.Current >= len(iter.Keys) {
 		return false
 	}
 
-	current := iter.Current
-	for current != nil {
+	for i := iter.Current; i < len(iter.Keys); i++ {
 		// if this is an open-ended query for all keys, return true
 		if iter.StartKey == "" && iter.EndKey == "" {
 			return true
 		}
-		comp1 := strings.Compare(current.Value.(string), iter.StartKey)
-		comp2 := strings.Compare(current.Value.(string), iter.EndKey)
+		comp1 := strings.Compare(iter.Keys[i], iter.StartKey)
+		comp2 := strings.Compare(iter.Keys[i], iter.EndKey)
 		if comp1 >= 0 {
 			if comp2 < 0 {
 				return true
 			}
 			return false
 		}
-		current = current.Next()
 	}
 	return false
 }
@@ -844,18 +841,18 @@ func (iter *MockStateRangeQueryIterator) Next() (*queryresult.KV, error) {
 		return nil, err
 	}
 
-	for iter.Current != nil {
-		comp1 := strings.Compare(iter.Current.Value.(string), iter.StartKey)
-		comp2 := strings.Compare(iter.Current.Value.(string), iter.EndKey)
+	for iter.Current < len(iter.Keys) {
+		key := iter.Keys[iter.Current]
+		comp1 := strings.Compare(key, iter.StartKey)
+		comp2 := strings.Compare(key, iter.EndKey)
 		// compare to start and end keys. or, if this is an open-ended query for
 		// all keys, it should always return the key and value
 		if (comp1 >= 0 && comp2 < 0) || (iter.StartKey == "" && iter.EndKey == "") {
-			key := iter.Current.Value.(string)
 			value, err := iter.Stub.GetState(key)
-			iter.Current = iter.Current.Next()
+			iter.Current++
 			return &queryresult.KV{Key: key, Value: value}, err
 		}
-		iter.Current = iter.Current.Next()
+		iter.Current++
 	}
 	err := errors.New("MockStateRangeQueryIterator.Next() went past end of range")
 	return nil, err
@@ -874,13 +871,14 @@ func (iter *MockStateRangeQueryIterator) Close() error {
 }
 
 // NewMockStateRangeQueryIterator ...
-func NewMockStateRangeQueryIterator(stub *MockStub, startKey string, endKey string) *MockStateRangeQueryIterator {
+func NewMockStateRangeQueryIterator(stub *MockStub, startKey string, endKey string, keys []string) *MockStateRangeQueryIterator {
 	iter := new(MockStateRangeQueryIterator)
 	iter.Closed = false
 	iter.Stub = stub
 	iter.StartKey = startKey
 	iter.EndKey = endKey
-	iter.Current = stub.Keys.Front()
+	iter.Keys = keys
+	iter.Current = 0
 	return iter
 }
 
