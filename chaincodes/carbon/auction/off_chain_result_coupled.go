@@ -41,15 +41,25 @@ func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainC
 func storeAdjustedBids(stub shim.ChaincodeStubInterface, result *OffChainCoupledAuctionResult) error {
 	mergedAdjustedSellBids, mergedAdjustedBuyBids := result.MergeIntoSingleAdjustedBids()
 
+	var err error
 	for _, mergedAdjustedSellBid := range mergedAdjustedSellBids {
-		err := mergedAdjustedSellBid.ToWorldState(stub)
+		if mergedAdjustedSellBid.Quantity == 0 {
+			err = mergedAdjustedSellBid.DeleteFromWorldState(stub)
+		} else {
+			err = mergedAdjustedSellBid.ToWorldState(stub)
+		}
 		if err != nil {
 			return fmt.Errorf("could not store merged adjusted sell bid: %v", err)
 		}
 	}
 
 	for _, mergedAdjustedBuyBid := range mergedAdjustedBuyBids {
-		err := mergedAdjustedBuyBid.ToWorldState(stub)
+		if mergedAdjustedBuyBid.PrivateQuantity.AskQuantity == 0 {
+			err = mergedAdjustedBuyBid.DeleteFromWorldState(stub)
+		} else {
+			err = mergedAdjustedBuyBid.ToWorldState(stub)
+		}
+
 		if err != nil {
 			return fmt.Errorf("could not store merged adjusted buy bid: %v", err)
 		}
