@@ -142,6 +142,7 @@ func getStatesByRange[T any](stub shim.ChaincodeStubInterface, startKey, endKey 
 
 		// If lastKey is not empty, we should read again.
 		// GetStateByRange is capped by "totalQueryLimit"
+		// See https://github.com/hyperledger/fabric/blob/57f91e9b60bcca109834dc2deb60157444863bae/sampleconfig/core.yaml#L689
 		if lastKey != "" {
 			startKey = lastKey + string(maxUnicodeRuneValue)
 		} else {
@@ -170,6 +171,7 @@ func getStatesBytesByRange(stub shim.ChaincodeStubInterface, startKey, endKey st
 
 		// If lastKey is not empty, we should read again.
 		// GetStateByRange is capped by "totalQueryLimit"
+		// See https://github.com/hyperledger/fabric/blob/57f91e9b60bcca109834dc2deb60157444863bae/sampleconfig/core.yaml#L689
 		if lastKey != "" {
 			startKey = lastKey + string(maxUnicodeRuneValue)
 		} else {
@@ -189,6 +191,7 @@ func readIteratorStates(stateIterator shim.StateQueryIteratorInterface) ([][]byt
 		if err != nil {
 			if strings.Contains(err.Error(), "invalid iterator state") {
 				// the error indicates that there is more keys to be fetched
+				// See https://github.com/hyperledger/fabric-chaincode-go/blob/fc2b4bb62e38eb681c621c9a46aa0fbd335732ff/shim/stub.go#L753
 				return statesInRange, lastKey, nil
 			}
 			return nil, "", fmt.Errorf("could not get next state by range: %v", err)
