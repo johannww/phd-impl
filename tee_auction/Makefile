@@ -2,6 +2,7 @@
 
 REGISTRY_NAME=carbonchain
 REGISTRY=ghcr.io/johannww/phd-exp
+AZ_QUIET=--only-show-errors --output none
 
 all: registry docker policy deploy verify-policy-image-layers
 
@@ -24,10 +25,10 @@ policy:
 	az confcom acipolicygen -a ./azure/arm_template.json
 
 deploy:
-	az deployment group create --resource-group carbon --template-file ./azure/arm_template.json
+	az deployment group create --resource-group carbon --template-file ./azure/arm_template.json $(AZ_QUIET)
 
 cleanup:
-	az container delete --resource-group carbon --name carbon-auction-container --yes
+	az container delete --resource-group carbon --name carbon-auction-container --yes $(AZ_QUIET)
 
 verify-policy-image-layers:
 	cd azure ; \
