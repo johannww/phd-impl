@@ -90,7 +90,7 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 		return fmt.Errorf("timestamp is empty")
 	}
 	if s.Quantity <= 0 {
-		return fmt.Errorf("askQuantity is not set")
+		return fmt.Errorf("Quantity is not set")
 	}
 
 	if s.Credit != nil {
