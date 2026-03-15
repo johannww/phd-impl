@@ -1,6 +1,7 @@
 package auction
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -11,7 +12,12 @@ import (
 func ProcessOffChainAuctionResult(stub shim.ChaincodeStubInterface, resultBytesPub, resultBytesPvt []byte) error {
 
 	indepResultPub, indepResultPvt := &OffChainIndepAuctionResult{}, &OffChainIndepAuctionResult{}
-	err1 := json.Unmarshal(resultBytesPub, indepResultPub)
+
+	// Ensure that OffChainCoupledAuctionResult cannot be decoded into OffChainIndepAuctionResult by disallowing unknown fields in the JSON
+	customDecoder := json.NewDecoder(bytes.NewReader(resultBytesPub))
+	customDecoder.DisallowUnknownFields()
+
+	err1 := customDecoder.Decode(indepResultPub)
 	err2 := json.Unmarshal(resultBytesPvt, indepResultPvt)
 	if err1 == nil && err2 == nil {
 		return processIndependentAuctionResult(stub, indepResultPub, indepResultPvt)
