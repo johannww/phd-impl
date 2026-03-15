@@ -14,6 +14,7 @@ NAMESPACE="${NAMESPACE:-fabric-experiments}"
 CHART_DIR="${CHART_DIR:-${SCRIPT_DIR}/../helm}"
 CHAINCODE_CHART_DIR="${CHAINCODE_CHART_DIR:-${CHART_DIR}/charts/chaincode-service}"
 CHAINCODE_RELEASE_NAME="${CHAINCODE_RELEASE_NAME:-${RELEASE_NAME}-chaincode}"
+TEE_AUCTION_DIR="${TEE_AUCTION_DIR:-${SCRIPT_DIR}/../../../tee_auction}"
 CPUS="${CPUS:-6}"
 MEMORY="${MEMORY:-12000}"
 
@@ -68,5 +69,8 @@ helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
   "${CC_SET_ARGS[@]}"
 
 . "${SCRIPT_DIR}/fetch_organizations.bash"
+
+echo "Deploying confidential container (tee_auction): docker, policy, deploy..."
+make -C "${TEE_AUCTION_DIR}" docker policy deploy
 
 echo "Done."
