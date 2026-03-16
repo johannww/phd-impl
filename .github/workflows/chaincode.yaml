@@ -5,6 +5,7 @@ on:
       - experiments
     paths:
       - "chaincodes/carbon/**"
+      - "chaincodes/interop/**"
       - ".github/workflows/chaincode.yaml"
   pull_request:
     branches:
@@ -16,9 +17,12 @@ jobs:
     env:
       GOPRIVATE: github.com/${{ github.repository }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chaincode: [carbon, interop]
     defaults:
       run:
-        working-directory: chaincodes/carbon
+        working-directory: chaincodes/${{ matrix.chaincode }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -33,8 +37,8 @@ jobs:
           TOKEN: ${{ github.token }}
         run: git config --global url."https://user:${TOKEN}@github.com".insteadOf "https://github.com"
 
-      - name: Build carbon chaincode
-        run: go work vendor && go build -o carbon ./cmd/carbon/main.go
+      - name: Build chaincode
+        run: go work vendor && go build -o ${{ matrix.chaincode }} ./cmd/${{ matrix.chaincode }}/main.go
 
       - name: Run the tests
         run: go test --tags=testing ./tests
@@ -45,6 +49,9 @@ jobs:
       GOPRIVATE: github.com/${{ github.repository }}
     needs: build-test-chaincode
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chaincode: [carbon, interop]
     permissions:
       packages: write
       contents: read
@@ -67,7 +74,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ghcr.io/${{ github.repository }}/carbon
+          images: ghcr.io/${{ github.repository }}/${{ matrix.chaincode }}
 
       - name: Configure git for private modules
         env:
@@ -75,7 +82,7 @@ jobs:
         run: git config --global url."https://user:${TOKEN}@github.com".insteadOf "https://github.com"
 
       - name: Vendor outside the container
-        working-directory: chaincodes/carbon
+        working-directory: chaincodes/${{ matrix.chaincode }}
         run: go work vendor
 
       - name: Build and push
@@ -83,8 +90,7 @@ jobs:
         with:
           push: true
           context: "."
-          file: "chaincodes/carbon/Dockerfile"
-          tags: ghcr.io/${{ github.repository }}/carbon:latest
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/carbon:latest
+          file: "chaincodes/${{ matrix.chaincode }}/Dockerfile"
+          tags: ghcr.io/${{ github.repository }}/${{ matrix.chaincode }}:latest
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/${{ matrix.chaincode }}:latest
           cache-to: type=inline
-
