@@ -30,7 +30,6 @@ type SerializedAuctionResultTEE struct {
 	TEECertDer   []byte `json:"teeCertDer"`
 }
 
-// TODOHP: finish auction running on tee
 func RunTEEAuction(
 	serializedAD *cc_auction.SerializedAuctionData,
 	privateKey ed25519.PrivateKey,
