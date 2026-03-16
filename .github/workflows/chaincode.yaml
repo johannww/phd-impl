@@ -76,7 +76,7 @@ jobs:
 
       - name: Vendor outside the container
         working-directory: chaincodes/carbon
-        run: go mod tidy && go mod vendor
+        run: go work vendor
 
       - name: Build and push
         uses: docker/build-push-action@v6
