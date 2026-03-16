@@ -282,11 +282,11 @@ func (a *AuctionCoupledRunner) mountPublicAndPrivateMatchedBid(
 // calculateClearingPriceAndQuantity calculates the clearing price and quantity for a pair of bids.
 // It considers the amount of extra credits the seller can provide based on the multiplier.
 // This is implemented according to the model described on our paper.
-// TODOHP: reflect: if the bid is satisfied, its multiplier is higher than other,
-// Thus, the pseudonym of the buyer is probably near the pseudonym of the seller.
-// This can lead to privacy issues. How can we deal with that?
-// - [X] After the matching, we can shuffle the matched bids to break the link between buyer and seller.
-// - We might have to hide the quantities in the bids
+// If the bid is satisfied, its multiplier is higher than other,
+// Thus, the order of matched bids implies a higher multiplier, which can be used to infer the buyer from the seller.
+// This can lead to privacy issues. To mitigate this, we take the following steps:
+// - [X] After the matching, we shuffle the matched bids to break the link between buyer and seller.
+// - [X] We hide the quantities in the bids
 func calculateClearingPriceAndQuantity(
 	sellBid *bids.SellBid,
 	buyBid *bids.BuyBid,
