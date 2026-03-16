@@ -54,7 +54,7 @@ while IFS= read -r codigo_imovel; do
 done <<< "${IDS}"
 
 if [[ "${FAILED}" -gt 0 ]]; then
-  echo "FAILED: ${FAILED}/${TOTAL} imoveis had errors." >&2
+  echo "FAIL: ${FAILED}/${TOTAL} imoveis had errors." >&2
   exit 1
 fi
 
