@@ -29,7 +29,8 @@ func main() {
 		reportUserData[i] = certHash[i]
 	}
 
-	reportBytes, err := report.GetAmdSevSnpReport(reportUserData)
+	fetcher := report.NewRealHardwareReportFetcher()
+	reportBytes, err := fetcher.FetchReport(reportUserData)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to get AMD SEV-SNP report: %v", err))
 	}

@@ -8,7 +8,17 @@ import (
 
 const USER_DATA_SIZE = attest.REPORT_DATA_SIZE
 
-func GetAmdSevSnpReport(reportUserData [USER_DATA_SIZE]byte) ([]byte, error) {
+type HardwareReportFetcher interface {
+	FetchReport(reportUserData [USER_DATA_SIZE]byte) ([]byte, error)
+}
+
+type RealHardwareReportFetcher struct{}
+
+func NewRealHardwareReportFetcher() HardwareReportFetcher {
+	return &RealHardwareReportFetcher{}
+}
+
+func (f *RealHardwareReportFetcher) FetchReport(reportUserData [USER_DATA_SIZE]byte) ([]byte, error) {
 	reportFetcher, err := attest.NewAttestationReportFetcher()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create attestation report fetcher: %v", err)
@@ -20,7 +30,6 @@ func GetAmdSevSnpReport(reportUserData [USER_DATA_SIZE]byte) ([]byte, error) {
 	}
 
 	return report, nil
-
 }
 
 func DeserializedReport(reportBytes []byte) (*attest.SNPAttestationReport, error) {

@@ -34,6 +34,7 @@ type SerializedAuctionResultTEE struct {
 func RunTEEAuction(
 	serializedAD *cc_auction.SerializedAuctionData,
 	privateKey ed25519.PrivateKey,
+	fetcher report.HardwareReportFetcher,
 ) (resultPub, resultPvt *SerializedAuctionResultTEE, err error) {
 	resultPub = &SerializedAuctionResultTEE{}
 	resultPvt = &SerializedAuctionResultTEE{}
@@ -62,8 +63,8 @@ func RunTEEAuction(
 	resultPvt.ReceivedHash = serializedAD.Sum
 
 	// get report on the results
-	err = resultPub.setHardwareSignature()
-	err2 := resultPvt.setHardwareSignature()
+	err = resultPub.setHardwareSignature(fetcher)
+	err2 := resultPvt.setHardwareSignature(fetcher)
 	if err != nil || err2 != nil {
 		return nil, nil, errors.Join(err, err2)
 	}
@@ -108,7 +109,7 @@ func (r *AuctionRunnerTEE) runAuctionFunction(auctionData *cc_auction.AuctionDat
 	return resultBytesPub, resultBytesPvt, nil
 }
 
-func (result *SerializedAuctionResultTEE) setHardwareSignature() error {
+func (result *SerializedAuctionResultTEE) setHardwareSignature(fetcher report.HardwareReportFetcher) error {
 	var err error
 	// Join ResultBytes and ReceivedHash to form the report user data
 	receivedResultAndBytes := []byte{}
@@ -116,7 +117,7 @@ func (result *SerializedAuctionResultTEE) setHardwareSignature() error {
 	receivedResultAndBytes = append(receivedResultAndBytes, result.ReceivedHash...)
 	reportUserData := sha512.Sum512(receivedResultAndBytes)
 
-	result.AmdReportBytes, err = report.GetAmdSevSnpReport(reportUserData)
+	result.AmdReportBytes, err = fetcher.FetchReport(reportUserData)
 	if err != nil {
 		return fmt.Errorf("Failed to get AMD SEV SNP report: %v", err)
 	}

@@ -9,6 +9,7 @@ import (
 	cc_auction "github.com/johannww/phd-impl/chaincodes/carbon/auction"
 	"github.com/johannww/phd-impl/tee_auction/go/api/metrics"
 	"github.com/johannww/phd-impl/tee_auction/go/auction"
+	"github.com/johannww/phd-impl/tee_auction/go/report"
 )
 
 // TODOHP: review metrics
@@ -30,7 +31,8 @@ func Auction(c *gin.Context, privateKey ed25519.PrivateKey, certDer []byte) {
 	}
 
 	start := time.Now()
-	auctionResultPub, auctionResultPvt, err := auction.RunTEEAuction(&serializedAD, privateKey)
+	fetcher := report.NewRealHardwareReportFetcher()
+	auctionResultPub, auctionResultPvt, err := auction.RunTEEAuction(&serializedAD, privateKey, fetcher)
 	metrics.ObserveAuctionRunDuration(time.Since(start))
 	if err != nil {
 		metrics.ObserveAuctionRequest("internal_error")
