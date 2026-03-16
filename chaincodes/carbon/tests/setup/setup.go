@@ -24,8 +24,9 @@ import (
 type MockIdentities map[string][]byte
 
 const (
-	REGULAR_ID = "regular"
-	IDEMIX_ID  = "idemix"
+	REGULAR_ID      = "regular"
+	CREDIT_OWNER_ID = "credit_owner"
+	IDEMIX_ID       = "idemix"
 )
 
 const (
@@ -128,6 +129,13 @@ func SetupIdentities(stub *mocks.MockStub) MockIdentities {
 		&attrmgr.Attributes{
 			Attrs: map[string]string{},
 		}, "AUCTIONEER", "auctioneer1",
+	)
+
+	mockIds[CREDIT_OWNER_ID] = GenerateHFSerializedIdentity(
+		X509_TYPE,
+		&attrmgr.Attributes{
+			Attrs: map[string]string{},
+		}, "COMPANY", "credit_owner",
 	)
 
 	mockIds[IDEMIX_ID] = GenerateHFSerializedIdentity(

@@ -10,14 +10,28 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/interop/util"
 )
 
+func canReadCreditLockStatus(stub shim.ChaincodeStubInterface, creditID []string) error {
+	if cid.AssertAttributeValue(stub, identities.InteropRelayerAttr, "true") == nil {
+		return nil
+	}
+	if len(creditID) == 0 {
+		return fmt.Errorf("creditID is required unless caller has %s attribute", identities.InteropRelayerAttr)
+	}
+	callerID := identities.GetID(stub)
+	if callerID != creditID[0] {
+		return fmt.Errorf("only the credit owner or interop relayer can check locked credits")
+	}
+	return nil
+}
+
 func CreditIsLocked(
 	stub shim.ChaincodeStubInterface,
 	carbonCCName string,
 	creditID []string,
 	lockID string,
 ) (bool, error) {
-	if cid.AssertAttributeValue(stub, identities.InteropRelayerAttr, "true") != nil {
-		return false, fmt.Errorf("only the interop relayer can check locked credits: missing attribute %s", identities.InteropRelayerAttr)
+	if err := canReadCreditLockStatus(stub, creditID); err != nil {
+		return false, err
 	}
 
 	funcName := "CreditIsLocked"
@@ -37,6 +51,26 @@ func CreditIsLocked(
 	return true, nil
 }
 
+func LockCredit(
+	stub shim.ChaincodeStubInterface,
+	carbonCCName string,
+	creditID []string,
+	quantity int64,
+	destChainID string,
+) (string, error) {
+	funcName := "LockCredit"
+	args, err := util.MarshallInvokeArgs(funcName, creditID, quantity, destChainID)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshall arguments for %s: %v", funcName, err)
+	}
+
+	resp := stub.InvokeChaincode(carbonCCName, args, "")
+	if resp.Status != 200 {
+		return "", fmt.Errorf("failed to invoke chaincode %s, function %s: %s", carbonCCName, funcName, resp.Message)
+	}
+	return string(resp.Payload), nil
+}
+
 func CreditIsLockedForChainID(
 	stub shim.ChaincodeStubInterface,
 	carbonCCName string,
@@ -44,8 +78,8 @@ func CreditIsLockedForChainID(
 	lockID string,
 	destChainID string,
 ) (bool, error) {
-	if cid.AssertAttributeValue(stub, identities.InteropRelayerAttr, "true") != nil {
-		return false, fmt.Errorf("only the interop relayer can check locked credits: missing attribute %s", identities.InteropRelayerAttr)
+	if err := canReadCreditLockStatus(stub, creditID); err != nil {
+		return false, err
 	}
 
 	funcName := "ChainIDCreditIsLockedFor"
