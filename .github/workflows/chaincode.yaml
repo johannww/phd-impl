@@ -82,7 +82,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          context: "chaincodes/carbon/"
+          context: "."
           file: "chaincodes/carbon/Dockerfile"
           tags: ghcr.io/${{ github.repository }}/carbon:latest
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/carbon:latest
