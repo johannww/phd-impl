@@ -12,8 +12,8 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
-	"github.com/johannww/phd-impl/chaincodes/common/state"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
 )
 
 // TestData holds a list as an identity map
@@ -28,6 +28,7 @@ type TestData struct {
 	TokenWallets     []*payment.VirtualTokenWallet
 	SellBids         []*bids.SellBid
 	BuyBids          []*bids.BuyBid
+	BidIssueLastTs   string
 	Policies         []policies.Name
 	PoliciesMockFunc map[policies.Name]policies.PolicyFunc
 }

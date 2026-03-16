@@ -125,10 +125,12 @@ func TestSellBidOwnerCanReadPrivatePrice(t *testing.T) {
 	startTimestamp := "2023-01-01T00:00:00Z"
 	endTimestamp := "2023-01-01T00:05:00Z"
 	issueInterval := 30 * time.Second
-	stub, testdata := genTestDataAndStub(
+	testdata := utils_test.GenData(
 		nOwners, nChunks, nCompanies,
 		startTimestamp, endTimestamp, issueInterval,
 	)
+	stub := mocks.NewMockStub("carbon", nil)
+
 	stub.MockTransactionStart("tx1")
 	testdata.SaveToWorldState(stub)
 	stub.MockTransactionEnd("tx1")

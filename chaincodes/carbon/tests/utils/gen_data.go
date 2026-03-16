@@ -8,6 +8,7 @@ import (
 	mathrand "math/rand"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/attrmgr"
+	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/companies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
@@ -40,12 +41,12 @@ func GenData(
 	data := &TestData{}
 
 	defaultIdentities := (setup.SetupIdentities(nil))
-	mockIds := &defaultIdentities
-	GenOwnerIDs(nOwners, mockIds)
-	GenCompanyIDs(nCompanies, mockIds)
-	props := GenProperties(nChunks, mockIds)
+	data.Identities = &defaultIdentities
+	GenOwnerIDs(nOwners, data.Identities)
+	GenCompanyIDs(nCompanies, data.Identities)
+	data.Properties = GenProperties(nChunks, data.Identities)
 
-	companies, pseudonymMap := GenCompaniesWithPseudonyms(nCompanies, mockIds)
+	data.Companies, data.PseudonymMap = GenCompaniesWithPseudonyms(nCompanies, data.Identities)
 
 	startTs, err := time.Parse(time.RFC3339, startTimestamp)
 	if err != nil {
@@ -56,27 +57,38 @@ func GenData(
 		panic(err)
 	}
 
-	creditWalletsMap := GenCreditWalletsMap(mockIds, pseudonymMap)
-
-	mintCredits := GenMintCredits(props, creditWalletsMap, startTs, endTs, issueInterval)
-
-	tokenWallets := GenTokenWallets(mockIds, pseudonymMap)
-
+	creditWalletsMap := GenCreditWalletsMap(data.Identities, data.PseudonymMap)
 	// Convert creditWalletsMap to slice
-	creditWallets := []*credits.CreditWallet{}
 	for _, cw := range creditWalletsMap {
-		creditWallets = append(creditWallets, cw)
+		data.CreditWallets = append(data.CreditWallets, cw)
 	}
 
-	data.Identities = mockIds
-	data.Properties = props
-	data.Companies, data.PseudonymMap = companies, pseudonymMap
-	data.MintCredits = mintCredits
-	data.CreditWallets = creditWallets
-	data.TokenWallets = tokenWallets
+	data.MintCredits = GenMintCredits(data.Properties, creditWalletsMap, startTs, endTs, issueInterval)
+
+	data.TokenWallets = GenTokenWallets(data.Identities, data.PseudonymMap)
 
 	return data
 
+}
+
+func GenDataWithBids(
+	nOwners int,
+	nChunks int,
+	nCompanies int,
+	startTimestamp string,
+	endTimestamp string,
+	issueInterval time.Duration,
+) *TestData {
+	data := GenData(nOwners, nChunks, nCompanies, startTimestamp, endTimestamp, issueInterval)
+
+	mintingEndTs, err := time.Parse(time.RFC3339, endTimestamp)
+	panicOnError(err)
+
+	bidsStart := mintingEndTs.Add(time.Minute)
+
+	GenRandomBidsForMintCredits(bidsStart, data)
+
+	return data
 }
 
 func GenOwnerIDs(n int, mockIds *setup.MockIdentities) {
@@ -261,6 +273,54 @@ func GenTokenWallets(
 	}
 
 	return wallets
+}
+
+func GenRandomBidsForMintCredits(issueStart time.Time, testData *TestData) {
+	sellMinPrice := int64(1000)
+	buyMinPrice := int64(1000)
+
+	buyerIds := testData.PseudonymMap
+
+	var issueTsStr string
+	for i, mintCredit := range testData.MintCredits {
+		issueTs := issueStart.Add(time.Duration(time.Duration(i) * time.Second)).UTC()
+		issueTsStr = issueTs.Format(time.RFC3339)
+		sellPrice := sellMinPrice + int64(mathrand.Intn(1000)) // Randomize sell price
+		sellBid := &bids.SellBid{
+			SellerID:  mintCredit.OwnerID,
+			CreditID:  (*mintCredit.GetID())[0],
+			Timestamp: issueTsStr,
+			PrivatePrice: &bids.PrivatePrice{
+				Price: sellPrice,
+			},
+			Quantity: mintCredit.Quantity,
+		}
+		sellBid.PrivatePrice.BidID = (*sellBid.GetID())[0]
+
+		testData.SellBids = append(testData.SellBids, sellBid)
+
+		buyerIdIndex := mathrand.Intn(len(buyerIds))
+
+		buyPrice := buyMinPrice + int64(mathrand.Intn(1000)) // Randomize buy price
+		bidAskQuantity := mintCredit.Quantity
+		buyBid := &bids.BuyBid{
+			BuyerID:     buyerIds[buyerIdIndex].Pseudonym,
+			AskQuantity: bidAskQuantity,
+			Timestamp:   issueTsStr,
+			PrivateQuantity: &bids.PrivateQuantity{
+				AskQuantity: bidAskQuantity,
+			},
+			PrivatePrice: &bids.PrivatePrice{
+				Price: buyPrice,
+			},
+		}
+		buyBid.PrivatePrice.BidID = (*buyBid.GetID())[0]
+		buyBid.PrivateQuantity.BidID = (*buyBid.GetID())[0]
+
+		testData.BuyBids = append(testData.BuyBids, buyBid)
+	}
+
+	testData.BidIssueLastTs = issueTsStr
 }
 
 func chunkForProperty(prop *properties.Property) *properties.PropertyChunk {
