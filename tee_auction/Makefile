@@ -51,3 +51,7 @@ verify-report-policy:
 .PHONY: docs
 docs:
 	./docs/scripts/generate-diagrams.sh
+
+unit-test:
+	cd go/; \
+	go test --tags=testing $$(go list ./...)
