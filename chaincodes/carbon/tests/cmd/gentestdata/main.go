@@ -17,6 +17,7 @@ func main() {
 	pflag.String("start", "2023-01-01T00:00:00Z", "start timestamp")
 	pflag.String("end", "2023-01-01T00:30:00Z", "end timestamp")
 	pflag.Duration("interval", 30*time.Second, "issue interval")
+	pflag.Bool("bids", false, "generate random bids for mint credits")
 	pflag.StringP("output", "o", "testdata.json", "output file path")
 	pflag.Parse()
 
@@ -24,7 +25,12 @@ func main() {
 
 	filePath := viper.GetString("output")
 
-	testData := utils_test.GenData(
+	genFunc := utils_test.GenData
+	if viper.GetBool("bids") {
+		genFunc = utils_test.GenDataWithBids
+	}
+
+	testData := genFunc(
 		viper.GetInt("owners"),
 		viper.GetInt("chunks"),
 		viper.GetInt("companies"),
