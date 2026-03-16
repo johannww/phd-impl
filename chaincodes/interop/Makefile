@@ -5,8 +5,8 @@ cc:
 	go build -o /dev/null ./cmd/interop/main.go
 	
 cc-docker:
-	go mod vendor && touch vendor/.nosync
-	docker build -t ghcr.io/$(REPO)/interop:latest .
+	go work vendor
+	docker build -t ghcr.io/$(REPO)/interop:latest -f Dockerfile ../..
 
 unit-test:
 	go test $(shell go list ./... | grep -v '\.tests/')

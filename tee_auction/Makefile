@@ -12,8 +12,8 @@ registry:
 	az acr login --name $(REGISTRY_NAME)
 
 docker:
-	pushd ./go && go mod tidy && go mod vendor && touch vendor/.nosync
-	docker build -t $(REGISTRY)/carbon_auction:latest .
+	go work vendor
+	docker build -t $(REGISTRY)/carbon_auction:latest -f Dockerfile ..
 	docker push $(REGISTRY)/carbon_auction:latest
 
 policy:

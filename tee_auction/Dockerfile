@@ -1,23 +1,26 @@
-# TODO: Finish this file
-
-# This file was based on ./../chaincodes/carbon/Dockerfile
+# --- Builder Stage ---
 FROM golang:1.26 AS builder
 
-COPY ./go /tee_auction/go
-WORKDIR /tee_auction/go
-RUN if [ ! -d "vendor" ]; then go mod tidy && go mod vendor; fi
-RUN go build -o tee_auction ./cmd/auction/main.go
+WORKDIR /app
 
+COPY go.work go.work.sum ./
+COPY chaincodes/go.work.sum chaincodes/go.work.sum
+
+COPY chaincodes/carbon/ ./chaincodes/carbon/
+COPY chaincodes/common/ ./chaincodes/common/
+COPY chaincodes/interop/ ./chaincodes/interop/
+COPY tee_auction/go/ ./tee_auction/go/
+COPY vendor/ ./vendor/
+
+RUN go build -o /usr/local/bin/tee_auction ./tee_auction/go/cmd/auction
+
+# --- Final Stage ---
 FROM ubuntu:22.04
 
 # This will ensure golang uses the UTC timezone.
-# This is important to generate state keys based on the
-# timezone.
-# See initLocal() in: golang/1.23.1/go/src/time/zoneinfo_unix.go
 ENV TZ=UTC
 
-COPY --from=builder /tee_auction/go/tee_auction /usr/local/bin/tee_auction
+COPY --from=builder /usr/local/bin/tee_auction /usr/local/bin/tee_auction
 ENTRYPOINT ["/usr/local/bin/tee_auction"]
 EXPOSE 80
 EXPOSE 443
-

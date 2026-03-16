@@ -1,0 +1,14 @@
+go 1.26.1
+
+use (
+	./chaincodes/carbon
+	./chaincodes/common
+	./chaincodes/interop
+	./tee_auction/go
+)
+
+replace github.com/johannww/phd-impl/chaincodes/common v0.0.0-20260316053027-9fd9a179b6ef => ./chaincodes/common
+
+replace github.com/johannww/phd-impl/chaincodes/carbon v0.0.0-20260316053027-9fd9a179b6ef => ./chaincodes/carbon
+
+replace github.com/johannww/phd-impl/tee_auction/go v0.0.0-20260316053027-9fd9a179b6ef => ./tee_auction/go

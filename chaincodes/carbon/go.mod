@@ -10,8 +10,8 @@ require (
 	github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0
 	github.com/hyperledger/fabric-gateway v1.7.1
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.7
-	github.com/johannww/phd-impl/chaincodes/common v0.0.0-20250831185049-8495b62111bf
-	github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693
+	github.com/johannww/phd-impl/chaincodes/common v0.0.0-20260316053027-9fd9a179b6ef
+	github.com/johannww/phd-impl/tee_auction/go v0.0.0-20260316053027-9fd9a179b6ef
 	github.com/mmcloughlin/geohash v0.10.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/quagmt/udecimal v1.9.0
@@ -95,6 +95,3 @@ replace github.com/hyperledger/fabric-gateway v1.7.1 => github.com/johannww/fabr
 // NOTE: This is temporary until microsoft fixes serialization
 // replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-4814b442cf71 => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91
 
-replace github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693 => ../../tee_auction/go
-
-replace github.com/johannww/phd-impl/chaincodes/common v0.0.0-20250831185049-8495b62111bf => ../common
