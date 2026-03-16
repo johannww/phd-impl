@@ -15,7 +15,7 @@ COPY vendor/ ./vendor/
 RUN go build -o /usr/local/bin/carbon ./chaincodes/carbon/cmd/carbon
 
 # --- Final Stage ---
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # This will ensure golang uses the UTC timezone.
 ENV TZ=UTC
