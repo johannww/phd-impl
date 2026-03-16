@@ -161,7 +161,7 @@ func SetupIdentities(stub *mocks.MockStub) MockIdentities {
 				Attrs: map[string]string{
 					attr: "true",
 				},
-			}, "AUCTIONEER", "auctioneer1",
+			}, "AUCTIONEER", attr,
 		)
 	}
 	// // Generate idmix identity for buyer
