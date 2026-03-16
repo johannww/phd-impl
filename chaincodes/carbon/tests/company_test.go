@@ -5,9 +5,9 @@ import (
 
 	"github.com/johannww/phd-impl/chaincodes/carbon/companies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
-	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
+	mocks "github.com/johannww/phd-impl/chaincodes/common/state/mocks"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
-	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 	"github.com/stretchr/testify/require"
 )
 

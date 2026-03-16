@@ -7,9 +7,9 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
-	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
-	ccstate "github.com/johannww/phd-impl/chaincodes/carbon/state"
-	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	ccstate "github.com/johannww/phd-impl/chaincodes/common/state"
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )
 
 const (

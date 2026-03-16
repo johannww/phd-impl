@@ -6,10 +6,10 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
-	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
-	ccstate "github.com/johannww/phd-impl/chaincodes/carbon/state"
-	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
+	ccstate "github.com/johannww/phd-impl/chaincodes/common/state"
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )
 
 const (

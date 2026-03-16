@@ -1,6 +1,6 @@
 module github.com/johannww/phd-impl/chaincodes/carbon
 
-go 1.26.0
+go 1.26.1
 
 require (
 	github.com/IBM/idemix v0.0.0-20250313153527-832db18b9478
@@ -9,7 +9,8 @@ require (
 	github.com/hyperledger/fabric-chaincode-go/v2 v2.3.0
 	github.com/hyperledger/fabric-contract-api-go/v2 v2.2.0
 	github.com/hyperledger/fabric-gateway v1.7.1
-	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6
+	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.7
+	github.com/johannww/phd-impl/chaincodes/common v0.0.0-20250831185049-8495b62111bf
 	github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693
 	github.com/mmcloughlin/geohash v0.10.0
 	github.com/prometheus/client_golang v1.23.2
@@ -18,7 +19,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/rtree v1.10.0
-	google.golang.org/protobuf v1.36.8
+	google.golang.org/protobuf v1.36.11
 )
 
 require (
@@ -95,3 +96,5 @@ replace github.com/hyperledger/fabric-gateway v1.7.1 => github.com/johannww/fabr
 // replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250610214904-4814b442cf71 => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91
 
 replace github.com/johannww/phd-impl/tee_auction/go v0.0.0-20250617200929-e632967cc693 => ../../tee_auction/go
+
+replace github.com/johannww/phd-impl/chaincodes/common v0.0.0-20250831185049-8495b62111bf => ../common

@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
-	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
 )
 
 const (

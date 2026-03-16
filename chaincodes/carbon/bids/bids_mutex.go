@@ -2,7 +2,7 @@ package bids
 
 import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
-	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
 )
 
 // BidsMutex prevents write access to bids before a timestamp.

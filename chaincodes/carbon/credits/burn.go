@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
-	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
-	"github.com/johannww/phd-impl/chaincodes/carbon/state"
-	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )
 
 const (

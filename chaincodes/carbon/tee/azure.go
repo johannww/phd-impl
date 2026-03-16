@@ -14,7 +14,7 @@ import (
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
-	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
 	report_verifier "github.com/johannww/phd-impl/tee_auction/go/report"
 )

@@ -2,7 +2,7 @@ package data
 
 import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/data/metheorological"
-	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )
 
 type DataFetcher interface {

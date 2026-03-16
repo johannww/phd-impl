@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
-	"github.com/johannww/phd-impl/chaincodes/carbon/identities"
-	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	mocks "github.com/johannww/phd-impl/chaincodes/common/state/mocks"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
 	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"

@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"testing"
 
-	mocks "github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
-	"github.com/johannww/phd-impl/chaincodes/carbon/utils"
+	mocks "github.com/johannww/phd-impl/chaincodes/common/state/mocks"
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )
 
 func TestUTCTimestamp(t *testing.T) {

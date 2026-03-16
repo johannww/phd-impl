@@ -1,6 +1,6 @@
 module github.com/johannww/phd-impl/tee_auction/go
 
-go 1.26.0
+go 1.26.1
 
 require (
 	github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250820140128-4814b442cf71
@@ -28,7 +28,8 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/hyperledger/fabric-chaincode-go/v2 v2.3.0 // indirect
-	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.6 // indirect
+	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.7 // indirect
+	github.com/johannww/phd-impl/chaincodes/common v0.0.0-20250831185049-8495b62111bf // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
@@ -67,11 +68,13 @@ require (
 	golang.org/x/text v0.28.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
-	google.golang.org/protobuf v1.36.8 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace github.com/johannww/phd-impl/chaincodes/carbon v0.0.0-20250616214325-7ee2a7b80f6b => ../../chaincodes/carbon
+
+replace github.com/johannww/phd-impl/chaincodes/common v0.0.0-20250831185049-8495b62111bf => ../../chaincodes/common
 
 // NOTE: This is temporary until microsoft fixes serialization
 // replace github.com/Microsoft/confidential-sidecar-containers v0.0.0-20250521161531-e3e00a1a216a => github.com/johannww/confidential-sidecar-containers v0.0.0-20250603023458-bbd0bf198f91

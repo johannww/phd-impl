@@ -1,6 +1,6 @@
 package emission
 
-import "github.com/johannww/phd-impl/chaincodes/carbon/identities"
+import "github.com/johannww/phd-impl/chaincodes/common/identities"
 
 const (
 	EMISSION_PREFIX = "emission"

@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/johannww/phd-impl/chaincodes/carbon/state/mocks"
+	"github.com/johannww/phd-impl/chaincodes/common/state/mocks"
 	"github.com/stretchr/testify/require"
 )
 

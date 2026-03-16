@@ -12,7 +12,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
-	"github.com/johannww/phd-impl/chaincodes/carbon/state"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
 )
 
