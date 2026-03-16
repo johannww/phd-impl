@@ -26,7 +26,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.24
+          go-version: 1.26
 
       - name: Configure git for private modules
         env:
@@ -34,7 +34,7 @@ jobs:
         run: git config --global url."https://user:${TOKEN}@github.com".insteadOf "https://github.com"
 
       - name: Build carbon chaincode
-        run: go mod tidy && go mod vendor && go build -o carbon ./cmd/carbon/main.go
+        run: go work vendor && go build -o carbon ./cmd/carbon/main.go
 
       - name: Run the tests
         run: go test --tags=testing ./tests
