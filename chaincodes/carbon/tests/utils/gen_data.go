@@ -11,19 +11,19 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/companies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
-	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
-	"github.com/johannww/phd-impl/chaincodes/common/state/mocks"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
-	"github.com/johannww/phd-impl/chaincodes/common/utils"
 	"github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/state/mocks"
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )
 
 const (
-	COMPANY_PREFIX = "company"
-	OWNER_PREFIX   = "owner"
+	COMPANY_PREFIX = "test_company"
+	OWNER_PREFIX   = "test_owner"
 )
 
 // mockStub helps generating chaincode identity strings
@@ -176,8 +176,8 @@ func GenCreditWalletsMap(
 	creditWalletsMap := map[string]*credits.CreditWallet{}
 
 	for ownerId := range *mockIds {
-		if strings.Contains(ownerId, COMPANY_PREFIX) {
-			continue // skip companies
+		if !strings.Contains(ownerId, OWNER_PREFIX) {
+			continue // skip non-owners
 		}
 		creditWalletsMap[ownerId] = &credits.CreditWallet{
 			OwnerID: getCidFromMockIdentity((*mockIds)[ownerId]),
