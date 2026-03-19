@@ -10,4 +10,4 @@ docker:
 	docker build -t ghcr.io/$(REPO)/data-api:$(TAG) .
 
 test:
-	go test ./... -v
+	go test ./...
