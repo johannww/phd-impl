@@ -9,6 +9,7 @@ COPY chaincodes/go.work.sum chaincodes/go.work.sum
 COPY chaincodes/carbon/ ./chaincodes/carbon/
 COPY chaincodes/common/ ./chaincodes/common/
 COPY chaincodes/interop/ ./chaincodes/interop/
+COPY data_api/ ./data_api/
 COPY tee_auction/go/ ./tee_auction/go/
 COPY vendor/ ./vendor/
 

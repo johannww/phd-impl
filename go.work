@@ -4,6 +4,7 @@ use (
 	./chaincodes/carbon
 	./chaincodes/common
 	./chaincodes/interop
+	./data_api
 	./tee_auction/go
 )
 
