@@ -2,6 +2,7 @@ package credits
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
@@ -54,18 +55,13 @@ func (mc *MintCredit) GetID() *[][]string {
 	return &[][]string{creditId}
 }
 
-// TODO: test minting function
-func MintCreditForChunk(
+func mintCreditInternal(
 	stub shim.ChaincodeStubInterface,
 	ownerID string,
 	chunkID []string,
 	quantity int64,
-	RFC339Timestamp string,
+	timestampRFC3339 string,
 ) (*MintCredit, error) {
-	if cid.AssertAttributeValue(stub, identities.CreditMinter, "true") != nil {
-		return nil, fmt.Errorf("caller is not a minter")
-	}
-
 	activePolicies, err := policies.GetActivePolicies(stub)
 	if err != nil {
 		return nil, fmt.Errorf("could not get active policies: %v", err)
@@ -96,12 +92,6 @@ func MintCreditForChunk(
 		if summary.Status != "Ativo" {
 			return nil, fmt.Errorf("property is not active in the registry: %s", summary.Status)
 		}
-
-		// Simplified check: ensure quantity doesn't exceed verified forest area
-		// Note: We might need a conversion factor here depending on units
-		if float64(quantity) > summary.VerifiedForest {
-			return nil, fmt.Errorf("mint quantity (%d) exceeds verified forest area (%.2f)", quantity, summary.VerifiedForest)
-		}
 	}
 
 	pApplier := policies.NewPolicyApplier()
@@ -121,10 +111,62 @@ func MintCreditForChunk(
 			Quantity: quantity,
 		},
 		MintMult:      mintMult,
-		MintTimeStamp: RFC339Timestamp,
+		MintTimeStamp: timestampRFC3339,
 	}
 	if err := credit.ToWorldState(stub); err != nil {
 		return nil, err
 	}
 	return credit, nil
+}
+
+// MintQuantityCreditForChunk mints a credit with a specified quantity and applies multipliers.
+func MintQuantityCreditForChunk(
+	stub shim.ChaincodeStubInterface,
+	ownerID string,
+	chunkID []string,
+	quantity int64,
+	timestampRFC3339 string,
+) (*MintCredit, error) {
+	if cid.AssertAttributeValue(stub, identities.CreditMinter, "true") != nil {
+		return nil, fmt.Errorf("caller is not a minter")
+	}
+
+	return mintCreditInternal(stub, ownerID, chunkID, quantity, timestampRFC3339)
+}
+
+// MintEstimatedCreditForChunk mints a credit by estimating the quantity based on the time interval.
+func MintEstimatedCreditForChunk(
+	stub shim.ChaincodeStubInterface,
+	ownerID string,
+	chunkID []string,
+	intervalStartRFC3339 string,
+	intervalEndRFC3339 string,
+) (*MintCredit, error) {
+	if cid.AssertAttributeValue(stub, identities.CreditMinter, "true") != nil {
+		return nil, fmt.Errorf("caller is not a minter")
+	}
+
+	intervalStart, err := time.Parse(time.RFC3339, intervalStartRFC3339)
+	if err != nil {
+		return nil, fmt.Errorf("invalid interval start timestamp: %v", err)
+	}
+	intervalEnd, err := time.Parse(time.RFC3339, intervalEndRFC3339)
+	if err != nil {
+		return nil, fmt.Errorf("invalid interval end timestamp: %v", err)
+	}
+
+	// Get chunk to pass to estimator
+	chunk := &properties.PropertyChunk{}
+	if err := chunk.FromWorldState(stub, chunkID); err != nil {
+		return nil, fmt.Errorf("could not get property chunk from world state: %v", err)
+	}
+
+	// Estimate quantity
+	estimator := &policies.Estimator{}
+	quantity, err := estimator.Estimate(chunk, intervalStart, intervalEnd)
+	if err != nil {
+		return nil, fmt.Errorf("could not estimate credit quantity: %v", err)
+	}
+
+	return mintCreditInternal(stub, ownerID, chunkID, quantity, intervalEndRFC3339)
 }

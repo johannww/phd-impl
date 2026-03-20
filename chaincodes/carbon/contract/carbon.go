@@ -129,9 +129,36 @@ func (c *CarbonContract) PublishData(ctx contractapi.TransactionContextInterface
 	return c.withMetricsErr("PublishData", func() error { return nil })
 }
 
-// TODO: implement
-func (c *CarbonContract) MintCreditsForRange(ctx contractapi.TransactionContextInterface) error {
-	return c.withMetricsErr("MintCreditsForRange", func() error { return nil })
+func (c *CarbonContract) MintQuantityCreditForChunk(
+	ctx contractapi.TransactionContextInterface,
+	ownerID string,
+	chunkID []string,
+	quantity int64,
+	timestampRFC3339 string,
+) (*credits.MintCredit, error) {
+	var mc *credits.MintCredit
+	err := c.withMetricsErr("MintQuantityCreditForChunk", func() error {
+		var err error
+		mc, err = credits.MintQuantityCreditForChunk(ctx.GetStub(), ownerID, chunkID, quantity, timestampRFC3339)
+		return err
+	})
+	return mc, err
+}
+
+func (c *CarbonContract) MintEstimatedCreditForChunk(
+	ctx contractapi.TransactionContextInterface,
+	ownerID string,
+	chunkID []string,
+	intervalStartRFC3339 string,
+	intervalEndRFC3339 string,
+) (*credits.MintCredit, error) {
+	var mc *credits.MintCredit
+	err := c.withMetricsErr("MintEstimatedCreditForChunk", func() error {
+		var err error
+		mc, err = credits.MintEstimatedCreditForChunk(ctx.GetStub(), ownerID, chunkID, intervalStartRFC3339, intervalEndRFC3339)
+		return err
+	})
+	return mc, err
 }
 
 func (c *CarbonContract) BurnCredit(ctx contractapi.TransactionContextInterface, mintCreditID []string, burnQuantity int64) error {

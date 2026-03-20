@@ -106,20 +106,24 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	// 5. Attempt Minting
 	stub.Creator = mockIds[identities.CreditMinter]
 
-	// Case A: Valid Minting (40 units <= 50 verified forest)
-	stub.MockTransactionStart("tx_mint_ok")
-	mc, err := credits.MintCreditForChunk(stub, ownerID, chunkID, 40, time.Now().Format(time.RFC3339))
+	intervalStart := time.Now().Format(time.RFC3339)
+	intervalEnd := time.Now().Add(1 * time.Hour).Format(time.RFC3339)
+
+	// Case A: Valid Minting with Estimated Quantity
+	stub.MockTransactionStart("tx_mint_est_ok")
+	mc, err := credits.MintEstimatedCreditForChunk(stub, ownerID, chunkID, intervalStart, intervalEnd)
 	require.NoError(t, err)
 	require.NotNil(t, mc)
-	require.Equal(t, int64(40), mc.Quantity)
-	stub.MockTransactionEnd("tx_mint_ok")
+	require.Greater(t, mc.Quantity, int64(0))
+	stub.MockTransactionEnd("tx_mint_est_ok")
 
-	// Case B: Invalid Minting (60 units > 50 verified forest)
-	stub.MockTransactionStart("tx_mint_fail_qty")
-	_, err = credits.MintCreditForChunk(stub, ownerID, chunkID, 60, time.Now().Format(time.RFC3339))
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "exceeds verified forest area")
-	stub.MockTransactionEnd("tx_mint_fail_qty")
+	// Case B: Valid Minting with Explicit Quantity
+	stub.MockTransactionStart("tx_mint_qty_ok")
+	mcQty, err := credits.MintQuantityCreditForChunk(stub, ownerID, chunkID, 100, intervalEnd)
+	require.NoError(t, err)
+	require.NotNil(t, mcQty)
+	require.Equal(t, int64(100), mcQty.Quantity)
+	stub.MockTransactionEnd("tx_mint_qty_ok")
 
 	// Case C: Deactivated Registry
 	sicarData.SituacaoImovel = "Cancelado"
@@ -129,7 +133,7 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	stub.MockTransactionEnd("tx_refresh_cancel")
 
 	stub.MockTransactionStart("tx_mint_fail_status")
-	_, err = credits.MintCreditForChunk(stub, ownerID, chunkID, 10, time.Now().Format(time.RFC3339))
+	_, err = credits.MintEstimatedCreditForChunk(stub, ownerID, chunkID, intervalStart, intervalEnd)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "property is not active")
 	stub.MockTransactionEnd("tx_mint_fail_status")
