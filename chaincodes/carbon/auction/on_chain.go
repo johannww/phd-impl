@@ -9,8 +9,8 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
-	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )

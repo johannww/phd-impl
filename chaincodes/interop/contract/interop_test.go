@@ -10,10 +10,10 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 	carbon "github.com/johannww/phd-impl/chaincodes/carbon/contract"
 	credits "github.com/johannww/phd-impl/chaincodes/carbon/credits"
-	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
-	"github.com/johannww/phd-impl/chaincodes/common/state/mocks"
 	setup_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/state/mocks"
 	carbon_utils "github.com/johannww/phd-impl/chaincodes/common/utils"
 
 	"github.com/johannww/phd-impl/chaincodes/interop/htlc"

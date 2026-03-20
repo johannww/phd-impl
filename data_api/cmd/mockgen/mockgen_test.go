@@ -79,4 +79,3 @@ func TestProjectionsAreConsistent(t *testing.T) {
 		}
 	}
 }
-

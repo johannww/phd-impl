@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
-	"github.com/johannww/phd-impl/chaincodes/common/identities"
-	mocks "github.com/johannww/phd-impl/chaincodes/common/state/mocks"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	mocks "github.com/johannww/phd-impl/chaincodes/common/state/mocks"
 	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
 	tee_auction_crypto "github.com/johannww/phd-impl/tee_auction/go/crypto"
 	"github.com/stretchr/testify/require"

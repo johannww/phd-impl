@@ -6,8 +6,8 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
-	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	ccstate "github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )
