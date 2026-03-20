@@ -105,7 +105,7 @@ func mintCreditInternal(
 // MintQuantityCreditForChunk mints a credit with a specified quantity and applies multipliers.
 func MintQuantityCreditForChunk(
 	stub shim.ChaincodeStubInterface,
-	ownerID string,
+	propertyID []string,
 	chunkID []string,
 	quantity int64,
 	timestampRFC3339 string,
@@ -116,7 +116,7 @@ func MintQuantityCreditForChunk(
 
 	// Load property to get registry info
 	property := &properties.Property{}
-	if err := property.FromWorldState(stub, []string{ownerID, chunkID[0]}); err != nil {
+	if err := property.FromWorldState(stub, propertyID); err != nil {
 		return nil, fmt.Errorf("could not get property from world state: %v", err)
 	}
 

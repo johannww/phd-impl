@@ -131,7 +131,7 @@ func (c *CarbonContract) PublishData(ctx contractapi.TransactionContextInterface
 
 func (c *CarbonContract) MintQuantityCreditForChunk(
 	ctx contractapi.TransactionContextInterface,
-	ownerID string,
+	propertyID []string,
 	chunkID []string,
 	quantity int64,
 	timestampRFC3339 string,
@@ -139,7 +139,7 @@ func (c *CarbonContract) MintQuantityCreditForChunk(
 	var mc *credits.MintCredit
 	err := c.withMetricsErr("MintQuantityCreditForChunk", func() error {
 		var err error
-		mc, err = credits.MintQuantityCreditForChunk(ctx.GetStub(), ownerID, chunkID, quantity, timestampRFC3339)
+		mc, err = credits.MintQuantityCreditForChunk(ctx.GetStub(), propertyID, chunkID, quantity, timestampRFC3339)
 		return err
 	})
 	return mc, err
