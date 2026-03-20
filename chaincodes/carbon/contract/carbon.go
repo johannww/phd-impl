@@ -145,20 +145,19 @@ func (c *CarbonContract) MintQuantityCreditForChunk(
 	return mc, err
 }
 
-func (c *CarbonContract) MintEstimatedCreditForChunk(
+func (c *CarbonContract) MintEstimatedCreditsForProperty(
 	ctx contractapi.TransactionContextInterface,
-	ownerID string,
-	chunkID []string,
+	propertyID []string,
 	intervalStartRFC3339 string,
 	intervalEndRFC3339 string,
-) (*credits.MintCredit, error) {
-	var mc *credits.MintCredit
-	err := c.withMetricsErr("MintEstimatedCreditForChunk", func() error {
+) ([]*credits.MintCredit, error) {
+	var mcs []*credits.MintCredit
+	err := c.withMetricsErr("MintEstimatedCreditsForProperty", func() error {
 		var err error
-		mc, err = credits.MintEstimatedCreditForChunk(ctx.GetStub(), ownerID, chunkID, intervalStartRFC3339, intervalEndRFC3339)
+		mcs, err = credits.MintEstimatedCreditsForProperty(ctx.GetStub(), propertyID, intervalStartRFC3339, intervalEndRFC3339)
 		return err
 	})
-	return mc, err
+	return mcs, err
 }
 
 func (c *CarbonContract) BurnCredit(ctx contractapi.TransactionContextInterface, mintCreditID []string, burnQuantity int64) error {

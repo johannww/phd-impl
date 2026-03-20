@@ -29,7 +29,7 @@ func (property *Property) FromWorldState(stub shim.ChaincodeStubInterface, keyAt
 		return fmt.Errorf("could not get property from world state: %v", err)
 	}
 
-	property.Chunks, err = state.GetStatesByPartialCompositeKey[PropertyChunk](stub, PROPERTY_CHUNK_PREFIX, keyAttributes)
+	property.Chunks, err = state.GetStatesByPartialCompositeKey[PropertyChunk](stub, PROPERTY_CHUNK_PREFIX, []string{strconv.FormatUint(property.ID, 10)})
 	if err != nil {
 		return fmt.Errorf("could not get property chunks from world state: %v", err)
 	}

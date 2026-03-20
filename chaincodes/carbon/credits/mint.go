@@ -2,6 +2,7 @@ package credits
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
@@ -57,8 +58,9 @@ func (mc *MintCredit) GetID() *[][]string {
 
 func mintCreditInternal(
 	stub shim.ChaincodeStubInterface,
-	ownerID string,
-	chunkID []string,
+	property *properties.Property,
+	summary *registry.RegistrySummary,
+	chunk *properties.PropertyChunk,
 	quantity int64,
 	timestampRFC3339 string,
 ) (*MintCredit, error) {
@@ -69,29 +71,6 @@ func mintCreditInternal(
 
 	if len(activePolicies) == 0 {
 		return nil, fmt.Errorf("no active policies found")
-	}
-
-	//get chunk
-	chunk := &properties.PropertyChunk{}
-	if err := chunk.FromWorldState(stub, chunkID); err != nil {
-		return nil, fmt.Errorf("could not get property chunk from world state: %v", err)
-	}
-
-	// Validate against external registry if linked
-	property := &properties.Property{}
-	if err := property.FromWorldState(stub, []string{ownerID, chunkID[0]}); err != nil {
-		return nil, fmt.Errorf("could not get property from world state: %v", err)
-	}
-
-	if property.RegistryProvider != "" {
-		summary := &registry.RegistrySummary{}
-		if err := summary.FromWorldState(stub, []string{property.RegistryID}); err != nil {
-			return nil, fmt.Errorf("failed to get registry summary from world state: %v", err)
-		}
-
-		if summary.Status != "Ativo" {
-			return nil, fmt.Errorf("property is not active in the registry: %s", summary.Status)
-		}
 	}
 
 	pApplier := policies.NewPolicyApplier()
@@ -106,8 +85,12 @@ func mintCreditInternal(
 
 	credit := &MintCredit{
 		Credit: Credit{
-			OwnerID:  ownerID,
-			ChunkID:  chunkID,
+			OwnerID: property.OwnerID,
+			ChunkID: []string{
+				strconv.FormatUint(property.ID, 10),
+				strconv.FormatFloat(chunk.Coordinates[0].Latitude, 'f', 6, 64),
+				strconv.FormatFloat(chunk.Coordinates[0].Longitude, 'f', 6, 64),
+			},
 			Quantity: quantity,
 		},
 		MintMult:      mintMult,
@@ -131,17 +114,40 @@ func MintQuantityCreditForChunk(
 		return nil, fmt.Errorf("caller is not a minter")
 	}
 
-	return mintCreditInternal(stub, ownerID, chunkID, quantity, timestampRFC3339)
+	// Load property to get registry info
+	property := &properties.Property{}
+	if err := property.FromWorldState(stub, []string{ownerID, chunkID[0]}); err != nil {
+		return nil, fmt.Errorf("could not get property from world state: %v", err)
+	}
+
+	var summary *registry.RegistrySummary
+	if property.RegistryProvider != "" {
+		summary = &registry.RegistrySummary{}
+		if err := summary.FromWorldState(stub, []string{property.RegistryID}); err != nil {
+			return nil, fmt.Errorf("failed to get registry summary from world state: %v", err)
+		}
+
+		if summary.Status != "Ativo" {
+			return nil, fmt.Errorf("property is not active in the registry: %s", summary.Status)
+		}
+	}
+
+	// Load chunk
+	chunk := &properties.PropertyChunk{}
+	if err := chunk.FromWorldState(stub, chunkID); err != nil {
+		return nil, fmt.Errorf("could not get property chunk from world state: %v", err)
+	}
+
+	return mintCreditInternal(stub, property, summary, chunk, quantity, timestampRFC3339)
 }
 
-// MintEstimatedCreditForChunk mints a credit by estimating the quantity based on the time interval.
-func MintEstimatedCreditForChunk(
+// MintEstimatedCreditsForProperty mints credits for all chunks of a property by estimating the quantity for each.
+func MintEstimatedCreditsForProperty(
 	stub shim.ChaincodeStubInterface,
-	ownerID string,
-	chunkID []string,
+	propertyID []string,
 	intervalStartRFC3339 string,
 	intervalEndRFC3339 string,
-) (*MintCredit, error) {
+) ([]*MintCredit, error) {
 	if cid.AssertAttributeValue(stub, identities.CreditMinter, "true") != nil {
 		return nil, fmt.Errorf("caller is not a minter")
 	}
@@ -155,18 +161,40 @@ func MintEstimatedCreditForChunk(
 		return nil, fmt.Errorf("invalid interval end timestamp: %v", err)
 	}
 
-	// Get chunk to pass to estimator
-	chunk := &properties.PropertyChunk{}
-	if err := chunk.FromWorldState(stub, chunkID); err != nil {
-		return nil, fmt.Errorf("could not get property chunk from world state: %v", err)
+	// Load property (this also loads chunks)
+	property := &properties.Property{}
+	if err := property.FromWorldState(stub, propertyID); err != nil {
+		return nil, fmt.Errorf("could not get property from world state: %v", err)
 	}
 
-	// Estimate quantity
+	var summary *registry.RegistrySummary
+	if property.RegistryProvider != "" {
+		summary = &registry.RegistrySummary{}
+		if err := summary.FromWorldState(stub, []string{property.RegistryID}); err != nil {
+			return nil, fmt.Errorf("failed to get registry summary from world state: %v", err)
+		}
+
+		if summary.Status != "Ativo" {
+			return nil, fmt.Errorf("property is not active in the registry: %s", summary.Status)
+		}
+	}
+
 	estimator := &policies.Estimator{}
-	quantity, err := estimator.Estimate(chunk, intervalStart, intervalEnd)
-	if err != nil {
-		return nil, fmt.Errorf("could not estimate credit quantity: %v", err)
+	mintedCredits := make([]*MintCredit, 0, len(property.Chunks))
+
+	for _, chunk := range property.Chunks {
+		// Estimate quantity for each chunk
+		quantity, err := estimator.Estimate(chunk, intervalStart, intervalEnd)
+		if err != nil {
+			return nil, fmt.Errorf("could not estimate credit quantity for chunk: %v", err)
+		}
+
+		mc, err := mintCreditInternal(stub, property, summary, chunk, quantity, intervalEndRFC3339)
+		if err != nil {
+			return nil, fmt.Errorf("could not mint credit for chunk: %v", err)
+		}
+		mintedCredits = append(mintedCredits, mc)
 	}
 
-	return mintCreditInternal(stub, ownerID, chunkID, quantity, intervalEndRFC3339)
+	return mintedCredits, nil
 }

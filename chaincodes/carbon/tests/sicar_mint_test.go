@@ -111,15 +111,16 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 
 	// Case A: Valid Minting with Estimated Quantity
 	stub.MockTransactionStart("tx_mint_est_ok")
-	mc, err := credits.MintEstimatedCreditForChunk(stub, ownerID, chunkID, intervalStart, intervalEnd)
+	propIDAttr := []string{ownerID, fmt.Sprintf("%d", propertyID)}
+	mcs, err := credits.MintEstimatedCreditsForProperty(stub, propIDAttr, intervalStart, intervalEnd)
 	require.NoError(t, err)
-	require.NotNil(t, mc)
-	require.Greater(t, mc.Quantity, int64(0))
+	require.Len(t, mcs, 1)
+	require.Greater(t, mcs[0].Quantity, int64(0))
 	stub.MockTransactionEnd("tx_mint_est_ok")
 
 	// Case B: Valid Minting with Explicit Quantity
 	stub.MockTransactionStart("tx_mint_qty_ok")
-	mcQty, err := credits.MintQuantityCreditForChunk(stub, ownerID, chunkID, 100, intervalEnd)
+	mcQty, err := credits.MintQuantityCreditForChunk(stub, propIDAttr, chunkID, 100, intervalEnd)
 	require.NoError(t, err)
 	require.NotNil(t, mcQty)
 	require.Equal(t, int64(100), mcQty.Quantity)
@@ -133,7 +134,7 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	stub.MockTransactionEnd("tx_refresh_cancel")
 
 	stub.MockTransactionStart("tx_mint_fail_status")
-	_, err = credits.MintEstimatedCreditForChunk(stub, ownerID, chunkID, intervalStart, intervalEnd)
+	_, err = credits.MintEstimatedCreditsForProperty(stub, propIDAttr, intervalStart, intervalEnd)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "property is not active")
 	stub.MockTransactionEnd("tx_mint_fail_status")

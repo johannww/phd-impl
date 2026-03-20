@@ -6,9 +6,9 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
+	v "github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
-	v "github.com/johannww/phd-impl/chaincodes/carbon/vegetation"
 )
 
 const (
