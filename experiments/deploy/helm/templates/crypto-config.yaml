@@ -69,5 +69,6 @@ data:
             policy_setter: "true"
             tee_configurer: "true"
             credit_minter: "true"
+            trusted_database_registrator: "true"
 {{- end }}
 {{- end }}

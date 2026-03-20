@@ -13,8 +13,10 @@ const (
 )
 
 type Property struct {
-	OwnerID string `json:"ownerId"`
-	ID      uint64 `json:"id"`
+	OwnerID          string `json:"ownerId"`
+	ID               uint64 `json:"id"`
+	RegistryID       string `json:"registryId"`       // ID in the external system (e.g. SICAR ID)
+	RegistryProvider string `json:"registryProvider"` // Name of the provider (e.g. "SICAR")
 	// Chunks will not be marshalled to the world state via
 	// this struct. Instead, it will be marshalled via the
 	// PropertyChunk struct.

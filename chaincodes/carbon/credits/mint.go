@@ -5,9 +5,10 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
-	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/carbon/data/registry"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 )
 
@@ -78,6 +79,29 @@ func MintCreditForChunk(
 	chunk := &properties.PropertyChunk{}
 	if err := chunk.FromWorldState(stub, chunkID); err != nil {
 		return nil, fmt.Errorf("could not get property chunk from world state: %v", err)
+	}
+
+	// Validate against external registry if linked
+	property := &properties.Property{}
+	if err := property.FromWorldState(stub, []string{ownerID, chunkID[0]}); err != nil {
+		return nil, fmt.Errorf("could not get property from world state: %v", err)
+	}
+
+	if property.RegistryProvider != "" {
+		summary := &registry.RegistrySummary{}
+		if err := summary.FromWorldState(stub, []string{property.RegistryID}); err != nil {
+			return nil, fmt.Errorf("failed to get registry summary from world state: %v", err)
+		}
+
+		if summary.Status != "Ativo" {
+			return nil, fmt.Errorf("property is not active in the registry: %s", summary.Status)
+		}
+
+		// Simplified check: ensure quantity doesn't exceed verified forest area
+		// Note: We might need a conversion factor here depending on units
+		if float64(quantity) > summary.VerifiedForest {
+			return nil, fmt.Errorf("mint quantity (%d) exceeds verified forest area (%.2f)", quantity, summary.VerifiedForest)
+		}
 	}
 
 	pApplier := policies.NewPolicyApplier()

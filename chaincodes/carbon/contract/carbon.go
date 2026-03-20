@@ -10,9 +10,10 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/auction"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
-	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/carbon/data/registry"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
 )
 
@@ -345,4 +346,29 @@ func (c *CarbonContract) UnlockCredit(ctx contractapi.TransactionContextInterfac
 	return c.withMetricsErr("UnlockCredit", func() error {
 		return credits.UnlockCredit(ctx.GetStub(), creditID, lockID)
 	})
+}
+
+func (c *CarbonContract) AddTrustedProvider(
+	ctx contractapi.TransactionContextInterface,
+	name string,
+	baseURL string,
+	rootCAPEM string,
+) error {
+	return c.withMetricsErr("AddTrustedProvider", func() error {
+		return registry.AddTrustedProvider(ctx.GetStub(), name, baseURL, []byte(rootCAPEM))
+	})
+}
+
+func (c *CarbonContract) RefreshRegistryDataForProperty(
+	ctx contractapi.TransactionContextInterface,
+	providerName string,
+	registryPropID string,
+) (*registry.RegistrySummary, error) {
+	var summary *registry.RegistrySummary
+	err := c.withMetricsErr("RefreshRegistryData", func() error {
+		var err error
+		summary, err = registry.RefreshRegistryData(ctx.GetStub(), providerName, registryPropID)
+		return err
+	})
+	return summary, err
 }

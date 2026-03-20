@@ -151,6 +151,8 @@ func SetupIdentities(stub *mocks.MockStub) MockIdentities {
 		identities.InteropRelayerAttr,
 		identities.PolicySetter,
 		identities.TEEConfigurer,
+		identities.CreditMinter,
+		identities.TrustedDBRegistrator,
 	}
 
 	for _, attr := range identityAttributes {

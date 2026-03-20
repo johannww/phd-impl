@@ -3,7 +3,9 @@ package registry
 import (
 	"fmt"
 
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 )
 
@@ -30,4 +32,23 @@ func (rp *RegistryProvider) ToWorldState(stub shim.ChaincodeStubInterface) error
 
 func (rp *RegistryProvider) GetID() *[][]string {
 	return &[][]string{{rp.Name}}
+}
+
+func AddTrustedProvider(
+	stub shim.ChaincodeStubInterface,
+	name string,
+	baseURL string,
+	rootCA []byte,
+) error {
+	if err := cid.AssertAttributeValue(stub, identities.TrustedDBRegistrator, "true"); err != nil {
+		return fmt.Errorf("caller is not a trusted database registrator: %v", err)
+	}
+
+	provider := &RegistryProvider{
+		Name:    name,
+		BaseURL: baseURL,
+		RootCA:  rootCA,
+	}
+
+	return provider.ToWorldState(stub)
 }
