@@ -62,7 +62,10 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	stub.MockTransactionEnd("tx_reg")
 
 	// 3. Create Property and Chunk linked to SICAR
-	ownerID := "test_owner"
+	ownerName := setup.CREDIT_OWNER_ID
+	stub.Creator = mockIds[ownerName]
+	ownerID := identities.GetID(stub)
+
 	propertyID := uint64(1)
 	registryProvider := "SICAR"
 
@@ -128,7 +131,8 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 
 	// Case B: Valid Minting with Explicit Quantity
 	stub.MockTransactionStart("tx_mint_qty_ok")
-	mcQty, err := credits.MintQuantityCreditForChunk(stub, propIDAttr, chunkID, 100, intervalEnd)
+	mintQuantity := int64(100)
+	mcQty, err := credits.MintQuantityCreditForChunk(stub, propIDAttr, chunkID, mintQuantity, intervalEnd)
 	require.NoError(t, err)
 	require.NotNil(t, mcQty)
 	require.Equal(t, int64(100), mcQty.Quantity)
@@ -146,4 +150,21 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "property is not active")
 	stub.MockTransactionEnd("tx_mint_fail_status")
+
+	// 6. Test Burning with SICAR Validation
+	// Get the ID of the minted credit from Case B
+	mintCreditID := mcQty.GetID() // This returns &[][]string{{ownerID, "1", "0.000000", "0.000000", intervalEnd}}
+	mintCreditIDAttr := (*mintCreditID)[0]
+
+	stub.MockTransactionStart("tx_burn_ok")
+	stub.Creator = mockIds[ownerName] // Ensure caller is owner
+	err = credits.BurnQuantity(stub, mintCreditIDAttr, mintQuantity)
+	require.NoError(t, err)
+	stub.MockTransactionEnd("tx_burn_ok")
+
+	stub.MockTransactionStart("tx_burn_fail_status")
+	err = credits.BurnQuantity(stub, mintCreditIDAttr, mintQuantity)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "burn quantity exceeds available quantity")
+	stub.MockTransactionEnd("tx_burn_fail_status")
 }
