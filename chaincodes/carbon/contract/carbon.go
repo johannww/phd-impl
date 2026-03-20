@@ -160,9 +160,19 @@ func (c *CarbonContract) MintEstimatedCreditsForProperty(
 	return mcs, err
 }
 
-func (c *CarbonContract) BurnCredit(ctx contractapi.TransactionContextInterface, mintCreditID []string, burnQuantity int64) error {
-	return c.withMetricsErr("BurnCredit", func() error {
-		return credits.BurnQuantity(ctx.GetStub(), mintCreditID, burnQuantity)
+func (c *CarbonContract) BurnNominalQuantity(ctx contractapi.TransactionContextInterface, mintCreditID []string, burnQuantity int64) (*credits.BurnCredit, error) {
+	var bc *credits.BurnCredit
+	err := c.withMetricsErr("BurnNominalQuantity", func() error {
+		var err error
+		bc, err = credits.BurnNominalQuantity(ctx.GetStub(), mintCreditID, burnQuantity)
+		return err
+	})
+	return bc, err
+}
+
+func (c *CarbonContract) ApplyBurnMultipliers(ctx contractapi.TransactionContextInterface, burnCreditID []string) error {
+	return c.withMetricsErr("ApplyBurnMultipliers", func() error {
+		return credits.ApplyBurnMultipliers(ctx.GetStub(), burnCreditID)
 	})
 }
 

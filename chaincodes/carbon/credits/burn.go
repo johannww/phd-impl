@@ -23,6 +23,7 @@ type BurnCredit struct {
 	BurnQuantity  int64       `json:"burnQuantity"`
 	BurnMult      int64       `json:"burnMult"`
 	BurnTimeStamp string      `json:"burnTimestamp"`
+	Adjusted      bool        `json:"adjusted"`
 }
 
 func (bc *BurnCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
@@ -41,50 +42,117 @@ func (bc *BurnCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttrib
 }
 
 func (bc *BurnCredit) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	mcId := bc.GetID()
+	id := bc.GetID()
 	copyBc := *bc // create a copy to avoid modifying the original object
 	copyBc.MintCredit = nil
-	if err := state.PutStateWithCompositeKey(stub, BURN_CREDIT_PREFIX, mcId, &copyBc); err != nil {
+	if err := state.PutStateWithCompositeKey(stub, BURN_CREDIT_PREFIX, id, &copyBc); err != nil {
 		return fmt.Errorf("could not put burn credit in state: %v", err)
 	}
 
 	// Ensure the associated MintCredit is also stored in the world state
-	if err := bc.MintCredit.ToWorldState(stub); err != nil {
-		return fmt.Errorf("could not put associated MintCredit in state: %v", err)
+	if bc.MintCredit != nil {
+		if err := bc.MintCredit.ToWorldState(stub); err != nil {
+			return fmt.Errorf("could not put associated MintCredit in state: %v", err)
+		}
 	}
 
 	return nil
 }
 
 func (bc *BurnCredit) GetID() *[][]string {
-	return bc.MintCredit.GetID()
+	// ID is MintCreditID + BurnTimeStamp
+	id := make([]string, len(bc.MintCreditID))
+	copy(id, bc.MintCreditID)
+	id = append(id, bc.BurnTimeStamp)
+	return &[][]string{id}
 }
 
-// TODO: Test
-// BurnQuantity handles the burning of a minted credit.
-func BurnQuantity(stub shim.ChaincodeStubInterface, mintCreditID []string, burnQuantity int64) error {
+// BurnNominalQuantity handles the initial retirement of carbon units without applying private multipliers.
+func BurnNominalQuantity(stub shim.ChaincodeStubInterface, mintCreditID []string, burnQuantity int64) (*BurnCredit, error) {
 	mc, err := loadMintCreditAndPerformChecks(stub, burnQuantity, mintCreditID)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	protoTs, _ := stub.GetTxTimestamp()
+	burnTimestamp := utils.TimestampRFC3339UtcString(protoTs)
 
 	bc := &BurnCredit{
-		BurnQuantity: burnQuantity,
-		MintCreditID: mintCreditID,
-		MintCredit:   mc,
-	}
-
-	if err = fillTSAndCalcMult(stub, bc); err != nil {
-		return fmt.Errorf("could not fill timestamp and calculate multiplier: %v", err)
+		BurnQuantity:  burnQuantity,
+		MintCreditID:  mintCreditID,
+		MintCredit:    mc,
+		BurnTimeStamp: burnTimestamp,
+		Adjusted:      false,
+		BurnMult:      0, // Not yet calculated
 	}
 
 	bc.MintCredit.Credit.Quantity -= burnQuantity
-	if err = bc.ToWorldState(stub); err != nil {
-		return fmt.Errorf("could not update mint credit in world state: %v", err)
-	}
 
 	if err = bc.ToWorldState(stub); err != nil {
-		return fmt.Errorf("could not put burn credit in world state: %v", err)
+		return nil, fmt.Errorf("could not save burn credit: %v", err)
+	}
+
+	return bc, nil
+}
+
+// ApplyBurnMultipliers calculates and applies multipliers based on company private data.
+func ApplyBurnMultipliers(stub shim.ChaincodeStubInterface, burnCreditID []string) error {
+	bc := &BurnCredit{
+		MintCreditID: burnCreditID[:len(burnCreditID)-1],
+	}
+	bc.BurnTimeStamp = burnCreditID[len(burnCreditID)-1]
+
+	if err := bc.FromWorldState(stub, burnCreditID); err != nil {
+		return fmt.Errorf("could not load burn credit: %v", err)
+	}
+
+	if bc.Adjusted {
+		return fmt.Errorf("multipliers already applied to this burn credit")
+	}
+
+	// Load company private data
+	companyId := bc.MintCredit.OwnerID
+	company := &companies.Company{
+		ID: companyId,
+	}
+	// Note: This requires the peer to have access to the private data collection
+	err := company.FromWorldState(stub, (*company.GetID())[0])
+	if err != nil {
+		return fmt.Errorf("could not get company from private world state: %v", err)
+	}
+
+	pApplier := policies.NewPolicyApplier()
+	pInput := &policies.PolicyInput{
+		Company: company,
+		Chunk:   bc.MintCredit.Chunk,
+	}
+	activePols, err := policies.GetActivePolicies(stub)
+	if err != nil {
+		return fmt.Errorf("could not get active policies: %v", err)
+	}
+
+	bc.BurnMult, err = pApplier.BurnIndependentMult(pInput, activePols)
+	if err != nil {
+		return fmt.Errorf("could not get burn multiplier: %v", err)
+	}
+
+	bc.Adjusted = true
+
+	// Burn the extra quantity from the multiplier
+	// BurnMult is the additional multiplier (e.g., 500 means +0.5x, total 1.5x)
+	if bc.BurnMult > 0 {
+		extraQuantity := (bc.BurnQuantity * bc.BurnMult) / policies.MULTIPLIER_SCALE
+		if extraQuantity > 0 {
+			if extraQuantity > bc.MintCredit.Quantity {
+				return fmt.Errorf("not enough remaining credits to apply multiplier: need %d more, have %d", extraQuantity, bc.MintCredit.Quantity)
+			}
+			bc.MintCredit.Quantity -= extraQuantity
+		}
+	}
+
+	// Save the adjusted BurnCredit and updated MintCredit
+	if err := bc.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not save adjusted burn credit and updated mint credit: %v", err)
 	}
 
 	return nil
@@ -109,36 +177,4 @@ func loadMintCreditAndPerformChecks(
 		return nil, fmt.Errorf("only the owner of the credit can burn it: %s != %s", mc.OwnerID, callerID)
 	}
 	return mc, nil
-}
-
-func fillTSAndCalcMult(stub shim.ChaincodeStubInterface, bc *BurnCredit) error {
-	protoTs, _ := stub.GetTxTimestamp()
-	burnTimestamp := utils.TimestampRFC3339UtcString(protoTs)
-	bc.BurnTimeStamp = burnTimestamp
-
-	companyId := bc.MintCredit.OwnerID
-	company := &companies.Company{
-		ID: companyId,
-	}
-	err := company.FromWorldState(stub, (*company.GetID())[0])
-	if err != nil {
-		return fmt.Errorf("could not get company from world state: %v", err)
-	}
-
-	pApplier := policies.NewPolicyApplier()
-	pInput := &policies.PolicyInput{
-		Company: company,
-		Chunk:   bc.MintCredit.Chunk,
-	}
-	activePols, err := policies.GetActivePolicies(stub)
-	if err != nil {
-		return fmt.Errorf("could not get active policies: %v", err)
-	}
-	bc.BurnMult, err = pApplier.BurnIndependentMult(pInput, activePols)
-	if err != nil {
-		return fmt.Errorf("could not get burn multiplier: %v", err)
-	}
-
-	return nil
-
 }

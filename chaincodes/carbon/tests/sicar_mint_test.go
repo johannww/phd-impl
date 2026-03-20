@@ -9,7 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/johannww/phd-impl/chaincodes/carbon/companies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
+	"github.com/johannww/phd-impl/chaincodes/carbon/data"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data/registry"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
@@ -151,20 +153,58 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	require.Contains(t, err.Error(), "property is not active")
 	stub.MockTransactionEnd("tx_mint_fail_status")
 
-	// 6. Test Burning with SICAR Validation
+	// 6. Test Burning with SICAR Validation and Multipliers
 	// Get the ID of the minted credit from Case B
 	mintCreditID := mcQty.GetID() // This returns &[][]string{{ownerID, "1", "0.000000", "0.000000", intervalEnd}}
 	mintCreditIDAttr := (*mintCreditID)[0]
 
+	// Setup company private data for multipliers
+	company := &companies.Company{
+		ID: ownerID,
+		Coordinate: &utils.Coordinate{
+			Latitude:  -23.550520,
+			Longitude: -46.633308,
+		},
+		DataProps: &data.ValidationProps{
+			Methods: []data.ValidationMethod{data.ValidationMethodSattelite},
+		},
+	}
+	stub.MockTransactionStart("tx_company")
+	err = company.ToWorldState(stub)
+	require.NoError(t, err)
+	stub.MockTransactionEnd("tx_company")
+
+	// Case D: Valid Nominal Burning
 	stub.MockTransactionStart("tx_burn_ok")
 	stub.Creator = mockIds[ownerName] // Ensure caller is owner
-	err = credits.BurnQuantity(stub, mintCreditIDAttr, mintQuantity)
+	nominalBurnQuantity := int64(40)
+	bc, err := credits.BurnNominalQuantity(stub, mintCreditIDAttr, nominalBurnQuantity)
 	require.NoError(t, err)
+	require.NotNil(t, bc)
+	require.False(t, bc.Adjusted)
 	stub.MockTransactionEnd("tx_burn_ok")
 
-	stub.MockTransactionStart("tx_burn_fail_status")
-	err = credits.BurnQuantity(stub, mintCreditIDAttr, mintQuantity)
+	// Case E: Apply Multipliers (Requires private data access)
+	burnCreditIDAttr := (*bc.GetID())[0]
+	stub.MockTransactionStart("tx_apply_mult")
+	// In mock stub, we assume access to pvt data if the collection is registered (which it is by default in setup)
+	err = credits.ApplyBurnMultipliers(stub, burnCreditIDAttr)
+	require.NoError(t, err)
+	stub.MockTransactionEnd("tx_apply_mult")
+
+	// Verify adjusted status
+	stub.MockTransactionStart("tx_verify_burn")
+	adjustedBc := &credits.BurnCredit{}
+	err = adjustedBc.FromWorldState(stub, burnCreditIDAttr)
+	require.NoError(t, err)
+	require.True(t, adjustedBc.Adjusted)
+	require.NotEqual(t, int64(0), adjustedBc.BurnMult)
+	stub.MockTransactionEnd("tx_verify_burn")
+
+	// Case F: Burn fail if quantity too high
+	stub.MockTransactionStart("tx_burn_fail_qty")
+	_, err = credits.BurnNominalQuantity(stub, mintCreditIDAttr, 1000)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "burn quantity exceeds available quantity")
-	stub.MockTransactionEnd("tx_burn_fail_status")
+	stub.MockTransactionEnd("tx_burn_fail_qty")
 }
