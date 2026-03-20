@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/companies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
@@ -40,6 +41,7 @@ func (bc *BurnCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttrib
 }
 
 func (bc *BurnCredit) ToWorldState(stub shim.ChaincodeStubInterface) error {
+	mcId := bc.GetID()
 	copyBc := *bc // create a copy to avoid modifying the original object
 	copyBc.MintCredit = nil
 	if err := state.PutStateWithCompositeKey(stub, BURN_CREDIT_PREFIX, mcId, &copyBc); err != nil {
@@ -114,11 +116,19 @@ func fillTSAndCalcMult(stub shim.ChaincodeStubInterface, bc *BurnCredit) error {
 	burnTimestamp := utils.TimestampRFC3339UtcString(protoTs)
 	bc.BurnTimeStamp = burnTimestamp
 
+	companyId := bc.MintCredit.OwnerID
+	company := &companies.Company{
+		ID: companyId,
+	}
+	err := company.FromWorldState(stub, (*company.GetID())[0])
+	if err != nil {
+		return fmt.Errorf("could not get company from world state: %v", err)
+	}
+
 	pApplier := policies.NewPolicyApplier()
-	// TODOHP: the multiplier here might expose buyer real identity.
-	// Evaluate this later.
 	pInput := &policies.PolicyInput{
-		Chunk: bc.MintCredit.Chunk,
+		Company: company,
+		Chunk:   bc.MintCredit.Chunk,
 	}
 	activePols, err := policies.GetActivePolicies(stub)
 	if err != nil {
