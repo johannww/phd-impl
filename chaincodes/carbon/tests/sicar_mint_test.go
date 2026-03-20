@@ -66,17 +66,6 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	propertyID := uint64(1)
 	registryProvider := "SICAR"
 
-	prop := &properties.Property{
-		OwnerID:          ownerID,
-		ID:               propertyID,
-		RegistryID:       registryPropID,
-		RegistryProvider: registryProvider,
-	}
-	stub.MockTransactionStart("tx_prop")
-	err = prop.ToWorldState(stub)
-	require.NoError(t, err)
-	stub.MockTransactionEnd("tx_prop")
-
 	chunkID := []string{fmt.Sprintf("%d", propertyID), "0.000000", "0.000000"}
 	chunk := &properties.PropertyChunk{
 		PropertyID: propertyID,
@@ -84,10 +73,29 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 			{Latitude: 0.0, Longitude: 0.0},
 		},
 	}
-	stub.MockTransactionStart("tx_chunk")
-	err = chunk.ToWorldState(stub)
+
+	prop := &properties.Property{
+		OwnerID:          ownerID,
+		ID:               propertyID,
+		RegistryID:       registryPropID,
+		RegistryProvider: registryProvider,
+		Chunks:           []*properties.PropertyChunk{chunk},
+	}
+	stub.MockTransactionStart("tx_prop")
+	err = prop.ToWorldState(stub)
 	require.NoError(t, err)
-	stub.MockTransactionEnd("tx_chunk")
+	stub.MockTransactionEnd("tx_prop")
+
+	// Verify property and chunk are stored correctly
+	propFromState := &properties.Property{
+		OwnerID: ownerID,
+		ID:      propertyID,
+	}
+	stub.MockTransactionStart("tx_get_prop")
+	err = propFromState.FromWorldState(stub, (*propFromState.GetID())[0])
+	require.NoError(t, err)
+	require.Equal(t, len(prop.Chunks), len(propFromState.Chunks))
+	stub.MockTransactionEnd("tx_get_prop")
 
 	// 4. Setup Active Policies
 	stub.MockTransactionStart("tx_pol")
