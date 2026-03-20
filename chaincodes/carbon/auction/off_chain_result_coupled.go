@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 )
 
 func processCoupledAuctionResult(stub shim.ChaincodeStubInterface,
@@ -33,6 +34,36 @@ func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainC
 		err = mergedMb.ToWorldState(stub)
 		if err != nil {
 			return fmt.Errorf("could not store merged matched bid: %v", err)
+		}
+
+		// Transfer credit ownership to the buyer
+		if mergedMb.SellBid.Credit == nil {
+			err := mergedMb.SellBid.FetchCredit(stub)
+			if err != nil {
+				return fmt.Errorf("sell bid in merged matched bid does not have associated credit data: %v", err)
+			}
+		}
+
+		buyerCredit := &credits.MintCredit{
+			Credit: credits.Credit{
+				OwnerID:  mergedMb.BuyBid.BuyerID,
+				ChunkID:  mergedMb.SellBid.Credit.ChunkID,
+				Quantity: mergedMb.Quantity,
+			},
+			MintMult:      mergedMb.SellBid.Credit.MintMult,
+			MintTimeStamp: mergedMb.SellBid.Credit.MintTimeStamp,
+		}
+
+		// Try to load existing credit for the buyer to aggregate quantity
+		existingBuyerCredit := &credits.MintCredit{}
+		err = existingBuyerCredit.FromWorldState(stub, (*buyerCredit.GetID())[0])
+		if err == nil {
+			buyerCredit.Quantity += existingBuyerCredit.Quantity
+		}
+
+		err = buyerCredit.ToWorldState(stub)
+		if err != nil {
+			return fmt.Errorf("could not materialize credit for buyer %s: %v", mergedMb.BuyBid.BuyerID, err)
 		}
 	}
 	return nil
