@@ -137,7 +137,8 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	mcQty, err := credits.MintQuantityCreditForChunk(stub, propIDAttr, chunkID, mintQuantity, intervalEnd)
 	require.NoError(t, err)
 	require.NotNil(t, mcQty)
-	require.Equal(t, int64(100), mcQty.Quantity)
+	// Expected quantity is doubled due to VEGETATION policy (returns 1000 = 1x extra)
+	require.Equal(t, int64(200), mcQty.Quantity)
 	stub.MockTransactionEnd("tx_mint_qty_ok")
 
 	// Case C: Deactivated Registry

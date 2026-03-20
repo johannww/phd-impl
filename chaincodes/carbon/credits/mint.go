@@ -83,6 +83,9 @@ func mintCreditInternal(
 		return nil, fmt.Errorf("could not get mint multiplier from active policies: %v", err)
 	}
 
+	// Apply multiplier to quantity
+	effectiveQuantity := quantity + (quantity * mintMult / policies.MULTIPLIER_SCALE)
+
 	credit := &MintCredit{
 		Credit: Credit{
 			OwnerID: property.OwnerID,
@@ -91,7 +94,7 @@ func mintCreditInternal(
 				strconv.FormatFloat(chunk.Coordinates[0].Latitude, 'f', 6, 64),
 				strconv.FormatFloat(chunk.Coordinates[0].Longitude, 'f', 6, 64),
 			},
-			Quantity: quantity,
+			Quantity: effectiveQuantity,
 		},
 		MintMult:      mintMult,
 		MintTimeStamp: timestampRFC3339,
