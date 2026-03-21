@@ -102,11 +102,14 @@ func splitIntoPublicAndPrivateIndependentResult(
 	// Split matched bids
 	for i, matchedBid := range result.MatchedBids {
 		resultPvt.MatchedBids[i] = &bids.MatchedBid{
-			PrivatePrice:      matchedBid.PrivatePrice,
-			PrivateMultiplier: matchedBid.PrivateMultiplier,
+			PrivatePrice: matchedBid.PrivatePrice,
+			BuyBid: &bids.BuyBid{
+				PrivatePrice: matchedBid.BuyBid.PrivatePrice,
+			},
+			SellBid: &bids.SellBid{
+				PrivatePrice: matchedBid.SellBid.PrivatePrice,
+			},
 		}
-		resultPub.MatchedBids[i].PrivatePrice = nil
-		resultPub.MatchedBids[i].PrivateMultiplier = nil
 	}
 
 	// Split adjusted sell bids
@@ -125,6 +128,11 @@ func splitIntoPublicAndPrivateIndependentResult(
 		resultPub.AdustedBuyBids[i].PrivatePrice = nil
 	}
 
+	for _, matchedBid := range result.MatchedBids {
+		matchedBid.PrivatePrice = nil
+		matchedBid.SellBid.PrivatePrice = nil
+		matchedBid.BuyBid.PrivatePrice = nil
+	}
 	return
 }
 
@@ -160,6 +168,8 @@ func MergeIndependentPublicPrivateResults(
 			PrivatePrice:      pvtResult.MatchedBids[i].PrivatePrice,
 			PrivateMultiplier: pvtResult.MatchedBids[i].PrivateMultiplier,
 		}
+		mergedResult.MatchedBids[i].BuyBid.PrivatePrice = pvtResult.MatchedBids[i].BuyBid.PrivatePrice
+		mergedResult.MatchedBids[i].SellBid.PrivatePrice = pvtResult.MatchedBids[i].SellBid.PrivatePrice
 	}
 
 	// Merge adjusted sell bids
