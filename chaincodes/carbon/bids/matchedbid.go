@@ -64,10 +64,18 @@ func (mb *MatchedBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	copyMb.PrivatePrice = nil
 	copyMb.PrivateMultiplier = nil
 
-	// We do not need duplicated data in the SellBid and BuyBid
-	copyMb.BuyBid.PrivatePrice = nil // Private prices are already stored in the world state
-	copyMb.SellBid.PrivatePrice = nil
-	copyMb.SellBid.Credit = nil // Do not store the credit in the matched bid
+	// Deep-copy BuyBid and clear its private fields on the copy
+	if mb.BuyBid != nil {
+		copyMb.BuyBid = mb.BuyBid.DeepCopy()
+		copyMb.BuyBid.PrivatePrice = nil
+	}
+
+	// Deep-copy SellBid and clear its private/duplicated fields on the copy
+	if mb.SellBid != nil {
+		copyMb.SellBid = mb.SellBid.DeepCopy()
+		copyMb.SellBid.PrivatePrice = nil // already stored in the private world state
+		copyMb.SellBid.Credit = nil       // Do not store the credit in the matched bid
+	}
 
 	// Store MatchedBid in world state without private data and without duplicated data
 	err := state.PutStateWithCompositeKey(stub, MATCHED_BID_PREFIX, copyMb.GetID(), copyMb)
