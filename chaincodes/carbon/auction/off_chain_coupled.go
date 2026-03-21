@@ -280,6 +280,7 @@ func (a *AuctionCoupledRunner) mountPublicAndPrivateMatchedBid(
 }
 
 // calculateClearingPriceAndQuantity calculates the clearing price and quantity for a pair of bids.
+// TODO: Add reference to the paper.
 // It considers the amount of extra credits the seller can provide based on the multiplier.
 // This is implemented according to the model described on our paper.
 // If the bid is satisfied, its multiplier is higher than other,
