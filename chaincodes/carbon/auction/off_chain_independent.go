@@ -33,8 +33,9 @@ func (a *AuctionIndepRunner) RunIndependent(data *AuctionData) (resultPub, resul
 	})
 
 	i, j := 0, len(buyBids)-1
-	lastMatch := [2]int{-1, -1}
+	lastSellBidMatched, lastBuyBidMatched := -1, -1
 	hasCuttingPrice := buyBids[j].PrivatePrice.Price >= sellBids[i].PrivatePrice.Price
+
 	for (i < len(sellBids) && j >= 0) &&
 		buyBids[j].PrivatePrice.Price >= sellBids[i].PrivatePrice.Price {
 
@@ -59,15 +60,15 @@ func (a *AuctionIndepRunner) RunIndependent(data *AuctionData) (resultPub, resul
 
 		matchedBids = append(matchedBids, matchedBid)
 
-		lastMatch[0] = i
-		lastMatch[1] = j
+		lastSellBidMatched = i
+		lastBuyBidMatched = j
 	}
 
 	if !hasCuttingPrice {
 		return nil, nil, fmt.Errorf("no cutting price found")
 	}
 
-	cuttingPrice := (buyBids[lastMatch[0]].PrivatePrice.Price + sellBids[lastMatch[1]].PrivatePrice.Price) / 2
+	cuttingPrice := (buyBids[lastBuyBidMatched].PrivatePrice.Price + sellBids[lastSellBidMatched].PrivatePrice.Price) / 2
 
 	for _, matchedBid := range matchedBids {
 		matchedBid.PrivatePrice = &bids.PrivatePrice{
@@ -79,8 +80,8 @@ func (a *AuctionIndepRunner) RunIndependent(data *AuctionData) (resultPub, resul
 	result := &OffChainIndepAuctionResult{
 		AuctionID:       data.AuctionID,
 		MatchedBids:     matchedBids,
-		AdustedSellBids: sellBids[:lastMatch[0]+1],
-		AdustedBuyBids:  buyBids[:lastMatch[1]+1],
+		AdustedSellBids: sellBids[:lastSellBidMatched+1],
+		AdustedBuyBids:  buyBids[:lastBuyBidMatched+1],
 	}
 	resultPub, resultPvt = splitIntoPublicAndPrivateIndependentResult(result)
 
