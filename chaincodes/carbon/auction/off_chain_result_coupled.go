@@ -5,6 +5,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
+	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 )
 
 func processCoupledAuctionResult(stub shim.ChaincodeStubInterface,
@@ -36,6 +37,9 @@ func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainC
 	if err != nil {
 		return fmt.Errorf("could not merge coupled auction results into single matched bids: %v", err)
 	}
+
+	// Aggregate wallet adjustments to minimize world state updates
+	walletAdjustments := make(map[string]int64)
 
 	for _, mergedMb := range mergedMbs {
 		err = mergedMb.ToWorldState(stub)
@@ -72,7 +76,39 @@ func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainC
 		if err != nil {
 			return fmt.Errorf("could not materialize credit for buyer %s: %v", mergedMb.BuyBid.BuyerID, err)
 		}
+
+		// Calculate payment and refund
+		matchPrice := mergedMb.PrivatePrice.Price
+		matchQuantity := mergedMb.Quantity
+
+		// TODOHP: we have to be careful here. we must consider the extra credits from the multiplier.
+		// 1. Seller payment: Sellers are paid the clearing price
+		walletAdjustments[mergedMb.SellBid.SellerID] += matchPrice * matchQuantity
+
+		// 2. Buyer refund: Buyers committed at their limit price, refund difference
+		originalPrice := mergedMb.BuyBid.PrivatePrice.Price
+		refund := (originalPrice - matchPrice) * matchQuantity
+		if refund > 0 {
+			walletAdjustments[mergedMb.BuyBid.BuyerID] += refund
+		}
 	}
+
+	// Update all adjusted wallets
+	for ownerID, amount := range walletAdjustments {
+		wallet := &payment.VirtualTokenWallet{OwnerID: ownerID}
+		err := wallet.FromWorldState(stub, []string{ownerID})
+		if err != nil {
+			// If it doesn't exist, we assume the balance was 0
+			wallet.Quantity = amount
+		} else {
+			wallet.Quantity += amount
+		}
+
+		if err := wallet.ToWorldState(stub); err != nil {
+			return fmt.Errorf("failed to update wallet for owner %s: %v", ownerID, err)
+		}
+	}
+
 	return nil
 }
 
