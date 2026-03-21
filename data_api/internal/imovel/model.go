@@ -11,16 +11,16 @@ type Imovel struct {
 	DataProtocolo       string `json:"dataProtocolo"`
 
 	// Status
-	StatusImovel     string `json:"statusImovel"`
-	TipoImovel       string `json:"tipoImovel"`
-	TipoOrigem       string `json:"tipoOrigem"`
+	StatusImovel           string `json:"statusImovel"`
+	TipoImovel             string `json:"tipoImovel"`
+	TipoOrigem             string `json:"tipoOrigem"`
 	DescricaoEtapaCadastro string `json:"descricaoEtapaCadastro"`
 
 	// Owner
-	CPFCadastrante   string  `json:"cpfCadastrante"`
-	NomeCadastrante  string  `json:"nomeCadastrante"`
-	NomeImovel       string  `json:"nomeImovel"`
-	FracaoIdeal      *string `json:"fracaoIdeal"`
+	CPFCadastrante  string  `json:"cpfCadastrante"`
+	NomeCadastrante string  `json:"nomeCadastrante"`
+	NomeImovel      string  `json:"nomeImovel"`
+	FracaoIdeal     *string `json:"fracaoIdeal"`
 
 	// Location
 	CodigoMunicipio   int     `json:"codigoMunicipio"`
@@ -49,22 +49,22 @@ type Imovel struct {
 
 	// Reserva Legal breakdown
 	SituacaoReservaLegal                           string  `json:"situacaoReservaLegal"`
-	AreaReservaLegalAverbada                        float64 `json:"areaReservaLegalAverbada"`
-	AreaReservaLegalAprovadaNaoAverbada             float64 `json:"areaReservaLegalAprovadaNaoAverbada"`
-	AreaReservaLegalProposta                        float64 `json:"areaReservaLegalProposta"`
-	AreaReservaLegalDeclaradaProprietarioPossuidor  float64 `json:"areaReservaLegalDeclaradaProprietarioPossuidor"`
-	AreaReservaLegalExcedentePassivo                float64 `json:"areaReservaLegalExcedentePassivo"`
-	AreaReservaLegalRecompor                        float64 `json:"areaReservaLegalRecompor"`
+	AreaReservaLegalAverbada                       float64 `json:"areaReservaLegalAverbada"`
+	AreaReservaLegalAprovadaNaoAverbada            float64 `json:"areaReservaLegalAprovadaNaoAverbada"`
+	AreaReservaLegalProposta                       float64 `json:"areaReservaLegalProposta"`
+	AreaReservaLegalDeclaradaProprietarioPossuidor float64 `json:"areaReservaLegalDeclaradaProprietarioPossuidor"`
+	AreaReservaLegalExcedentePassivo               float64 `json:"areaReservaLegalExcedentePassivo"`
+	AreaReservaLegalRecompor                       float64 `json:"areaReservaLegalRecompor"`
 
 	// APP breakdown
-	AreaPPAreaRuralConsolida             float64 `json:"areaPPAreaRuralConsolida"`
-	AreaPPRemanescenteVegetacaoNativa    float64 `json:"areaPPRemanescenteVegetacaoNativa"`
-	AreaPreservacaoPermanenteRecompor    float64 `json:"areaPreservacaoPermanenteRecompor"`
+	AreaPPAreaRuralConsolida          float64 `json:"areaPPAreaRuralConsolida"`
+	AreaPPRemanescenteVegetacaoNativa float64 `json:"areaPPRemanescenteVegetacaoNativa"`
+	AreaPreservacaoPermanenteRecompor float64 `json:"areaPreservacaoPermanenteRecompor"`
 
 	// Other
-	AreaUsoRestritoDeclividade  float64 `json:"areaUsoRestritoDeclividade"`
-	AreaUsoRestritoRecompor     float64 `json:"areaUsoRestritoRecompor"`
-	SobreposicoesTerraIndigena  float64 `json:"sobreposicoesTerraIndigena"`
+	AreaUsoRestritoDeclividade      float64 `json:"areaUsoRestritoDeclividade"`
+	AreaUsoRestritoRecompor         float64 `json:"areaUsoRestritoRecompor"`
+	SobreposicoesTerraIndigena      float64 `json:"sobreposicoesTerraIndigena"`
 	SobreposicoesUnidadeConservacao float64 `json:"sobreposicoesUnidadeConservacao"`
 	SobreposicoesAreasEmbargadas    float64 `json:"sobreposicoesAreasEmbargadas"`
 
@@ -82,10 +82,10 @@ type Imovel struct {
 	NomeFantasia     string `json:"nomeFantasia"`
 
 	// Flags
-	Situacao         bool `json:"situacao"`
-	SituacaoMigracao bool `json:"situacaomigracao"`
-	AderiuPRA        string `json:"aderiupra"`
-	DeclaracaoPosterior int `json:"declaracaoPosterior"`
+	Situacao            bool   `json:"situacao"`
+	SituacaoMigracao    bool   `json:"situacaomigracao"`
+	AderiuPRA           string `json:"aderiupra"`
+	DeclaracaoPosterior int    `json:"declaracaoPosterior"`
 }
 
 type Store map[string]Imovel
