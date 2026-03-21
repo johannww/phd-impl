@@ -48,7 +48,7 @@ func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainC
 			return fmt.Errorf("could not store merged matched bid: %v", err)
 		}
 
-		if err := transferCreditToBuyer(stub, mergedMb, &walletAdjustments); err != nil {
+		if err := transferCreditToBuyer(stub, mergedMb); err != nil {
 			return err
 		}
 

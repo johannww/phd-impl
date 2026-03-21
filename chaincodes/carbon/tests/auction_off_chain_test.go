@@ -49,6 +49,15 @@ func TestOffChainIndependentAuction(t *testing.T) {
 	require.NoError(t, err, "Failed to merge independent auction results")
 
 	verifyBidsQuantityConsistency(t, totalBuyBidQuantity, auctionResult)
+
+	stub.MockTransactionStart("process-auction-result-tx")
+	resultPubBytes, err := json.Marshal(auctionResultPub)
+	require.NoError(t, err, "Failed to marshal public auction result")
+	resultPvtBytes, err := json.Marshal(auctionResultPvt)
+	require.NoError(t, err, "Failed to marshal private auction result")
+	err = auction.ProcessOffChainAuctionResult(stub, resultPubBytes, resultPvtBytes)
+	require.NoError(t, err, "Failed to process off-chain auction result")
+	stub.MockTransactionEnd("process-auction-result-tx")
 }
 
 func TestOffChainIndependentAuctionWithRandomBids(t *testing.T) {
