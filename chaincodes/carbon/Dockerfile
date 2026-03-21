@@ -10,6 +10,7 @@ COPY chaincodes/carbon/ ./chaincodes/carbon/
 COPY chaincodes/common/ ./chaincodes/common/
 COPY chaincodes/interop/ ./chaincodes/interop/
 COPY tee_auction/go/ ./tee_auction/go/
+COPY data_api/ ./data_api/
 COPY vendor/ ./vendor/
 
 RUN go build -o /usr/local/bin/carbon ./chaincodes/carbon/cmd/carbon
