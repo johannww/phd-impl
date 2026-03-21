@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 )
@@ -47,49 +48,12 @@ func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainC
 			return fmt.Errorf("could not store merged matched bid: %v", err)
 		}
 
-		// Transfer credit ownership to the buyer
-		if mergedMb.SellBid.Credit == nil {
-			err := mergedMb.SellBid.FetchCredit(stub)
-			if err != nil {
-				return fmt.Errorf("sell bid in merged matched bid does not have associated credit data: %v", err)
-			}
+		if err := transferCreditToBuyer(stub, mergedMb, &walletAdjustments); err != nil {
+			return err
 		}
 
-		buyerCredit := &credits.MintCredit{
-			Credit: credits.Credit{
-				OwnerID:  mergedMb.BuyBid.BuyerID,
-				ChunkID:  mergedMb.SellBid.Credit.ChunkID,
-				Quantity: mergedMb.Quantity,
-			},
-			MintMult:      mergedMb.SellBid.Credit.MintMult,
-			MintTimeStamp: mergedMb.SellBid.Credit.MintTimeStamp,
-		}
-
-		// Try to load existing credit for the buyer to aggregate quantity
-		existingBuyerCredit := &credits.MintCredit{}
-		err = existingBuyerCredit.FromWorldState(stub, (*buyerCredit.GetID())[0])
-		if err == nil {
-			buyerCredit.Quantity += existingBuyerCredit.Quantity
-		}
-
-		err = buyerCredit.ToWorldState(stub)
-		if err != nil {
-			return fmt.Errorf("could not materialize credit for buyer %s: %v", mergedMb.BuyBid.BuyerID, err)
-		}
-
-		// Calculate payment and refund
-		matchPrice := mergedMb.PrivatePrice.Price
-		matchQuantity := mergedMb.Quantity
-
-		// TODOHP: we have to be careful here. we must consider the extra credits from the multiplier.
-		// 1. Seller payment: Sellers are paid the clearing price
-		walletAdjustments[mergedMb.SellBid.SellerID] += matchPrice * matchQuantity
-
-		// 2. Buyer refund: Buyers committed at their limit price, refund difference
-		originalPrice := mergedMb.BuyBid.PrivatePrice.Price
-		refund := (originalPrice - matchPrice) * matchQuantity
-		if refund > 0 {
-			walletAdjustments[mergedMb.BuyBid.BuyerID] += refund
+		if err := calculatePaymentsAndRefunds(mergedMb, &walletAdjustments); err != nil {
+			return err
 		}
 	}
 
@@ -107,6 +71,74 @@ func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainC
 		if err := wallet.ToWorldState(stub); err != nil {
 			return fmt.Errorf("failed to update wallet for owner %s: %v", ownerID, err)
 		}
+	}
+
+	return nil
+}
+
+// transferCreditToBuyer transfers ownership of credits from the seller to the buyer
+// and accumulates payment/refund adjustments in the provided walletAdjustments map.
+// The function mutates the provided map in-place. Maps are reference types in Go,
+// so the caller will observe these mutations. Inputs are expected to be scaled
+// integers according to the system-wide constants (e.g. prices and quantities
+// are fixed-point integers).
+func transferCreditToBuyer(
+	stub shim.ChaincodeStubInterface,
+	mergedMb *bids.MatchedBid,
+	walletAdjustments *map[string]int64,
+) error {
+	if walletAdjustments == nil {
+		return fmt.Errorf("walletAdjustments pointer is nil; expected address of a map created by the caller")
+	}
+	if *walletAdjustments == nil {
+		// allocate map if caller passed a nil map pointer
+		*walletAdjustments = make(map[string]int64)
+	}
+	// Transfer credit ownership to the buyer
+	if mergedMb.SellBid.Credit == nil {
+		err := mergedMb.SellBid.FetchCredit(stub)
+		if err != nil {
+			return fmt.Errorf("sell bid in merged matched bid does not have associated credit data: %v", err)
+		}
+	}
+
+	buyerCredit := &credits.MintCredit{
+		Credit: credits.Credit{
+			OwnerID:  mergedMb.BuyBid.BuyerID,
+			ChunkID:  mergedMb.SellBid.Credit.ChunkID,
+			Quantity: mergedMb.Quantity,
+		},
+		MintMult:      mergedMb.SellBid.Credit.MintMult,
+		MintTimeStamp: mergedMb.SellBid.Credit.MintTimeStamp,
+	}
+
+	// Try to load existing credit for the buyer to aggregate quantity
+	existingBuyerCredit := &credits.MintCredit{}
+	err := existingBuyerCredit.FromWorldState(stub, (*buyerCredit.GetID())[0])
+	if err == nil {
+		buyerCredit.Quantity += existingBuyerCredit.Quantity
+	}
+
+	err = buyerCredit.ToWorldState(stub)
+	if err != nil {
+		return fmt.Errorf("could not materialize credit for buyer %s: %v", mergedMb.BuyBid.BuyerID, err)
+	}
+	return nil
+}
+
+func calculatePaymentsAndRefunds(mergedMb *bids.MatchedBid, walletAdjustments *map[string]int64) error {
+	matchPrice := mergedMb.PrivatePrice.Price
+	matchQuantity := mergedMb.Quantity
+
+	// TODOHP: we have to be careful here. we must consider the extra credits from the multiplier.
+	// 1. Seller payment: Sellers are paid the clearing price
+	(*walletAdjustments)[mergedMb.SellBid.SellerID] += matchPrice * matchQuantity
+
+	// 2. Buyer refund: Buyers committed at their limit price, refund difference
+	originalPrice := mergedMb.BuyBid.PrivatePrice.Price
+	refund := (originalPrice - matchPrice) * matchQuantity
+	if refund > 0 {
+		(*walletAdjustments)[mergedMb.BuyBid.BuyerID] += refund
 	}
 
 	return nil
