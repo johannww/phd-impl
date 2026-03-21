@@ -34,3 +34,7 @@ test-network:
 
 docs:
 	./docs/scripts/generate-diagrams.sh
+
+fmt:
+	find . -name '*.go' -exec gofmt -w {} +
+
