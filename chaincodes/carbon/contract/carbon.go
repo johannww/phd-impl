@@ -98,6 +98,9 @@ func (c *CarbonContract) withMetricsStringValue(txName string, fn func() string)
 	return out
 }
 
+// CreateBuyBidPublicQuantity expects `quantity` and transient `price` to be
+// provided as scaled integers (see common.QUANTITY_SCALE and
+// bids.PRICE_SCALE).
 func (c *CarbonContract) CreateBuyBidPublicQuantity(ctx contractapi.TransactionContextInterface, quantity int64) error {
 	return c.withMetricsErr("CreateBuyBidPublicQuantity", func() error {
 		stub := ctx.GetStub()
@@ -106,6 +109,9 @@ func (c *CarbonContract) CreateBuyBidPublicQuantity(ctx contractapi.TransactionC
 	})
 }
 
+// CreateBuyBidPrivateQuantity expects transient `price` and private
+// `quantity` to be provided as scaled integers (see bids.PRICE_SCALE and
+// common.QUANTITY_SCALE).
 func (c *CarbonContract) CreateBuyBidPrivateQuantity(ctx contractapi.TransactionContextInterface) error {
 	return c.withMetricsErr("CreateBuyBidPrivateQuantity", func() error {
 		stub := ctx.GetStub()
@@ -114,6 +120,8 @@ func (c *CarbonContract) CreateBuyBidPrivateQuantity(ctx contractapi.Transaction
 	})
 }
 
+// CreateSellBid expects `quantity` and transient `price` to be provided as
+// scaled integers (see common.QUANTITY_SCALE and bids.PRICE_SCALE).
 func (c *CarbonContract) CreateSellBid(
 	ctx contractapi.TransactionContextInterface,
 	quantity int64,
@@ -129,6 +137,8 @@ func (c *CarbonContract) PublishData(ctx contractapi.TransactionContextInterface
 	return c.withMetricsErr("PublishData", func() error { return nil })
 }
 
+// MintQuantityCreditForChunk expects `quantity` to be a scaled integer
+// according to common.QUANTITY_SCALE.
 func (c *CarbonContract) MintQuantityCreditForChunk(
 	ctx contractapi.TransactionContextInterface,
 	propertyID []string,
@@ -160,6 +170,8 @@ func (c *CarbonContract) MintEstimatedCreditsForProperty(
 	return mcs, err
 }
 
+// BurnNominalQuantity expects `burnQuantity` to be a scaled integer
+// according to common.QUANTITY_SCALE.
 func (c *CarbonContract) BurnNominalQuantity(ctx contractapi.TransactionContextInterface, mintCreditID []string, burnQuantity int64) (*credits.BurnCredit, error) {
 	var bc *credits.BurnCredit
 	err := c.withMetricsErr("BurnNominalQuantity", func() error {
