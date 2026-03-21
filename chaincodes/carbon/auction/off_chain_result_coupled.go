@@ -16,6 +16,7 @@ func processCoupledAuctionResult(stub shim.ChaincodeStubInterface,
 	if err != nil {
 		return fmt.Errorf("could not merge coupled public and private results: %v", err)
 	}
+
 	stub.StartWriteBatch()
 
 	err = storeCoupledMatchedBids(stub, result)

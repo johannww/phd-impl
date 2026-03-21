@@ -16,6 +16,8 @@ func processIndependentAuctionResult(stub shim.ChaincodeStubInterface,
 		return fmt.Errorf("could not merge independent public and private results: %v", err)
 	}
 
+	stub.StartWriteBatch()
+
 	paymentWalletAdjustments, err := storeIndependentMatchedBids(stub, result)
 	if err != nil {
 		return err
@@ -29,7 +31,9 @@ func processIndependentAuctionResult(stub shim.ChaincodeStubInterface,
 		return err
 	}
 
-	return nil
+	err = stub.FinishWriteBatch()
+
+	return err
 }
 
 // storeIndependentMatchedBids persists matched bids and performs credit transfers
