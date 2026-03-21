@@ -86,8 +86,11 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 		if err := sellBid.FetchPrivatePrice(stub); err != nil {
 			return err
 		}
-		if err := sellBid.FetchCredit(stub); err != nil {
-			return err
+		// For independent auctions we do not need to retrieve the credit
+		if a.Coupled {
+			if err := sellBid.FetchCredit(stub); err != nil {
+				return err
+			}
 		}
 	}
 
