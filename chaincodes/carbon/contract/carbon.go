@@ -165,6 +165,14 @@ func (c *CarbonContract) MintQuantityCreditForChunk(
 	return mc, err
 }
 
+// TransferFromMintToWallet deducts quantity from a MintCredit and credits the caller's fungible credit wallet.
+// `mintCreditID` is the composite key attributes for the MintCredit and `quantity` is a scaled integer.
+func (c *CarbonContract) TransferFromMintToWallet(ctx contractapi.TransactionContextInterface, mintCreditID []string, quantity int64) error {
+	return c.withMetricsErr("TransferFromMintToWallet", func() error {
+		return credits.TransferFromMintToWallet(ctx.GetStub(), mintCreditID, quantity)
+	})
+}
+
 func (c *CarbonContract) MintEstimatedCreditsForProperty(
 	ctx contractapi.TransactionContextInterface,
 	propertyID []string,

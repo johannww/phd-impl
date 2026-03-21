@@ -9,6 +9,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
+	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
 	utils_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/utils"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
@@ -261,18 +262,43 @@ func TestRetractBidRefundsWalletAndDeletesBid(t *testing.T) {
 func TestPublishSellBidFromWalletFlow(t *testing.T) {
 	stub := mocks.NewMockStub("carbon", nil)
 	possibleIds := setup.SetupIdentities(stub)
-	sellerCreator := possibleIds[setup.IDEMIX_ID]
+	sellerCreator := possibleIds[setup.REGULAR_ID]
 	stub.Creator = sellerCreator
+	var err error
 
-	// initialize seller fungible credit wallet
 	initialCredits := int64(10000)
 	sellerID := identities.GetID(stub)
-	cw := &credits.CreditWallet{OwnerID: sellerID, Quantity: initialCredits}
 
-	stub.MockTransactionStart("tx-init-wallet")
-	err := cw.ToWorldState(stub)
+	// create a PropertyChunk and persist it because MintCredit requires a chunk
+	chunk := &properties.PropertyChunk{
+		PropertyID:  1,
+		Coordinates: []utils.Coordinate{{Latitude: 0.0, Longitude: 0.0}},
+	}
+	stub.MockTransactionStart("tx-create-chunk")
+	err = chunk.ToWorldState(stub)
 	require.NoError(t, err)
-	stub.MockTransactionEnd("tx-init-wallet")
+	stub.MockTransactionEnd("tx-create-chunk")
+
+	// create a MintCredit owned by the caller
+	mc := &credits.MintCredit{
+		Credit: credits.Credit{
+			OwnerID:  sellerID,
+			ChunkID:  []string{"1", "0.000000", "0.000000"},
+			Quantity: initialCredits,
+		},
+		MintMult:      0,
+		MintTimeStamp: "mint-1",
+	}
+
+	stub.MockTransactionStart("tx-init-mint")
+	err = mc.ToWorldState(stub)
+	require.NoError(t, err)
+	stub.MockTransactionEnd("tx-init-mint")
+
+	stub.MockTransactionStart("tx-transfer-mint-to-wallet")
+	err = credits.TransferFromMintToWallet(stub, (*mc.GetID())[0], initialCredits)
+	require.NoError(t, err)
+	stub.MockTransactionEnd("tx-transfer-mint-to-wallet")
 
 	// prepare transient price
 	stub.TransientMap = map[string][]byte{

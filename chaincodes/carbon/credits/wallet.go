@@ -1,7 +1,9 @@
 package credits
 
 import (
+	"fmt"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 )
 
@@ -42,4 +44,43 @@ func (cw *CreditWallet) ToWorldState(stub shim.ChaincodeStubInterface) error {
 
 func (cw *CreditWallet) GetID() *[][]string {
 	return &[][]string{{cw.OwnerID}}
+}
+
+// TransferFromMintToWallet deducts quantity from the specified MintCredit and
+// adds it to the specified owner's CreditWallet.
+func TransferFromMintToWallet(
+	stub shim.ChaincodeStubInterface,
+	mintCreditID []string,
+	quantity int64) error {
+	mc := &MintCredit{}
+	if err := mc.FromWorldState(stub, mintCreditID); err != nil {
+		return fmt.Errorf("could not load mint credit: %v", err)
+	}
+
+	// ensure callerID is the owner of the mint credit
+	callerID := identities.GetID(stub)
+	if mc.OwnerID != callerID {
+		return fmt.Errorf("caller %s is not the owner of the mint credit %v", callerID, mintCreditID)
+	}
+
+	if mc.Quantity < quantity {
+		return fmt.Errorf("mint credit has insufficient quantity: have %d, need %d", mc.Quantity, quantity)
+	}
+
+	mc.Quantity -= quantity
+	if err := mc.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not persist updated mint credit: %v", err)
+	}
+
+	ownerID := identities.GetID(stub)
+	cw := &CreditWallet{OwnerID: ownerID}
+	if err := cw.FromWorldState(stub, []string{ownerID}); err != nil {
+		cw = &CreditWallet{OwnerID: ownerID, Quantity: 0}
+	}
+	cw.Quantity += quantity
+	if err := cw.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not persist credit wallet: %v", err)
+	}
+
+	return nil
 }
