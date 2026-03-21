@@ -148,7 +148,7 @@ func TestSellBidOwnerCanReadPrivatePrice(t *testing.T) {
 	}
 
 	stub.MockTransactionStart("tx-sell-1")
-	err := bids.PublishSellBid(stub, sellQuantity, creditID)
+	err := bids.PublishSellBidFromCredit(stub, sellQuantity, creditID)
 	require.NoError(t, err)
 	protoTs, err := stub.GetTxTimestamp()
 	require.NoError(t, err)
@@ -258,6 +258,73 @@ func TestRetractBidRefundsWalletAndDeletesBid(t *testing.T) {
 	stub.MockTransactionEnd("tx2")
 }
 
+func TestPublishSellBidFromWalletFlow(t *testing.T) {
+	stub := mocks.NewMockStub("carbon", nil)
+	possibleIds := setup.SetupIdentities(stub)
+	sellerCreator := possibleIds[setup.IDEMIX_ID]
+	stub.Creator = sellerCreator
+
+	// initialize seller fungible credit wallet
+	initialCredits := int64(10000)
+	sellerID := identities.GetID(stub)
+	cw := &credits.CreditWallet{OwnerID: sellerID, Quantity: initialCredits}
+
+	stub.MockTransactionStart("tx-init-wallet")
+	err := cw.ToWorldState(stub)
+	require.NoError(t, err)
+	stub.MockTransactionEnd("tx-init-wallet")
+
+	// prepare transient price
+	stub.TransientMap = map[string][]byte{
+		"price": []byte("4321"),
+	}
+
+	sellQuantity := int64(4000)
+
+	stub.MockTransactionStart("tx-sell-wallet-1")
+	err = bids.PublishSellBidFromWallet(stub, sellQuantity)
+	require.NoError(t, err)
+	protoTs, err := stub.GetTxTimestamp()
+	require.NoError(t, err)
+	bidTS := utils.TimestampRFC3339UtcString(protoTs)
+	stub.MockTransactionEnd("tx-sell-wallet-1")
+
+	// wallet should be debited
+	wallet := &credits.CreditWallet{}
+	err = wallet.FromWorldState(stub, []string{sellerID})
+	require.NoError(t, err)
+	require.Equal(t, initialCredits-sellQuantity, wallet.Quantity)
+
+	// sell bid should be stored and owner should see private price
+	bidKey := []string{bidTS, sellerID}
+	ownerView := &bids.SellBid{}
+	stub.MockTransactionStart("tx-sell-wallet-owner-read")
+	stub.Creator = sellerCreator
+	err = ownerView.FromWorldState(stub, bidKey)
+	require.NoError(t, err)
+	require.NotNil(t, ownerView.PrivatePrice)
+	require.Equal(t, int64(4321), ownerView.PrivatePrice.Price)
+	stub.MockTransactionEnd("tx-sell-wallet-owner-read")
+
+	// retract sell bid should restore wallet and delete bid
+	stub.MockTransactionStart("tx-sell-wallet-retract")
+	stub.Creator = sellerCreator
+	err = bids.RetractSellBid(stub, bidKey)
+	require.NoError(t, err)
+	stub.MockTransactionEnd("tx-sell-wallet-retract")
+
+	// wallet restored
+	wallet2 := &credits.CreditWallet{}
+	err = wallet2.FromWorldState(stub, []string{sellerID})
+	require.NoError(t, err)
+	require.Equal(t, initialCredits, wallet2.Quantity)
+
+	// bid deleted
+	deleted := &bids.SellBid{}
+	err = deleted.FromWorldState(stub, bidKey)
+	require.Error(t, err)
+}
+
 func TestBidBatchRecover(t *testing.T) {
 	stub := mocks.NewMockStub("carbon", nil)
 	possibleIds := setup.SetupIdentities(stub)
@@ -267,7 +334,7 @@ func TestBidBatchRecover(t *testing.T) {
 	numOfBids := int64(100)
 	initialTime := time.Now()
 	timeBeforeInsertion := utils.TimestampRFC3339UtcString(timestamppb.New(initialTime))
-	for i := int64(0); i < numOfBids; i++ {
+	for i := range numOfBids {
 		stub.TransientMap = map[string][]byte{
 			"price": []byte(strconv.FormatInt(i+10, 10)),
 		}

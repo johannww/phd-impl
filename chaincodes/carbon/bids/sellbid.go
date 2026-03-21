@@ -68,9 +68,12 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 		return err
 	}
 
-	err = s.FetchCredit(stub)
-	if err != nil {
-		return err
+	// Only sell bids from credits.MintCredit have associated credit data to fetch.
+	if len(s.CreditID) > 0 {
+		err = s.FetchCredit(stub)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = s.FetchPrivatePrice(stub)
@@ -83,9 +86,6 @@ func (s *SellBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes
 
 // TODO: test for the bids mutex timestamp
 func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	if len(s.CreditID) == 0 {
-		return fmt.Errorf("creditID is not set")
-	}
 	if s.Timestamp == "" {
 		return fmt.Errorf("timestamp is empty")
 	}
@@ -165,26 +165,13 @@ func (b *SellBid) DeepCopy() *SellBid {
 	return &bidCopy
 }
 
-// PublishSellBid creates a sell bid in the world state.
+// PublishSellBidFromCredit creates a sell bid in the world state from a mint credit.
 // The price is read from the transient data.
-// The credit is fetched from the world state to verify ownership and quantity. After that, the credit is updated in the world state with the new quantity.
-func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID []string) error {
-	ownerID := identities.GetID(stub)
-	priceBytes, err := ccstate.GetTransientData(stub, "price")
+func PublishSellBidFromCredit(stub shim.ChaincodeStubInterface, quantity int64, creditID []string) error {
+	ownerID, price, bidTSStr, err := validateAndExtractSellBidInput(stub, quantity)
 	if err != nil {
 		return err
 	}
-
-	price, err := strconv.ParseInt(string(priceBytes), 10, 64)
-	if err != nil {
-		return fmt.Errorf("could not parse price: %v", err)
-	}
-
-	bidTS, err := stub.GetTxTimestamp()
-	if err != nil {
-		return fmt.Errorf("could not get transaction timestamp: %v", err)
-	}
-	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
 
 	sellBid := &SellBid{
 		SellerID:  ownerID,
@@ -192,14 +179,39 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID [
 		Timestamp: bidTSStr,
 		Quantity:  quantity,
 	}
-	err = sellBid.FetchCredit(stub)
-	if err != nil {
-		return fmt.Errorf("could not fetch credit: %v", err)
+
+	if err := createSellBidFromCredit(stub, sellBid); err != nil {
+		return fmt.Errorf("could not create sell bid from mint credit: %v", err)
 	}
 
-	sellBid.Credit.Quantity -= quantity
-	if sellBid.Credit.Quantity < 0 {
-		return fmt.Errorf("sell bid quantity %d exceeds credit quantity %d", sellBid.Quantity, sellBid.Credit.Quantity)
+	sellBid.PrivatePrice = &PrivatePrice{
+		Price: price,
+		BidID: (*sellBid.GetID())[0],
+	}
+
+	if err := sellBid.ToWorldState(stub); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// PublishSellBidFromWallet creates a sell bid by taking credits from the seller's
+// fungible credit wallet (CreditWallet).
+func PublishSellBidFromWallet(stub shim.ChaincodeStubInterface, quantity int64) error {
+	ownerID, price, bidTSStr, err := validateAndExtractSellBidInput(stub, quantity)
+	if err != nil {
+		return err
+	}
+
+	sellBid := &SellBid{
+		SellerID:  ownerID,
+		Timestamp: bidTSStr,
+		Quantity:  quantity,
+	}
+
+	if err := createSellBidFromWallet(stub, sellBid); err != nil {
+		return fmt.Errorf("could not create sell bid from credit wallet: %v", err)
 	}
 
 	bidID := *(sellBid.GetID())
@@ -217,29 +229,128 @@ func PublishSellBid(stub shim.ChaincodeStubInterface, quantity int64, creditID [
 	return nil
 }
 
+// CreateSellBidFromWallet moves credits from the mint credit to the seller's credit wallet.
+func createSellBidFromCredit(stub shim.ChaincodeStubInterface, s *SellBid) error {
+	if err := s.FetchCredit(stub); err != nil {
+		return fmt.Errorf("could not fetch credit: %v", err)
+	}
+
+	if s.Credit.Quantity < s.Quantity {
+		return fmt.Errorf("sell bid quantity %d exceeds mint credit quantity %d", s.Quantity, s.Credit.Quantity)
+	}
+
+	// Decrease mint credit quantity
+	s.Credit.Quantity -= s.Quantity
+
+	// Persist updated mint credit (we remove quantity from the mint)
+	if err := s.Credit.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not put updated mint credit in state: %v", err)
+	}
+
+	return nil
+}
+
 func RetractSellBid(stub shim.ChaincodeStubInterface, bidID []string) error {
 	if len(bidID) < 2 {
 		return fmt.Errorf("invalid bid ID: expected at least 2 attributes")
 	}
 
-	mockBid := &SellBid{
+	sellBid := &SellBid{
 		Timestamp: bidID[0],
 		SellerID:  bidID[1],
 	}
 
 	callerID := identities.GetID(stub)
-	if callerID != mockBid.SellerID {
+	if callerID != sellBid.SellerID {
 		return fmt.Errorf("caller is not the bid owner")
 	}
 
-	if err := mockBid.FromWorldState(stub, bidID); err != nil {
+	if err := sellBid.FromWorldState(stub, bidID); err != nil {
 		return fmt.Errorf("could not get sell bid from world state: %v", err)
 	}
 
-	mockBid.Credit.Quantity += mockBid.Quantity
-	if err := mockBid.Credit.ToWorldState(stub); err != nil {
-		return fmt.Errorf("could not update credit quantity: %v", err)
+	if len(sellBid.CreditID) == 0 {
+		return retractWalletBasedSellBid(stub, sellBid)
 	}
 
-	return mockBid.DeleteFromWorldState(stub)
+	return retractMintCreditBasedSellBid(stub, sellBid)
+
+}
+
+// CreateSellBidFromTokenWallet deducts the sell quantity from the seller's
+// fungible CreditWallet and persists the wallet.
+func createSellBidFromWallet(stub shim.ChaincodeStubInterface, s *SellBid) error {
+	sellerCW := &credits.CreditWallet{OwnerID: s.SellerID}
+	if err := sellerCW.FromWorldState(stub, (*sellerCW.GetID())[0]); err != nil {
+		return fmt.Errorf("could not get seller credit wallet: %v", err)
+	}
+
+	if sellerCW.Quantity < s.Quantity {
+		return fmt.Errorf("seller credit wallet has insufficient quantity: have %d, need %d", sellerCW.Quantity, s.Quantity)
+	}
+
+	sellerCW.Quantity -= s.Quantity
+
+	if err := sellerCW.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not update seller credit wallet: %v", err)
+	}
+
+	s.Credit = nil // mark that there is no associated MintCredit
+
+	return nil
+}
+
+func validateAndExtractSellBidInput(stub shim.ChaincodeStubInterface, quantity int64) (string, int64, string, error) {
+	if quantity <= 0 {
+		return "", 0, "", fmt.Errorf("quantity must be greater than zero")
+	}
+
+	ownerID := identities.GetID(stub)
+
+	priceBytes, err := ccstate.GetTransientData(stub, "price")
+	if err != nil {
+		return "", 0, "", fmt.Errorf("could not get price from transient data: %v", err)
+	}
+
+	price, err := strconv.ParseInt(string(priceBytes), 10, 64)
+	if err != nil {
+		return "", 0, "", fmt.Errorf("could not parse price: %v", err)
+	}
+
+	bidTS, err := stub.GetTxTimestamp()
+	if err != nil {
+		return "", 0, "", fmt.Errorf("could not get transaction timestamp: %v", err)
+	}
+	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
+
+	return ownerID, price, bidTSStr, nil
+}
+
+func retractWalletBasedSellBid(stub shim.ChaincodeStubInterface, sellBid *SellBid) error {
+	sellerCW := &credits.CreditWallet{OwnerID: sellBid.SellerID}
+	if err := sellerCW.FromWorldState(stub, []string{sellBid.SellerID}); err != nil {
+		return fmt.Errorf("could not get seller credit wallet: %v", err)
+	}
+
+	sellerCW.Quantity += sellBid.Quantity
+
+	if err := sellerCW.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not update seller credit wallet: %v", err)
+	}
+
+	return sellBid.DeleteFromWorldState(stub)
+}
+
+func retractMintCreditBasedSellBid(stub shim.ChaincodeStubInterface, sellBid *SellBid) error {
+	if err := sellBid.FetchCredit(stub); err != nil {
+		return fmt.Errorf("could not fetch credit for sell bid: %v", err)
+	}
+
+	sellBid.Credit.Quantity += sellBid.Quantity
+
+	if err := sellBid.Credit.ToWorldState(stub); err != nil {
+		return fmt.Errorf("could not update mint credit in world state: %v", err)
+	}
+
+	return sellBid.DeleteFromWorldState(stub)
 }

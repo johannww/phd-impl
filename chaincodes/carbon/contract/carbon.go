@@ -122,13 +122,23 @@ func (c *CarbonContract) CreateBuyBidPrivateQuantity(ctx contractapi.Transaction
 
 // CreateSellBid expects `quantity` and transient `price` to be provided as
 // scaled integers (see common.QUANTITY_SCALE and bids.PRICE_SCALE).
-func (c *CarbonContract) CreateSellBid(
+func (c *CarbonContract) CreateSellBidFromCredit(
 	ctx contractapi.TransactionContextInterface,
 	quantity int64,
 	creditID []string,
 ) error {
-	return c.withMetricsErr("CreateSellBid", func() error {
-		return bids.PublishSellBid(ctx.GetStub(), quantity, creditID)
+	return c.withMetricsErr("CreateSellBidFromCredit", func() error {
+		return bids.PublishSellBidFromCredit(ctx.GetStub(), quantity, creditID)
+	})
+}
+
+func (c *CarbonContract) CreateSellBidFromWallet(
+	ctx contractapi.TransactionContextInterface,
+	quantity int64,
+	creditID []string,
+) error {
+	return c.withMetricsErr("CreateSellBidFromWallet", func() error {
+		return bids.PublishSellBidFromWallet(ctx.GetStub(), quantity)
 	})
 }
 
