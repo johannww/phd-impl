@@ -78,22 +78,11 @@ func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainC
 
 // transferCreditToBuyer transfers ownership of credits from the seller to the buyer
 // and accumulates payment/refund adjustments in the provided walletAdjustments map.
-// The function mutates the provided map in-place. Maps are reference types in Go,
-// so the caller will observe these mutations. Inputs are expected to be scaled
-// integers according to the system-wide constants (e.g. prices and quantities
-// are fixed-point integers).
+// The function mutates the provided map in-place.
 func transferCreditToBuyer(
 	stub shim.ChaincodeStubInterface,
 	mergedMb *bids.MatchedBid,
-	walletAdjustments *map[string]int64,
 ) error {
-	if walletAdjustments == nil {
-		return fmt.Errorf("walletAdjustments pointer is nil; expected address of a map created by the caller")
-	}
-	if *walletAdjustments == nil {
-		// allocate map if caller passed a nil map pointer
-		*walletAdjustments = make(map[string]int64)
-	}
 	// Transfer credit ownership to the buyer
 	if mergedMb.SellBid.Credit == nil {
 		err := mergedMb.SellBid.FetchCredit(stub)
@@ -127,6 +116,10 @@ func transferCreditToBuyer(
 }
 
 func calculatePaymentsAndRefunds(mergedMb *bids.MatchedBid, walletAdjustments *map[string]int64) error {
+	if walletAdjustments == nil {
+		return fmt.Errorf("wallet adjustments map cannot be nil")
+	}
+
 	matchPrice := mergedMb.PrivatePrice.Price
 	matchQuantity := mergedMb.Quantity
 
