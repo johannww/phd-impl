@@ -29,7 +29,7 @@ jobs:
         COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       run: |
         cat logs.txt | wc -l
-        copilot --allow-all -p \
+        copilot --allow-all --model gpt-4.1 -p \
         "read the git logs in logs.txt file and write a report in markdown format summarizing the work done today. Read the entire logs.txt, do not limited reads. Do not dive into other files, keep yourself to what was changed and described in the files logs.txt. The report should be concise. Save the report in a file named report_implementation.md."
 
     - name: Email report
