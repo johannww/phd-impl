@@ -24,6 +24,9 @@ func (p *ProtoSerializer) Unmarshal(data []byte, v ProtoConvertible) error {
 	if v == nil {
 		return fmt.Errorf("nil out")
 	}
+	if len(data) == 0 {
+		return fmt.Errorf("empty data")
+	}
 	msg := v.ToProto()
 	if msg == nil {
 		return fmt.Errorf("ToProto returned nil message for unmarshal target")
