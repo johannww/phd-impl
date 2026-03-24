@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-collections-config
+  namespace: {{ include "chaincode-service.namespace" . }}
+  labels:
+    {{- include "chaincode-service.labels" . | nindent 4 }}
+data:
+  collections_config.json: |
+    [
+    {{- $collections := dict -}}
+    {{- range $org := .Values.network.organizations -}}
+      {{- range $col := $org.collections -}}
+        {{- if not (hasKey $collections $col) -}}
+          {{- $orgs := list -}}
+          {{- range $o := $.Values.network.organizations -}}
+            {{- if has $col $o.collections -}}
+              {{- $orgs = append $orgs (printf "'%sMSP.member'" ($o.name | title)) -}}
+            {{- end -}}
+          {{- end -}}
+          {{- $_ := set $collections $col $orgs -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $colNames := keys $collections | sortAlpha -}}
+    {{- range $i, $name := $colNames }}
+      {
+        "name": "{{ $name }}",
+        "policy": "OR({{ join ", " (get $collections $name) }})",
+        "requiredPeerCount": 0,
+        "maxPeerCount": 3,
+        "blockToLive": 1000000,
+        "memberOnlyRead": true,
+        "memberOnlyWrite": true
+      }{{ if lt $i (sub (len $colNames) 1) }},{{ end }}
+    {{- end }}
+    ]

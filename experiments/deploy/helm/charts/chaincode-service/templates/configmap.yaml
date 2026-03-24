@@ -89,7 +89,8 @@ data:
       --name {{ $ccName }} \
       --version {{ $ccVersion }} \
       --package-id {{ $ccID }} \
-      --sequence "${sequence}"
+      --sequence "${sequence}" \
+      --collections-config /collections-config/collections_config.json
 {{- end }}
 {{- end }}
 {{- range $org := $.Values.network.organizations }}
@@ -105,7 +106,8 @@ data:
       --channelID {{ $.Values.network.channelName }}
       --name {{ $ccName }}
       --version {{ $ccVersion }}
-      --sequence "${sequence}"
+      --sequence "${sequence}" \
+      --collections-config /collections-config/collections_config.json
     )
 {{- range $org := $.Values.network.organizations }}
 {{- if gt (int (default 0 $org.peers)) 0 }}

@@ -16,16 +16,36 @@ images:
     tag: "3.1.4"
     pullPolicy: IfNotPresent
 
+# collections are defined in ../../../chaincodes/common/state/collections.go
 network: &defaultNetwork
   channelName: "carbon"
   externalIPs: []
   organizations:
-    - name: "org1"
-      peers: 2
+    - name: "mma"
+      peers: 1
       nodePortBase: 30060
-    - name: "org2"
+      collections:
+        - "bidsPvtCollection"
+        - "companiesPvtCollection"
+        - "auctionPvtCollection"
+        - "regulatoryPvtCollection"
+    - name: "farmers"
+      peers: 1
+      nodePortBase: 30070
+      collections:
+        - "bidsPvtCollection"
+        - "companiesPvtCollection"
+        - "auctionPvtCollection"
+    - name: "companies"
+      peers: 1
+      nodePortBase: 30080
+      collections:
+        - "bidsPvtCollection"
+        - "companiesPvtCollection"
+        - "auctionPvtCollection"
+    - name: "orderer"
       orderers: 2
-      nodePortBase: 30050
+      nodePortBase: 30090
 
 storage:
   organizations:

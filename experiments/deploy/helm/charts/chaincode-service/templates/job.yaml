@@ -36,6 +36,8 @@ spec:
               mountPath: /packages
             - name: organizations
               mountPath: {{ .Values.workspace }}/organizations
+            - name: collections-config
+              mountPath: /collections-config
       volumes:
         - name: scripts
           configMap:
@@ -47,3 +49,6 @@ spec:
         - name: organizations
           persistentVolumeClaim:
             claimName: {{ default (printf "%s-fabric-experiments-organizations" .Release.Name) .Values.organizationsClaimName }}
+        - name: collections-config
+          configMap:
+            name: {{ .Release.Name }}-collections-config
