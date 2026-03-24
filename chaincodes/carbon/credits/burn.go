@@ -7,8 +7,10 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/companies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -24,6 +26,48 @@ type BurnCredit struct {
 	BurnMult      int64       `json:"burnMult"`
 	BurnTimeStamp string      `json:"burnTimestamp"`
 	Adjusted      bool        `json:"adjusted"`
+}
+
+var _ state.WorldStateManager = (*BurnCredit)(nil)
+
+func (bc *BurnCredit) FromProto(m proto.Message) error {
+	pbBc, ok := m.(*pb.BurnCredit)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for BurnCredit")
+	}
+
+	bc.MintCreditID = pbBc.MintCreditID
+	bc.BurnQuantity = pbBc.BurnQuantity
+	bc.BurnMult = pbBc.BurnMult
+	bc.BurnTimeStamp = pbBc.BurnTimestamp
+	bc.Adjusted = pbBc.Adjusted
+
+	// Convert MintCredit
+	if pbBc.MintCredit != nil {
+		mc := &MintCredit{}
+		if err := mc.FromProto(pbBc.MintCredit); err != nil {
+			return fmt.Errorf("could not convert MintCredit from proto: %v", err)
+		}
+		bc.MintCredit = mc
+	}
+
+	return nil
+}
+
+func (bc *BurnCredit) ToProto() proto.Message {
+	var pbMintCredit *pb.MintCredit
+	if bc.MintCredit != nil {
+		pbMintCredit = bc.MintCredit.ToProto().(*pb.MintCredit)
+	}
+
+	return &pb.BurnCredit{
+		MintCreditID:  bc.MintCreditID,
+		MintCredit:    pbMintCredit,
+		BurnQuantity:  bc.BurnQuantity,
+		BurnMult:      bc.BurnMult,
+		BurnTimestamp: bc.BurnTimeStamp,
+		Adjusted:      bc.Adjusted,
+	}
 }
 
 func (bc *BurnCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {

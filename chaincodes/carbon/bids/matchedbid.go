@@ -6,7 +6,9 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -21,6 +23,87 @@ type MatchedBid struct {
 	Quantity          int64              `json:"quantity"`
 	PrivatePrice      *PrivatePrice      `json:"privatePrice"`
 	PrivateMultiplier *PrivateMultiplier `json:"privateMultiplier"`
+}
+
+var _ state.WorldStateManager = (*MatchedBid)(nil)
+
+// FromProto implements [state.WorldStateManager].
+func (mb *MatchedBid) FromProto(m proto.Message) error {
+	pbMb, ok := m.(*pb.MatchedBid)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for MatchedBid")
+	}
+
+	// Convert BuyBid
+	if pbMb.BuyBid != nil {
+		buyBid := &BuyBid{}
+		if err := buyBid.FromProto(pbMb.BuyBid); err != nil {
+			return fmt.Errorf("could not convert BuyBid from proto: %v", err)
+		}
+		mb.BuyBid = buyBid
+	}
+
+	// Convert SellBid
+	if pbMb.SellBid != nil {
+		sellBid := &SellBid{}
+		if err := sellBid.FromProto(pbMb.SellBid); err != nil {
+			return fmt.Errorf("could not convert SellBid from proto: %v", err)
+		}
+		mb.SellBid = sellBid
+	}
+
+	// Set quantity
+	mb.Quantity = pbMb.Quantity
+
+	// Convert PrivatePrice
+	if pbMb.PrivatePrice != nil {
+		mb.PrivatePrice = &PrivatePrice{
+			Price: pbMb.PrivatePrice.Price,
+			BidID: pbMb.PrivatePrice.BidID,
+		}
+	}
+
+	// Convert PrivateMultiplier
+	if pbMb.PrivateMultiplier != nil {
+		mb.PrivateMultiplier = &PrivateMultiplier{
+			MatchingID: pbMb.PrivateMultiplier.MatchingID,
+			Scale:      pbMb.PrivateMultiplier.Scale,
+			Value:      pbMb.PrivateMultiplier.Value,
+		}
+	}
+
+	return nil
+}
+
+// ToProto implements [state.WorldStateManager].
+func (mb *MatchedBid) ToProto() proto.Message {
+	var pbBuyBid *pb.BuyBid
+	if mb.BuyBid != nil {
+		pbBuyBid = mb.BuyBid.ToProto().(*pb.BuyBid)
+	}
+
+	var pbSellBid *pb.SellBid
+	if mb.SellBid != nil {
+		pbSellBid = mb.SellBid.ToProto().(*pb.SellBid)
+	}
+
+	var pbPrivPrice *pb.PrivatePrice
+	if mb.PrivatePrice != nil {
+		pbPrivPrice = mb.PrivatePrice.ToProto().(*pb.PrivatePrice)
+	}
+
+	var pbPrivMultiplier *pb.PrivateMultiplier
+	if mb.PrivateMultiplier != nil {
+		pbPrivMultiplier = mb.PrivateMultiplier.ToProto().(*pb.PrivateMultiplier)
+	}
+
+	return &pb.MatchedBid{
+		BuyBid:            pbBuyBid,
+		SellBid:           pbSellBid,
+		Quantity:          mb.Quantity,
+		PrivatePrice:      pbPrivPrice,
+		PrivateMultiplier: pbPrivMultiplier,
+	}
 }
 
 func (mb *MatchedBid) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
