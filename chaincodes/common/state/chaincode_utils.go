@@ -26,7 +26,7 @@ func PutPvtDataWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectT
 	if err != nil {
 		return fmt.Errorf("could not create composite key for pvt data: %v", err)
 	}
-	pvtDataBytes, err := json.Marshal(pvtDataStruct)
+	pvtDataBytes, err := MarshalStateAs(pvtDataStruct)
 	if err != nil {
 		return fmt.Errorf("could not marshal private data: %v", err)
 	}
@@ -37,7 +37,7 @@ func PutPvtDataWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectT
 }
 
 func PutState[T any](stub shim.ChaincodeStubInterface, key string, stateStruct T) error {
-	stateBytes, err := json.Marshal(stateStruct)
+	stateBytes, err := MarshalStateAs(stateStruct)
 	if err != nil {
 		return fmt.Errorf("could not marshal state: %v", err)
 	}
@@ -76,7 +76,7 @@ func PutStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectTyp
 	if err != nil {
 		return fmt.Errorf("could not create composite key for state: %v", err)
 	}
-	stateBytes, err := json.Marshal(stateStruct)
+	stateBytes, err := MarshalStateAs(stateStruct)
 	if err != nil {
 		return fmt.Errorf("could not marshal state: %v", err)
 	}
@@ -111,7 +111,7 @@ func GetPvtDataWithCompositeKey[T any](
 	if len(stateBytes) == 0 {
 		return fmt.Errorf("private data with key %s not found in collection %s", stateKey, collectionName)
 	}
-	err = json.Unmarshal(stateBytes, pvtDataStruct)
+	err = UnmarshalStateAs(stateBytes, pvtDataStruct)
 	if err != nil {
 		return fmt.Errorf("could not unmarshal private data %s: %v", string(stateBytes), err)
 	}
@@ -123,7 +123,7 @@ func GetState[T any](stub shim.ChaincodeStubInterface, key string, stateStruct T
 	if err != nil {
 		return fmt.Errorf("could not get state: %v", err)
 	}
-	err = json.Unmarshal(stateBytes, stateStruct)
+	err = UnmarshalStateAs(stateBytes, stateStruct)
 	if err != nil {
 		return fmt.Errorf("could not unmarshal state: %v", err)
 	}
@@ -139,7 +139,7 @@ func GetStateWithCompositeKey[T any](stub shim.ChaincodeStubInterface, objectTyp
 	if err != nil {
 		return fmt.Errorf("could not get state: %v", err)
 	}
-	err = json.Unmarshal(stateBytes, stateStruct)
+	err = UnmarshalStateAs(stateBytes, stateStruct)
 	if err != nil {
 		return fmt.Errorf("could not unmarshal state: %v", err)
 	}

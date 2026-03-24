@@ -53,7 +53,7 @@ func (m *MockObjectWithSecondaryIndex) ToWorldState(stub shim.ChaincodeStubInter
 		return nil // No private data to store
 	}
 
-	if err := PutPvtDataWithCompositeKey(stub, MOCK_OBJECT_PREFIX, (*m.GetID())[0], MOCK_OBJECT_PVT, &m); err != nil {
+	if err := PutPvtDataWithCompositeKey(stub, MOCK_OBJECT_PREFIX, (*m.GetID())[0], MOCK_OBJECT_PVT, m); err != nil {
 		return err
 	}
 

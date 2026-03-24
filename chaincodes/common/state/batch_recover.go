@@ -1,7 +1,6 @@
 package state
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -220,7 +219,7 @@ func readUnmarshalledIteratorStates[T any](stateIterator shim.StateQueryIterator
 		}
 
 		var unmarshalledState T
-		err = json.Unmarshal(kv.GetValue(), &unmarshalledState)
+		err = UnmarshalStateAs(kv.GetValue(), &unmarshalledState)
 		if err != nil {
 			return nil, "", fmt.Errorf("could not unmarshal state: %v", err)
 		}
