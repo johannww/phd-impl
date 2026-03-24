@@ -26,6 +26,6 @@ func routesByID[T any](store map[string]T) func(chi.Router) {
 	}
 }
 
-func Routes(store Store) func(chi.Router)              { return routesByID(store) }
+func Routes(store Store) func(chi.Router)                           { return routesByID(store) }
 func DemonstrativoRoutes(store DemonstrativoStore) func(chi.Router) { return routesByID(store) }
-func ReciboRoutes(store ReciboStore) func(chi.Router)  { return routesByID(store) }
+func ReciboRoutes(store ReciboStore) func(chi.Router)               { return routesByID(store) }
