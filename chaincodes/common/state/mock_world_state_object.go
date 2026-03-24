@@ -2,6 +2,7 @@ package state
 
 import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -15,6 +16,9 @@ type MockObjectWithSecondaryIndex struct {
 }
 
 var _ WorldStateManager = (*MockObjectWithSecondaryIndex)(nil)
+
+func (m *MockObjectWithSecondaryIndex) ToProto() proto.Message          { return nil }
+func (m *MockObjectWithSecondaryIndex) FromProto(_ proto.Message) error { return nil }
 
 // FromWorldState implements WorldStateManager.
 func (m *MockObjectWithSecondaryIndex) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {

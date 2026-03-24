@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/johannww/phd-impl/chaincodes/common/pb";
+
+// HTLC represents a hash-time-locked contract record used for cross-chain
+// credit transfers. Field names follow the project's JSON naming conventions
+// and use lowerCamelCase for proto field names.
+message HTLC {
+  // Owner of the credit(s) (first element of CreditID is owner id in the app)
+  repeated string creditID = 1;
+  // Hash of the preimage (sha256 hex or base64)
+  string secretHash = 2;
+  // Preimage (only present when claimed)
+  string secret = 3;
+  // Lock identifier
+  string lockID = 4;
+  // Receiver identity on the destination chain
+  string receiverId = 5;
+  // Payment receiver wallet (on public chain)
+  string paymentReceiverWallet = 6;
+  // Amount (use int64 to be safe for proto int handling)
+  int64 amount = 7;
+  // Whether the HTLC has been claimed
+  bool claimed = 8;
+  // RFC3339 timestamp until which the HTLC is valid
+  string validUntil = 9;
+}

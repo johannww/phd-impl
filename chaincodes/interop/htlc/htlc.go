@@ -9,9 +9,11 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	ccstate "github.com/johannww/phd-impl/chaincodes/common/state"
 	carbon_utils "github.com/johannww/phd-impl/chaincodes/common/utils"
 	"github.com/johannww/phd-impl/chaincodes/interop/lock"
+	"google.golang.org/protobuf/proto"
 )
 
 const HTLC_PREFIX = "htlc"
@@ -223,4 +225,46 @@ func isMatchingSecret(secret string, expectedHash string) bool {
 	}
 	shaBase64 := base64.StdEncoding.EncodeToString(b[:])
 	return shaBase64 == expectedHash
+}
+
+func (h *HTLC) ToProto() proto.Message {
+	if h == nil {
+		return nil
+	}
+	return &pb.HTLC{
+		CreditID:              append([]string(nil), h.CreditID...),
+		SecretHash:            h.SecretHash,
+		Secret:                h.Secret,
+		LockID:                h.LockID,
+		ReceiverId:            h.BuyerID,
+		PaymentReceiverWallet: h.SellerWallet,
+		Amount:                int64(h.Amount),
+		Claimed:               h.Claimed,
+		ValidUntil:            h.ValidUntil,
+	}
+}
+
+// FromProto populates HTLC from its protobuf representation.
+func (h *HTLC) FromProto(m proto.Message) error {
+	pbH, ok := m.(*pb.HTLC)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for HTLC")
+	}
+	if pbH == nil {
+		// clear receiver
+		*h = HTLC{}
+		return nil
+	}
+
+	h.CreditID = append([]string(nil), pbH.GetCreditID()...)
+	h.SecretHash = pbH.GetSecretHash()
+	h.Secret = pbH.GetSecret()
+	h.LockID = pbH.GetLockID()
+	h.BuyerID = pbH.GetReceiverId()
+	h.SellerWallet = pbH.GetPaymentReceiverWallet()
+	h.Amount = int(pbH.GetAmount())
+	h.Claimed = pbH.GetClaimed()
+	h.ValidUntil = pbH.GetValidUntil()
+
+	return nil
 }

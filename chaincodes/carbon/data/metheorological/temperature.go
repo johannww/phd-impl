@@ -5,8 +5,10 @@ import (
 	"strconv"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 const TEMPERATURE_PREFIX = "temperature"
@@ -19,6 +21,35 @@ type Temperature struct {
 }
 
 var _ state.WorldStateManager = (*Temperature)(nil)
+
+func (t *Temperature) ToProto() proto.Message {
+	return &pb.Temperature{
+		Coordinate: &pb.Coordinate{
+			Latitude:  t.Coordinate.Latitude,
+			Longitude: t.Coordinate.Longitude,
+		},
+		Datetime:    t.Datetime,
+		Temperature: t.Temperature,
+	}
+}
+
+func (t *Temperature) FromProto(m proto.Message) error {
+	pt, ok := m.(*pb.Temperature)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for Temperature")
+	}
+	if pt.Coordinate != nil {
+		t.Coordinate = utils.Coordinate{
+			Latitude:  pt.Coordinate.Latitude,
+			Longitude: pt.Coordinate.Longitude,
+		}
+	} else {
+		t.Coordinate = utils.Coordinate{}
+	}
+	t.Datetime = pt.Datetime
+	t.Temperature = pt.Temperature
+	return nil
+}
 
 // FromWorldState implements state.WorldStateManager.
 func (t *Temperature) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {

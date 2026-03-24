@@ -1,8 +1,12 @@
 package companies
 
 import (
+	"fmt"
+
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const PSEUDONYM_TO_COMPANY_ID_PREFIX = "pseudonymToCompanyID"
@@ -13,6 +17,23 @@ type PseudonymToCompanyID struct {
 }
 
 var _ state.WorldStateManager = (*PseudonymToCompanyID)(nil)
+
+func (p *PseudonymToCompanyID) ToProto() proto.Message {
+	return &pb.PseudonymToCompanyID{
+		Pseudonym: p.Pseudonym,
+		CompanyID: p.CompanyID,
+	}
+}
+
+func (p *PseudonymToCompanyID) FromProto(m proto.Message) error {
+	pp, ok := m.(*pb.PseudonymToCompanyID)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for PseudonymToCompanyID")
+	}
+	p.Pseudonym = pp.Pseudonym
+	p.CompanyID = pp.CompanyID
+	return nil
+}
 
 // FromWorldState implements state.WorldStateManager.
 func (p *PseudonymToCompanyID) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {

@@ -6,8 +6,10 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -153,5 +155,26 @@ func UnlockCredit(stub shim.ChaincodeStubInterface, creditID []string, lockID st
 		return fmt.Errorf("could not delete locked credit from world state: %v", err)
 	}
 
+	return nil
+}
+
+func (l *LockedCredit) ToProto() proto.Message {
+	return &pb.LockedCredit{
+		CreditID:    l.CreditID,
+		Quantity:    l.Quantity,
+		LockID:      l.LockID,
+		DestChainID: l.DestChainID,
+	}
+}
+
+func (l *LockedCredit) FromProto(m proto.Message) error {
+	pl, ok := m.(*pb.LockedCredit)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for LockedCredit")
+	}
+	l.CreditID = pl.CreditID
+	l.Quantity = pl.Quantity
+	l.LockID = pl.LockID
+	l.DestChainID = pl.DestChainID
 	return nil
 }

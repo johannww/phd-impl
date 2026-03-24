@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const AUCTION_TYPE_KEY = "auctionType"
@@ -14,6 +16,19 @@ const AUCTION_COUPLED = "coupled"
 type AuctionType string
 
 var _ state.WorldStateManager = (*AuctionType)(nil)
+
+func (a *AuctionType) ToProto() proto.Message {
+	return &pb.AuctionType{Value: string(*a)}
+}
+
+func (a *AuctionType) FromProto(m proto.Message) error {
+	pa, ok := m.(*pb.AuctionType)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for AuctionType")
+	}
+	*a = AuctionType(pa.Value)
+	return nil
+}
 
 // FromWorldState implements state.WorldStateManager.
 func (a *AuctionType) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {

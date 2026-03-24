@@ -8,8 +8,10 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	ccstate "github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -163,6 +165,79 @@ func (s *SellBid) DeepCopy() *SellBid {
 		bidCopy.PrivatePrice = &priceCopy
 	}
 	return &bidCopy
+}
+
+func (s *SellBid) ToProto() proto.Message {
+	var pbCredit *pb.MintCredit
+	if s.Credit != nil {
+		// Reuse MintCredit's fields; construct pb.Credit inside pb.MintCredit
+		pc := &pb.Credit{
+			Owner:    s.Credit.OwnerID,
+			ChunkId:  s.Credit.ChunkID,
+			Quantity: s.Credit.Quantity,
+		}
+		pbCredit = &pb.MintCredit{
+			Credit:        pc,
+			MintMult:      s.Credit.MintMult,
+			MintTimestamp: s.Credit.MintTimeStamp,
+		}
+	}
+
+	var pbPrivPrice *pb.PrivatePrice
+	if s.PrivatePrice != nil {
+		pbPrivPrice = &pb.PrivatePrice{
+			Price: s.PrivatePrice.Price,
+			BidID: s.PrivatePrice.BidID,
+		}
+	}
+
+	return &pb.SellBid{
+		SellerID:     s.SellerID,
+		CreditID:     s.CreditID,
+		Timestamp:    s.Timestamp,
+		Credit:       pbCredit,
+		Quantity:     s.Quantity,
+		PrivatePrice: pbPrivPrice,
+	}
+}
+
+func (s *SellBid) FromProto(m proto.Message) error {
+	pbSell, ok := m.(*pb.SellBid)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for SellBid")
+	}
+	s.SellerID = pbSell.SellerID
+	s.CreditID = pbSell.CreditID
+	s.Timestamp = pbSell.Timestamp
+	s.Quantity = pbSell.Quantity
+
+	if pbSell.PrivatePrice != nil {
+		pp := &PrivatePrice{}
+		pp.Price = pbSell.PrivatePrice.Price
+		pp.BidID = pbSell.PrivatePrice.BidID
+		s.PrivatePrice = pp
+	} else {
+		s.PrivatePrice = nil
+	}
+
+	if pbSell.Credit != nil {
+		// Map pb.MintCredit into credits.MintCredit
+		mc := &credits.MintCredit{}
+		if pbSell.Credit.Credit != nil {
+			mc.Credit = credits.Credit{
+				OwnerID:  pbSell.Credit.Credit.Owner,
+				ChunkID:  pbSell.Credit.Credit.ChunkId,
+				Quantity: pbSell.Credit.Credit.Quantity,
+			}
+		}
+		mc.MintMult = pbSell.Credit.MintMult
+		mc.MintTimeStamp = pbSell.Credit.MintTimestamp
+		s.Credit = mc
+	} else {
+		s.Credit = nil
+	}
+
+	return nil
 }
 
 // PublishSellBidFromCredit creates a sell bid in the world state from a mint credit.

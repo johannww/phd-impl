@@ -1,8 +1,11 @@
 package registry
 
 import (
+	"fmt"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const REGISTRY_SUMMARY_PREFIX = "registrySummary"
@@ -18,6 +21,29 @@ type RegistrySummary struct {
 }
 
 var _ state.WorldStateManager = (*RegistrySummary)(nil)
+
+func (r *RegistrySummary) ToProto() proto.Message {
+	return &pb.RegistrySummary{
+		RegistryPropId:  r.RegistryPropID,
+		Status:          r.Status,
+		TotalArea:       r.TotalArea,
+		LegalForestArea: r.LegalForestArea,
+		VerifiedForest:  r.VerifiedForest,
+	}
+}
+
+func (r *RegistrySummary) FromProto(m proto.Message) error {
+	pr, ok := m.(*pb.RegistrySummary)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for RegistrySummary")
+	}
+	r.RegistryPropID = pr.RegistryPropId
+	r.Status = pr.Status
+	r.TotalArea = pr.TotalArea
+	r.LegalForestArea = pr.LegalForestArea
+	r.VerifiedForest = pr.VerifiedForest
+	return nil
+}
 
 func (r *RegistrySummary) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
 	return state.GetStateWithCompositeKey(stub, REGISTRY_SUMMARY_PREFIX, keyAttributes, r)

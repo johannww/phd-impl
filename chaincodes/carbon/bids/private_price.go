@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -21,6 +23,23 @@ type PrivatePrice struct {
 }
 
 var _ state.WorldStateManagerWithExtraPrefix = (*PrivatePrice)(nil)
+
+func (privPrice *PrivatePrice) ToProto() proto.Message {
+	return &pb.PrivatePrice{
+		Price: privPrice.Price,
+		BidID: privPrice.BidID,
+	}
+}
+
+func (privPrice *PrivatePrice) FromProto(m proto.Message) error {
+	pp, ok := m.(*pb.PrivatePrice)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for PrivatePrice")
+	}
+	privPrice.Price = pp.Price
+	privPrice.BidID = pp.BidID
+	return nil
+}
 
 func (privPrice *PrivatePrice) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string, extraPrefix string) error {
 	priceID := append([]string{extraPrefix}, keyAttributes...)

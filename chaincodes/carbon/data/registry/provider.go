@@ -6,7 +6,9 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const REGISTRY_PROVIDER_PREFIX = "registryProvider"
@@ -18,6 +20,25 @@ type RegistryProvider struct {
 }
 
 var _ state.WorldStateManager = (*RegistryProvider)(nil)
+
+func (rp *RegistryProvider) ToProto() proto.Message {
+	return &pb.RegistryProvider{
+		Name:    rp.Name,
+		BaseUrl: rp.BaseURL,
+		RootCa:  rp.RootCA,
+	}
+}
+
+func (rp *RegistryProvider) FromProto(m proto.Message) error {
+	pr, ok := m.(*pb.RegistryProvider)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for RegistryProvider")
+	}
+	rp.Name = pr.Name
+	rp.BaseURL = pr.BaseUrl
+	rp.RootCA = pr.RootCa
+	return nil
+}
 
 func (rp *RegistryProvider) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
 	if len(keyAttributes) == 0 {

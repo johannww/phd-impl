@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/johannww/phd-impl/chaincodes/common/internal/pb";
+
+message VirtualTokenWallet {
+  string owner = 1;
+  int64 quantity = 2;
+}

@@ -1,8 +1,12 @@
 package bids
 
 import (
+	"fmt"
+
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -16,6 +20,23 @@ type PrivateQuantity struct {
 }
 
 var _ state.WorldStateManager = (*PrivateQuantity)(nil)
+
+func (privQuantity *PrivateQuantity) ToProto() proto.Message {
+	return &pb.PrivateQuantity{
+		AskQuantity: privQuantity.AskQuantity,
+		BidID:       privQuantity.BidID,
+	}
+}
+
+func (privQuantity *PrivateQuantity) FromProto(m proto.Message) error {
+	pp, ok := m.(*pb.PrivateQuantity)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for PrivateQuantity")
+	}
+	privQuantity.AskQuantity = pp.AskQuantity
+	privQuantity.BidID = pp.BidID
+	return nil
+}
 
 func (privQuantity *PrivateQuantity) FromWorldState(
 	stub shim.ChaincodeStubInterface,

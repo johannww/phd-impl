@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/johannww/phd-impl/chaincodes/common/internal/pb";
+
+import "properties.proto";
+
+message Credit {
+  string owner = 1;
+  repeated string chunkId = 2;
+  PropertyChunk chunk = 3;
+  int64 quantity = 4;
+}
+
+message MintCredit {
+  Credit credit = 1;
+  int64 mintMult = 2;
+  string mintTimestamp = 3;
+}
+
+message BurnCredit {
+  repeated string mintCreditID = 1;
+  MintCredit mintCredit = 2;
+  int64 burnQuantity = 3;
+  int64 burnMult = 4;
+  string burnTimestamp = 5;
+  bool adjusted = 6;
+}
+
+message CreditWallet {
+  string owner = 1;
+  int64 quantity = 2;
+}
+
+message LockedCredit {
+  repeated string creditID = 1;
+  int64 quantity = 2;
+  string lockID = 3;
+  string destChainID = 4;
+}

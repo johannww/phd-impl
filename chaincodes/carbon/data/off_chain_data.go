@@ -9,6 +9,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -25,6 +26,11 @@ type OffChainData struct {
 }
 
 var _ state.WorldStateManager = (*OffChainData)(nil)
+
+// ToProto/FromProto stubs to satisfy WorldStateManager until a proto schema
+// for OffChainData is added.
+func (ocd *OffChainData) ToProto() proto.Message          { return nil }
+func (ocd *OffChainData) FromProto(_ proto.Message) error { return nil }
 
 // TODO:
 func (ocd *OffChainData) loadDataFromUri() error {

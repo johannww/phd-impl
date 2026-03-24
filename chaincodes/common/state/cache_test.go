@@ -5,6 +5,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/common/state/mocks"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestGetStateFromCache(t *testing.T) {
@@ -47,6 +48,9 @@ func (w *worldStateObject) GetID() *[][]string {
 	return &w.ID
 }
 
+func (w *worldStateObject) ToProto() proto.Message          { return nil }
+func (w *worldStateObject) FromProto(_ proto.Message) error { return nil }
+
 // FromWorldState loads the object from the world state using the keyAttributes.
 func (w *worldStateObject) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
 	err := GetStateWithCompositeKey(stub, MOCK_OBJECT_PREFIX, keyAttributes, w)
@@ -82,3 +86,6 @@ func (w *worldStateObjectWithExtraPrefix) ToWorldState(stub shim.ChaincodeStubIn
 	err := PutStateWithCompositeKey(stub, MOCK_OBJECT_PREFIX, w.GetID(), w)
 	return err
 }
+
+func (w *worldStateObjectWithExtraPrefix) ToProto() proto.Message          { return nil }
+func (w *worldStateObjectWithExtraPrefix) FromProto(_ proto.Message) error { return nil }

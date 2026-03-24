@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/johannww/phd-impl/chaincodes/common/internal/pb";
+
+import "credits.proto";
+
+message PrivatePrice {
+  int64 price = 1;
+  repeated string bidID = 2;
+}
+
+message PrivateQuantity {
+  int64 askQuantity = 1;
+  repeated string bidID = 2;
+}
+
+message PrivateMultiplier {
+  repeated string matchingID = 1;
+  int64 scale = 2;
+  int64 value = 3;
+}
+
+message BuyBid {
+  string buyerID = 1;
+  string timestamp = 2;
+  int64 askQuantity = 3;
+  PrivateQuantity privateQuantity = 4;
+  PrivatePrice privatePrice = 5;
+}
+
+message SellBid {
+  string sellerID = 1;
+  repeated string creditID = 2;
+  string timestamp = 3;
+  MintCredit credit = 4;
+  int64 quantity = 5;
+  PrivatePrice privatePrice = 6;
+}
+
+message MatchedBid {
+  BuyBid buyBid = 1;
+  SellBid sellBid = 2;
+  int64 quantity = 3;
+  PrivatePrice privatePrice = 4;
+  PrivateMultiplier privateMultiplier = 5;
+}

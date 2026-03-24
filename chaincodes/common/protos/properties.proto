@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/johannww/phd-impl/chaincodes/common/internal/pb";
+
+message Coordinate {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+enum ForestType {
+  AMAZON_RAINFOREST = 0;
+  ATLANTIC_FOREST = 1;
+  CAATINGA = 2;
+  CERRADO = 3;
+  PANTANAL = 4;
+  PAMPA = 5;
+  MANGROVES = 6;
+  ARAUCARIA_FOREST = 7;
+  RESTINGA = 8;
+}
+
+enum CropType {
+  SOYBEAN = 0;
+  CORN = 1;
+  COFFEE = 2;
+  SUGARCANE = 3;
+  COTTON = 4;
+  RICE = 5;
+  WHEAT = 6;
+  BEANS = 7;
+  ORANGE = 8;
+  BANANA = 9;
+}
+
+message VegetationProps {
+  ForestType forestType = 1;
+  double forestDensity = 2;
+  CropType cropType = 3;
+}
+
+enum ValidationMethod {
+  SATELLITE = 0;
+  GROUND_TRUTH = 1;
+  SELF_DECLARATION = 2;
+}
+
+message ValidationProps {
+  repeated ValidationMethod methods = 1;
+}
+
+message PropertyChunk {
+  uint64 propertyId = 1;
+  repeated Coordinate coordinates = 2;
+  VegetationProps vegetationsProps = 3;
+  ValidationProps validationProps = 4;
+}
+
+message Property {
+  string ownerId = 1;
+  uint64 id = 2;
+  string registryId = 3;
+  string registryProvider = 4;
+  repeated PropertyChunk chunks = 5;
+}
+
+message RegistrySummary {
+  string registryPropId = 1;
+  string status = 2;
+  double totalArea = 3;
+  double legalForestArea = 4;
+  double verifiedForest = 5;
+}
+
+message RegistryProvider {
+  string name = 1;
+  string baseUrl = 2;
+  bytes rootCa = 3;
+}
+
+message Temperature {
+  Coordinate coordinate = 1;
+  string datetime = 2;
+  double temperature = 3;
+}
+
+message Wind {
+  Coordinate coordinate = 1;
+  string datetime = 2;
+  double speed = 3;
+  double direction = 4;
+}
+
+message Company {
+  string id = 1;
+  Coordinate coordinate = 2;
+  ValidationProps dataProps = 3;
+}

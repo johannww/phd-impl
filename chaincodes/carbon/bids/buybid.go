@@ -8,8 +8,10 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	ccstate "github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -173,6 +175,58 @@ func (b *BuyBid) DeepCopy() *BuyBid {
 		copyB.PrivateQuantity = &privateQuantityCopy
 	}
 	return &copyB
+}
+
+func (b *BuyBid) ToProto() proto.Message {
+	var pbPrivQty *pb.PrivateQuantity
+	if b.PrivateQuantity != nil {
+		pbPrivQty = &pb.PrivateQuantity{
+			AskQuantity: b.PrivateQuantity.AskQuantity,
+			BidID:       b.PrivateQuantity.BidID,
+		}
+	}
+
+	var pbPrivPrice *pb.PrivatePrice
+	if b.PrivatePrice != nil {
+		pbPrivPrice = &pb.PrivatePrice{
+			Price: b.PrivatePrice.Price,
+			BidID: b.PrivatePrice.BidID,
+		}
+	}
+
+	return &pb.BuyBid{
+		BuyerID:         b.BuyerID,
+		Timestamp:       b.Timestamp,
+		AskQuantity:     b.AskQuantity,
+		PrivateQuantity: pbPrivQty,
+		PrivatePrice:    pbPrivPrice,
+	}
+}
+
+func (b *BuyBid) FromProto(m proto.Message) error {
+	pbBuy, ok := m.(*pb.BuyBid)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for BuyBid")
+	}
+	b.BuyerID = pbBuy.BuyerID
+	b.Timestamp = pbBuy.Timestamp
+	b.AskQuantity = pbBuy.AskQuantity
+
+	if pbBuy.PrivatePrice != nil {
+		b.PrivatePrice = &PrivatePrice{
+			Price: pbBuy.PrivatePrice.Price,
+			BidID: pbBuy.PrivatePrice.BidID,
+		}
+	}
+
+	if pbBuy.PrivateQuantity != nil {
+		b.PrivateQuantity = &PrivateQuantity{
+			AskQuantity: pbBuy.PrivateQuantity.AskQuantity,
+			BidID:       pbBuy.PrivateQuantity.BidID,
+		}
+	} 
+
+	return nil
 }
 
 func publishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, withPrivateQuantity bool) error {

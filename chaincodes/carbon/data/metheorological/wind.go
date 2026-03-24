@@ -1,11 +1,14 @@
 package metheorological
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 const WIND_PREFIX = "wind"
@@ -19,6 +22,34 @@ type Wind struct {
 }
 
 var _ state.WorldStateManager = (*Wind)(nil)
+
+func (w *Wind) ToProto() proto.Message {
+	return &pb.Wind{
+		Coordinate: &pb.Coordinate{
+			Latitude:  w.Coordinate.Latitude,
+			Longitude: w.Coordinate.Longitude,
+		},
+		Datetime:  w.Datetime,
+		Speed:     w.Speed,
+		Direction: w.Direction,
+	}
+}
+
+func (w *Wind) FromProto(m proto.Message) error {
+	pw, ok := m.(*pb.Wind)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for Wind")
+	}
+	if pw.Coordinate != nil {
+		w.Coordinate = utils.Coordinate{Latitude: pw.Coordinate.Latitude, Longitude: pw.Coordinate.Longitude}
+	} else {
+		w.Coordinate = utils.Coordinate{}
+	}
+	w.Datetime = pw.Datetime
+	w.Speed = pw.Speed
+	w.Direction = pw.Direction
+	return nil
+}
 
 // FromWorldState implements state.WorldStateManager.
 func (w *Wind) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {

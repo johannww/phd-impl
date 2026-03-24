@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/johannww/phd-impl/chaincodes/common/internal/pb";
+
+// Pseudonym to CompanyID mapping
+message PseudonymToCompanyID {
+  string pseudonym = 1;
+  string companyID = 2;
+}

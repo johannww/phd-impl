@@ -1,8 +1,11 @@
 package bids
 
 import (
+	"fmt"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -31,4 +34,23 @@ func (privMultiplier *PrivateMultiplier) ToWorldState(stub shim.ChaincodeStubInt
 
 func (privMultiplier *PrivateMultiplier) GetID() *[][]string {
 	return &[][]string{privMultiplier.MatchingID}
+}
+
+func (privMultiplier *PrivateMultiplier) ToProto() proto.Message {
+	return &pb.PrivateMultiplier{
+		MatchingID: privMultiplier.MatchingID,
+		Scale:      privMultiplier.Scale,
+		Value:      privMultiplier.Value,
+	}
+}
+
+func (privMultiplier *PrivateMultiplier) FromProto(m proto.Message) error {
+	pm, ok := m.(*pb.PrivateMultiplier)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for PrivateMultiplier")
+	}
+	privMultiplier.MatchingID = pm.MatchingID
+	privMultiplier.Scale = pm.Scale
+	privMultiplier.Value = pm.Value
+	return nil
 }

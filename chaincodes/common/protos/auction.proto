@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/johannww/phd-impl/chaincodes/common/internal/pb";
+
+// AuctionCommitment stores a commitment (hash) of serialized auction data keyed by auction end timestamp.
+message AuctionCommitment {
+  string endTimestamp = 1;
+  bytes hash = 2;
+}
+
+// AuctionType is a simple wrapper to store the auction mode as a string (independent|coupled).
+message AuctionType {
+  string value = 1;
+}

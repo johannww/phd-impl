@@ -6,7 +6,9 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -21,6 +23,23 @@ type VirtualTokenWallet struct {
 }
 
 var _ state.WorldStateManager = (*VirtualTokenWallet)(nil)
+
+func (vtw *VirtualTokenWallet) ToProto() proto.Message {
+	return &pb.VirtualTokenWallet{
+		Owner:    vtw.OwnerID,
+		Quantity: vtw.Quantity,
+	}
+}
+
+func (vtw *VirtualTokenWallet) FromProto(m proto.Message) error {
+	pv, ok := m.(*pb.VirtualTokenWallet)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for VirtualTokenWallet")
+	}
+	vtw.OwnerID = pv.Owner
+	vtw.Quantity = pv.Quantity
+	return nil
+}
 
 func (vtw *VirtualTokenWallet) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
 	return state.GetPvtDataWithCompositeKey(stub, VIRTUAL_TOKEN_WALLET_PREFIX, keyAttributes, state.BIDS_PVT_DATA_COLLECTION, vtw)

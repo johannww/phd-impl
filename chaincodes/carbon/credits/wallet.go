@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -44,6 +46,23 @@ func (cw *CreditWallet) ToWorldState(stub shim.ChaincodeStubInterface) error {
 
 func (cw *CreditWallet) GetID() *[][]string {
 	return &[][]string{{cw.OwnerID}}
+}
+
+func (cw *CreditWallet) ToProto() proto.Message {
+	return &pb.CreditWallet{
+		Owner:    cw.OwnerID,
+		Quantity: cw.Quantity,
+	}
+}
+
+func (cw *CreditWallet) FromProto(m proto.Message) error {
+	pcw, ok := m.(*pb.CreditWallet)
+	if !ok {
+		return fmt.Errorf("unexpected proto message type for CreditWallet")
+	}
+	cw.OwnerID = pcw.Owner
+	cw.Quantity = pcw.Quantity
+	return nil
 }
 
 // TransferFromMintToWallet deducts quantity from the specified MintCredit and
