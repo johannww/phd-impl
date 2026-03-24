@@ -53,13 +53,10 @@ func (mc *MintCredit) ToProto() proto.Message {
 		}
 	}
 
-	var pbMintChunk *pb.MintCredit
-	if pbCredit != nil {
-		pbMintChunk = &pb.MintCredit{
-			Credit:        pbCredit,
-			MintMult:      mc.MintMult,
-			MintTimestamp: mc.MintTimeStamp,
-		}
+	pbMintChunk := &pb.MintCredit{
+		Credit:        pbCredit,
+		MintMult:      mc.MintMult,
+		MintTimestamp: mc.MintTimeStamp,
 	}
 
 	return pbMintChunk

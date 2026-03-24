@@ -170,25 +170,12 @@ func (s *SellBid) DeepCopy() *SellBid {
 func (s *SellBid) ToProto() proto.Message {
 	var pbCredit *pb.MintCredit
 	if s.Credit != nil {
-		// Reuse MintCredit's fields; construct pb.Credit inside pb.MintCredit
-		pc := &pb.Credit{
-			Owner:    s.Credit.OwnerID,
-			ChunkId:  s.Credit.ChunkID,
-			Quantity: s.Credit.Quantity,
-		}
-		pbCredit = &pb.MintCredit{
-			Credit:        pc,
-			MintMult:      s.Credit.MintMult,
-			MintTimestamp: s.Credit.MintTimeStamp,
-		}
+		pbCredit = s.Credit.ToProto().(*pb.MintCredit)
 	}
 
 	var pbPrivPrice *pb.PrivatePrice
 	if s.PrivatePrice != nil {
-		pbPrivPrice = &pb.PrivatePrice{
-			Price: s.PrivatePrice.Price,
-			BidID: s.PrivatePrice.BidID,
-		}
+		pbPrivPrice = s.PrivatePrice.ToProto().(*pb.PrivatePrice)
 	}
 
 	return &pb.SellBid{
@@ -221,20 +208,11 @@ func (s *SellBid) FromProto(m proto.Message) error {
 	}
 
 	if pbSell.Credit != nil {
-		// Map pb.MintCredit into credits.MintCredit
 		mc := &credits.MintCredit{}
-		if pbSell.Credit.Credit != nil {
-			mc.Credit = credits.Credit{
-				OwnerID:  pbSell.Credit.Credit.Owner,
-				ChunkID:  pbSell.Credit.Credit.ChunkId,
-				Quantity: pbSell.Credit.Credit.Quantity,
-			}
+		err := mc.FromProto(pbSell.Credit)
+		if err != nil {
+			return fmt.Errorf("could not map pb.MintCredit to credits.MintCredit: %v", err)
 		}
-		mc.MintMult = pbSell.Credit.MintMult
-		mc.MintTimeStamp = pbSell.Credit.MintTimestamp
-		s.Credit = mc
-	} else {
-		s.Credit = nil
 	}
 
 	return nil

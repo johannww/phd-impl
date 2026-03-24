@@ -180,18 +180,12 @@ func (b *BuyBid) DeepCopy() *BuyBid {
 func (b *BuyBid) ToProto() proto.Message {
 	var pbPrivQty *pb.PrivateQuantity
 	if b.PrivateQuantity != nil {
-		pbPrivQty = &pb.PrivateQuantity{
-			AskQuantity: b.PrivateQuantity.AskQuantity,
-			BidID:       b.PrivateQuantity.BidID,
-		}
+		pbPrivQty = b.PrivateQuantity.ToProto().(*pb.PrivateQuantity)
 	}
 
 	var pbPrivPrice *pb.PrivatePrice
 	if b.PrivatePrice != nil {
-		pbPrivPrice = &pb.PrivatePrice{
-			Price: b.PrivatePrice.Price,
-			BidID: b.PrivatePrice.BidID,
-		}
+		pbPrivPrice = b.PrivatePrice.ToProto().(*pb.PrivatePrice)
 	}
 
 	return &pb.BuyBid{
@@ -224,7 +218,7 @@ func (b *BuyBid) FromProto(m proto.Message) error {
 			AskQuantity: pbBuy.PrivateQuantity.AskQuantity,
 			BidID:       pbBuy.PrivateQuantity.BidID,
 		}
-	} 
+	}
 
 	return nil
 }
