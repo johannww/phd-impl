@@ -78,7 +78,7 @@ func (mb *MatchedBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	}
 
 	// Store MatchedBid in world state without private data and without duplicated data
-	err := state.PutStateWithCompositeKey(stub, MATCHED_BID_PREFIX, copyMb.GetID(), copyMb)
+	err := state.PutStateWithCompositeKey(stub, MATCHED_BID_PREFIX, copyMb.GetID(), &copyMb)
 
 	return err
 }

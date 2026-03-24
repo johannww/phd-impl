@@ -112,7 +112,7 @@ func (s *SellBid) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	copyS.PrivatePrice = nil // already stored in the private world state
 
 	var err error
-	if err = ccstate.PutStateWithCompositeKey(stub, SELL_BID_PREFIX, copyS.GetID(), copyS); err != nil {
+	if err = ccstate.PutStateWithCompositeKey(stub, SELL_BID_PREFIX, copyS.GetID(), &copyS); err != nil {
 		err = fmt.Errorf("could not put sellbid in state: %v", err)
 	}
 
