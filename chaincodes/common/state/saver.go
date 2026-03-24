@@ -28,15 +28,6 @@ func NewStateSaver(s serializer.Serializer) *StateSaver {
 	return &StateSaver{serializer: s}
 }
 
-// defaultManager is the package-level StateManager used by the facade helpers.
-// It is initialized once and not mutated at runtime to avoid races and mutexes.
-var defaultManager = NewStateManager(NewStateSaver(serializer.NewJSONSerializer()))
-
-// DefaultManager returns the package-level StateManager. Callers that need
-// different serializers should construct their own StateManager via
-// NewStateManager.
-func DefaultManager() *StateManager { return defaultManager }
-
 // currentSerializer is the package-level serializer used by chaincode_utils and
 // batch_recover helpers. It is initialized to NewJSONSerializer() for backward
 // compatibility. Call SetSerializer() to override at init time (e.g., in main or tests).
