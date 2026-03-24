@@ -13,6 +13,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 	mocks "github.com/johannww/phd-impl/chaincodes/common/state/mocks"
+	"github.com/johannww/phd-impl/chaincodes/common/state/serializer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -93,6 +94,13 @@ func TestOffChainIndependentAuctionWithRandomBids(t *testing.T) {
 	require.NoError(t, err, "Failed to merge independent auction results")
 
 	verifyBidsQuantityConsistency(t, totalBuyBidQuantity, auctionResult)
+}
+
+func TestOffChainCoupledAuctionWithProtoSerializer(t *testing.T) {
+	originalSerializer := state.GetSerializer()
+	defer state.SetSerializer(originalSerializer)
+	state.SetSerializer(serializer.NewProtoSerializer())
+	TestOffChainCoupledAuction(t)
 }
 
 func TestOffChainCoupledAuction(t *testing.T) {
