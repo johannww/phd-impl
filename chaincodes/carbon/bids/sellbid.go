@@ -143,23 +143,23 @@ func (s *SellBid) GetID() *[][]string {
 	}
 }
 
-func (b *SellBid) Less(b2 *SellBid) int {
-	if b.PrivatePrice.Price < b2.PrivatePrice.Price {
+func (s *SellBid) Less(b2 *SellBid) int {
+	if s.PrivatePrice.Price < b2.PrivatePrice.Price {
 		return -1
-	} else if b.PrivatePrice.Price > b2.PrivatePrice.Price {
+	} else if s.PrivatePrice.Price > b2.PrivatePrice.Price {
 		return 1
 	}
 	return 0
 }
 
-func (b *SellBid) DeepCopy() *SellBid {
-	bidCopy := *b
-	if b.Credit != nil {
-		creditCopy := *b.Credit
+func (s *SellBid) DeepCopy() *SellBid {
+	bidCopy := *s
+	if s.Credit != nil {
+		creditCopy := *s.Credit
 		bidCopy.Credit = &creditCopy
 	}
-	if b.PrivatePrice != nil {
-		priceCopy := *b.PrivatePrice
+	if s.PrivatePrice != nil {
+		priceCopy := *s.PrivatePrice
 		bidCopy.PrivatePrice = &priceCopy
 	}
 	return &bidCopy
