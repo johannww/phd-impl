@@ -154,6 +154,8 @@ spec:
           env:
             - name: CORE_PEER_TLS_ENABLED
               value: "true"
+            #- name: FABRIC_LOGGING_SPEC
+            #  value: "debug"
             - name: CORE_PEER_LOCALMSPID
               value: "{{ $orgName | title }}MSP"
             - name: CORE_OPERATIONS_LISTENADDRESS
