@@ -40,12 +40,24 @@ func DefaultManager() *StateManager { return defaultManager }
 // currentSerializer is the package-level serializer used by chaincode_utils and
 // batch_recover helpers. It is initialized to NewJSONSerializer() for backward
 // compatibility. Call SetSerializer() to override at init time (e.g., in main or tests).
+//
+// Usage:
+//   - Default JSON serialization: No action needed, system uses JSON by default
+//   - Switch to Proto serialization: Call SetSerializer(serializer.NewProtoSerializer()) in init()
+//   - Custom serializer: Implement the serializer.Serializer interface and pass to SetSerializer()
 var currentSerializer serializer.Serializer = serializer.NewJSONSerializer()
 
 // SetSerializer sets the package-level serializer used by chaincode_utils and
 // batch_recover helpers. This should be called once at init time (e.g., in main
 // or test setup) before any marshaling/unmarshaling occurs. If s is nil, this
 // function is a no-op to prevent nil-pointer dereferences.
+//
+// Example:
+//
+//	func init() {
+//	    // Switch from default JSON to Protocol Buffers
+//	    state.SetSerializer(serializer.NewProtoSerializer())
+//	}
 func SetSerializer(s serializer.Serializer) {
 	if s != nil {
 		currentSerializer = s
@@ -54,14 +66,30 @@ func SetSerializer(s serializer.Serializer) {
 
 // GetSerializer returns the current package-level serializer used by chaincode_utils
 // and batch_recover helpers. Never returns nil.
+//
+// This is useful for introspecting the current serialization format or for
+// manually serializing values in custom code.
 func GetSerializer() serializer.Serializer {
 	return currentSerializer
 }
 
 // UnmarshalStateAs unmarshals state bytes into an arbitrary target that implements
-// ProtoConvertible. This is useful for generic code that needs to unmarshal into
-// a type parameter without compile-time constraint validation. Returns an error if
-// the target does not implement ProtoConvertible.
+// ProtoConvertible using the current package-level serializer. This is useful for
+// generic code that needs to unmarshal into a type parameter without compile-time
+// constraint validation.
+//
+// For types that do not implement ProtoConvertible (e.g., []string used in secondary
+// indexes), this function falls back to JSON unmarshaling. This ensures compatibility
+// with existing code that stores composite keys as JSON strings.
+//
+// Returns an error if:
+//   - The data is invalid for the target type
+//   - Unmarshaling fails in the serializer
+//
+// Example:
+//
+//	var bid Bid
+//	err := state.UnmarshalStateAs(stateBytes, &bid)
 func UnmarshalStateAs(data []byte, target any) error {
 	pc, ok := target.(ProtoConvertible)
 	if !ok {
@@ -86,10 +114,18 @@ func unmarshalJSON(data []byte, target any) error {
 	return err
 }
 
-// MarshalStateAs marshals an arbitrary value that implements ProtoConvertible to bytes.
-// This is useful for generic code that needs to marshal from a type parameter without
-// compile-time constraint validation. Returns an error if the value does not implement
-// ProtoConvertible.
+// MarshalStateAs marshals an arbitrary value that implements ProtoConvertible to bytes
+// using the current package-level serializer. This is useful for generic code that
+// needs to marshal from a type parameter without compile-time constraint validation.
+//
+// Returns an error if:
+//   - The value does not implement ProtoConvertible
+//   - Marshaling fails in the serializer
+//
+// Example:
+//
+//	bid := &Bid{BuyerID: "buyer1", ...}
+//	stateBytes, err := state.MarshalStateAs(bid)
 func MarshalStateAs(value any) ([]byte, error) {
 	pc, ok := value.(ProtoConvertible)
 	if !ok {
