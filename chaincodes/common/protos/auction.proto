@@ -4,6 +4,9 @@ package pb;
 
 option go_package = "github.com/johannww/phd-impl/chaincodes/common/internal/pb";
 
+import "properties.proto";
+import "bids.proto";
+
 // AuctionCommitment stores a commitment (hash) of serialized auction data keyed by auction end timestamp.
 message AuctionCommitment {
   string endTimestamp = 1;
@@ -13,4 +16,21 @@ message AuctionCommitment {
 // AuctionType is a simple wrapper to store the auction mode as a string (independent|coupled).
 message AuctionType {
   string value = 1;
+}
+
+// AuctionData represents the complete auction data including bids, policies, and companies.
+message AuctionData {
+  uint64 auctionID = 1;
+  repeated SellBid sellBids = 2;
+  repeated BuyBid buyBids = 3;
+  bytes bidsMerkleRoot = 4;
+  repeated string activePolicies = 5;
+  map<string, Company> companiesPvt = 6;
+  bool coupled = 7;
+}
+
+// SerializedAuctionData represents serialized auction data with its hash commitment.
+message SerializedAuctionData {
+  bytes auctionDataBytes = 1;
+  bytes sum = 2;
 }

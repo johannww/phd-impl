@@ -119,16 +119,178 @@ func (x *AuctionType) GetValue() string {
 	return ""
 }
 
+// AuctionData represents the complete auction data including bids, policies, and companies.
+type AuctionData struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	AuctionID      uint64                 `protobuf:"varint,1,opt,name=auctionID,proto3" json:"auctionID,omitempty"`
+	SellBids       []*SellBid             `protobuf:"bytes,2,rep,name=sellBids,proto3" json:"sellBids,omitempty"`
+	BuyBids        []*BuyBid              `protobuf:"bytes,3,rep,name=buyBids,proto3" json:"buyBids,omitempty"`
+	BidsMerkleRoot []byte                 `protobuf:"bytes,4,opt,name=bidsMerkleRoot,proto3" json:"bidsMerkleRoot,omitempty"`
+	ActivePolicies []string               `protobuf:"bytes,5,rep,name=activePolicies,proto3" json:"activePolicies,omitempty"`
+	CompaniesPvt   map[string]*Company    `protobuf:"bytes,6,rep,name=companiesPvt,proto3" json:"companiesPvt,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Coupled        bool                   `protobuf:"varint,7,opt,name=coupled,proto3" json:"coupled,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AuctionData) Reset() {
+	*x = AuctionData{}
+	mi := &file_auction_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuctionData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuctionData) ProtoMessage() {}
+
+func (x *AuctionData) ProtoReflect() protoreflect.Message {
+	mi := &file_auction_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuctionData.ProtoReflect.Descriptor instead.
+func (*AuctionData) Descriptor() ([]byte, []int) {
+	return file_auction_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *AuctionData) GetAuctionID() uint64 {
+	if x != nil {
+		return x.AuctionID
+	}
+	return 0
+}
+
+func (x *AuctionData) GetSellBids() []*SellBid {
+	if x != nil {
+		return x.SellBids
+	}
+	return nil
+}
+
+func (x *AuctionData) GetBuyBids() []*BuyBid {
+	if x != nil {
+		return x.BuyBids
+	}
+	return nil
+}
+
+func (x *AuctionData) GetBidsMerkleRoot() []byte {
+	if x != nil {
+		return x.BidsMerkleRoot
+	}
+	return nil
+}
+
+func (x *AuctionData) GetActivePolicies() []string {
+	if x != nil {
+		return x.ActivePolicies
+	}
+	return nil
+}
+
+func (x *AuctionData) GetCompaniesPvt() map[string]*Company {
+	if x != nil {
+		return x.CompaniesPvt
+	}
+	return nil
+}
+
+func (x *AuctionData) GetCoupled() bool {
+	if x != nil {
+		return x.Coupled
+	}
+	return false
+}
+
+// SerializedAuctionData represents serialized auction data with its hash commitment.
+type SerializedAuctionData struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	AuctionDataBytes []byte                 `protobuf:"bytes,1,opt,name=auctionDataBytes,proto3" json:"auctionDataBytes,omitempty"`
+	Sum              []byte                 `protobuf:"bytes,2,opt,name=sum,proto3" json:"sum,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *SerializedAuctionData) Reset() {
+	*x = SerializedAuctionData{}
+	mi := &file_auction_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SerializedAuctionData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SerializedAuctionData) ProtoMessage() {}
+
+func (x *SerializedAuctionData) ProtoReflect() protoreflect.Message {
+	mi := &file_auction_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SerializedAuctionData.ProtoReflect.Descriptor instead.
+func (*SerializedAuctionData) Descriptor() ([]byte, []int) {
+	return file_auction_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SerializedAuctionData) GetAuctionDataBytes() []byte {
+	if x != nil {
+		return x.AuctionDataBytes
+	}
+	return nil
+}
+
+func (x *SerializedAuctionData) GetSum() []byte {
+	if x != nil {
+		return x.Sum
+	}
+	return nil
+}
+
 var File_auction_proto protoreflect.FileDescriptor
 
 const file_auction_proto_rawDesc = "" +
 	"\n" +
-	"\rauction.proto\x12\x02pb\"K\n" +
+	"\rauction.proto\x12\x02pb\x1a\x10properties.proto\x1a\n" +
+	"bids.proto\"K\n" +
 	"\x11AuctionCommitment\x12\"\n" +
 	"\fendTimestamp\x18\x01 \x01(\tR\fendTimestamp\x12\x12\n" +
 	"\x04hash\x18\x02 \x01(\fR\x04hash\"#\n" +
 	"\vAuctionType\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\tR\x05valueB<Z:github.com/johannww/phd-impl/chaincodes/common/internal/pbb\x06proto3"
+	"\x05value\x18\x01 \x01(\tR\x05value\"\xf9\x02\n" +
+	"\vAuctionData\x12\x1c\n" +
+	"\tauctionID\x18\x01 \x01(\x04R\tauctionID\x12'\n" +
+	"\bsellBids\x18\x02 \x03(\v2\v.pb.SellBidR\bsellBids\x12$\n" +
+	"\abuyBids\x18\x03 \x03(\v2\n" +
+	".pb.BuyBidR\abuyBids\x12&\n" +
+	"\x0ebidsMerkleRoot\x18\x04 \x01(\fR\x0ebidsMerkleRoot\x12&\n" +
+	"\x0eactivePolicies\x18\x05 \x03(\tR\x0eactivePolicies\x12E\n" +
+	"\fcompaniesPvt\x18\x06 \x03(\v2!.pb.AuctionData.CompaniesPvtEntryR\fcompaniesPvt\x12\x18\n" +
+	"\acoupled\x18\a \x01(\bR\acoupled\x1aL\n" +
+	"\x11CompaniesPvtEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12!\n" +
+	"\x05value\x18\x02 \x01(\v2\v.pb.CompanyR\x05value:\x028\x01\"U\n" +
+	"\x15SerializedAuctionData\x12*\n" +
+	"\x10auctionDataBytes\x18\x01 \x01(\fR\x10auctionDataBytes\x12\x10\n" +
+	"\x03sum\x18\x02 \x01(\fR\x03sumB<Z:github.com/johannww/phd-impl/chaincodes/common/internal/pbb\x06proto3"
 
 var (
 	file_auction_proto_rawDescOnce sync.Once
@@ -142,17 +304,27 @@ func file_auction_proto_rawDescGZIP() []byte {
 	return file_auction_proto_rawDescData
 }
 
-var file_auction_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_auction_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_auction_proto_goTypes = []any{
-	(*AuctionCommitment)(nil), // 0: pb.AuctionCommitment
-	(*AuctionType)(nil),       // 1: pb.AuctionType
+	(*AuctionCommitment)(nil),     // 0: pb.AuctionCommitment
+	(*AuctionType)(nil),           // 1: pb.AuctionType
+	(*AuctionData)(nil),           // 2: pb.AuctionData
+	(*SerializedAuctionData)(nil), // 3: pb.SerializedAuctionData
+	nil,                           // 4: pb.AuctionData.CompaniesPvtEntry
+	(*SellBid)(nil),               // 5: pb.SellBid
+	(*BuyBid)(nil),                // 6: pb.BuyBid
+	(*Company)(nil),               // 7: pb.Company
 }
 var file_auction_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	5, // 0: pb.AuctionData.sellBids:type_name -> pb.SellBid
+	6, // 1: pb.AuctionData.buyBids:type_name -> pb.BuyBid
+	4, // 2: pb.AuctionData.companiesPvt:type_name -> pb.AuctionData.CompaniesPvtEntry
+	7, // 3: pb.AuctionData.CompaniesPvtEntry.value:type_name -> pb.Company
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_auction_proto_init() }
@@ -160,13 +332,15 @@ func file_auction_proto_init() {
 	if File_auction_proto != nil {
 		return
 	}
+	file_properties_proto_init()
+	file_bids_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auction_proto_rawDesc), len(file_auction_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
