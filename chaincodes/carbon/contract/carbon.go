@@ -14,8 +14,14 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"github.com/johannww/phd-impl/chaincodes/common/state/serializer"
 	tee_auction "github.com/johannww/phd-impl/tee_auction/go/auction"
 )
+
+func init() {
+	state.SetSerializer(serializer.NewProtoSerializer())
+}
 
 const (
 	SERIALIZED_RESULT_TEE_PVT_KEY = "serializedResultPvt"
