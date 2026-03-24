@@ -95,9 +95,17 @@ func (mb *MatchedBid) GetID() *[][]string {
 	return &[][]string{buyBidFirstID, sellBidFirstID, buyerIDPrefix, sellerIDPrefix}
 }
 
-func (mb *MatchedBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) (err error) {
-	privatePrice := &PrivatePrice{}
+func (mb *MatchedBid) canReadPrivateBidData(stub shim.ChaincodeStubInterface) bool {
 	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
+		return true
+	}
+	callerID := identities.GetID(stub)
+	return callerID == mb.BuyBid.BuyerID || callerID == mb.SellBid.SellerID
+}
+
+func (mb *MatchedBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) (err error) {
+	if mb.canReadPrivateBidData(stub) {
+		privatePrice := &PrivatePrice{}
 		if err := privatePrice.FromWorldState(stub, (*mb.GetID())[0], MATCHED_BID_PVT); err == nil {
 			mb.PrivatePrice = privatePrice
 			return nil
@@ -108,8 +116,8 @@ func (mb *MatchedBid) FetchPrivatePrice(stub shim.ChaincodeStubInterface) (err e
 }
 
 func (mb *MatchedBid) FetchPrivateMultiplier(stub shim.ChaincodeStubInterface) (err error) {
-	privateMultiplier := &PrivateMultiplier{}
-	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") == nil {
+	if mb.canReadPrivateBidData(stub) {
+		privateMultiplier := &PrivateMultiplier{}
 		if err := privateMultiplier.FromWorldState(stub, (*mb.GetID())[0]); err == nil {
 			mb.PrivateMultiplier = privateMultiplier
 			return nil
