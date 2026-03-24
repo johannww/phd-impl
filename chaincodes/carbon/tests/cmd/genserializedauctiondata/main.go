@@ -9,7 +9,9 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	utils_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/utils"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/chaincodes/common/state/mocks"
+	"github.com/johannww/phd-impl/chaincodes/common/state/serializer"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -22,6 +24,7 @@ func main() {
 	pflag.String("end", "2023-01-01T00:30:00Z", "end timestamp")
 	pflag.Duration("interval", 30*time.Second, "issue interval")
 	pflag.StringP("output", "o", "testdata.json", "output file path")
+	pflag.StringP("format", "f", "json", "output format (json or proto)")
 	pflag.Parse()
 
 	viper.BindPFlags(pflag.CommandLine)
@@ -36,6 +39,14 @@ func main() {
 		viper.GetString("end"),
 		viper.GetDuration("interval"),
 	)
+
+	isProto := viper.GetString("format") == "proto"
+
+	if isProto {
+		state.SetSerializer(serializer.NewProtoSerializer())
+	} else {
+		state.SetSerializer(serializer.NewJSONSerializer())
+	}
 
 	testData.Policies = []policies.Name{policies.DISTANCE, policies.WIND_DIRECTION}
 
@@ -70,11 +81,16 @@ func main() {
 	panicOnError(err)
 	serializedAD, err = retrievedAD.ToSerializedAuctionData()
 	panicOnError(err)
-	serializedAD.CommitmentFromWorldState(stub, testData.BidIssueLastTs)
+	err = serializedAD.CommitmentFromWorldState(stub, testData.BidIssueLastTs)
 	panicOnError(err)
 	stub.MockTransactionEnd("retrieve-data")
 
-	bytes, err := json.MarshalIndent(serializedAD, "", "  ")
+	var bytes []byte
+	if isProto {
+		bytes, err = state.GetSerializer().Marshal(serializedAD)
+	} else {
+		bytes, err = json.MarshalIndent(serializedAD, "", "  ")
+	}
 	panicOnError(err)
 
 	err = os.WriteFile(filePath, bytes, os.ModePerm)
