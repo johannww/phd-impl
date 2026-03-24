@@ -11,6 +11,7 @@ import (
 type Estimator struct{}
 
 // TODO: implement
+// Estimate assumes that the property chunk inherits the same external data as the property.
 func (e *Estimator) Estimate(chunk *properties.PropertyChunk, intervalStart, intervalEnd time.Time) (int64, error) {
 	quantity := int64(mathrand.Intn(1000) + 1) // Random quantity between 1 and 1000
 	quantity = quantity * common.QUANTITY_SCALE
