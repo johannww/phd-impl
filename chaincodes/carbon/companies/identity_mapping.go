@@ -16,7 +16,7 @@ var _ state.WorldStateManager = (*PseudonymToCompanyID)(nil)
 
 // FromWorldState implements state.WorldStateManager.
 func (p *PseudonymToCompanyID) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	return state.GetPvtDataWithCompositeKey(stub, PSEUDONYM_TO_COMPANY_ID_PREFIX, keyAttributes, state.BIDS_PVT_DATA_COLLECTION, p)
+	return state.GetPvtDataWithCompositeKey(stub, PSEUDONYM_TO_COMPANY_ID_PREFIX, keyAttributes, state.COMPANIES_PVT_DATA_COLLECTION, p)
 }
 
 // GetID implements state.WorldStateManager.
@@ -27,7 +27,7 @@ func (p *PseudonymToCompanyID) GetID() *[][]string {
 // ToWorldState implements state.WorldStateManager.
 func (p *PseudonymToCompanyID) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	firstID := (*p.GetID())[0]
-	return state.PutPvtDataWithCompositeKey(stub, PSEUDONYM_TO_COMPANY_ID_PREFIX, firstID, state.BIDS_PVT_DATA_COLLECTION, p)
+	return state.PutPvtDataWithCompositeKey(stub, PSEUDONYM_TO_COMPANY_ID_PREFIX, firstID, state.COMPANIES_PVT_DATA_COLLECTION, p)
 }
 
 // CreatePseudonymToCompanyID creates a new mapping and saves it to the world state.

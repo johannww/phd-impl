@@ -19,13 +19,13 @@ type PrivateMultiplier struct {
 var _ state.WorldStateManager = (*PrivateMultiplier)(nil)
 
 func (privMultiplier *PrivateMultiplier) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	err := state.GetPvtDataWithCompositeKey(stub, PVT_MULTIPLIER_PREFIX, keyAttributes, state.BIDS_PVT_DATA_COLLECTION, privMultiplier)
+	err := state.GetPvtDataWithCompositeKey(stub, PVT_MULTIPLIER_PREFIX, keyAttributes, state.AUCTION_PVT_DATA_COLLECTION, privMultiplier)
 	return err
 }
 
 func (privMultiplier *PrivateMultiplier) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	multiplierID := (*privMultiplier.GetID())[0]
-	err := state.PutPvtDataWithCompositeKey(stub, PVT_MULTIPLIER_PREFIX, multiplierID, state.BIDS_PVT_DATA_COLLECTION, privMultiplier)
+	err := state.PutPvtDataWithCompositeKey(stub, PVT_MULTIPLIER_PREFIX, multiplierID, state.AUCTION_PVT_DATA_COLLECTION, privMultiplier)
 	return err
 }
 

@@ -22,7 +22,7 @@ var _ state.WorldStateManager = (*Company)(nil)
 
 // FromWorldState implements state.WorldStateManager.
 func (c *Company) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	return state.GetPvtDataWithCompositeKey(stub, COMPANY_PREFIX, keyAttributes, state.BIDS_PVT_DATA_COLLECTION, c)
+	return state.GetPvtDataWithCompositeKey(stub, COMPANY_PREFIX, keyAttributes, state.COMPANIES_PVT_DATA_COLLECTION, c)
 }
 
 // GetID implements state.WorldStateManager.
@@ -33,7 +33,7 @@ func (c *Company) GetID() *[][]string {
 // ToWorldState implements state.WorldStateManager.
 func (c *Company) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	firstID := (*c.GetID())[0]
-	return state.PutPvtDataWithCompositeKey(stub, COMPANY_PREFIX, firstID, state.BIDS_PVT_DATA_COLLECTION, c)
+	return state.PutPvtDataWithCompositeKey(stub, COMPANY_PREFIX, firstID, state.COMPANIES_PVT_DATA_COLLECTION, c)
 }
 
 func CompanyToWorldState(stub shim.ChaincodeStubInterface, company *Company) error {
