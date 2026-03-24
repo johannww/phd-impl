@@ -3,10 +3,10 @@ package auction
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
 )
 
 type SerializedAuctionData struct {
@@ -67,9 +67,9 @@ func (s *SerializedAuctionData) ValidateHash() bool {
 func (s *SerializedAuctionData) ToAuctionData() (*AuctionData, error) {
 	auctionData := &AuctionData{}
 
-	err := json.Unmarshal(s.AuctionDataBytes, auctionData)
+	err := state.UnmarshalStateAs(s.AuctionDataBytes, auctionData)
 	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal sell bids: %v", err)
+		return nil, fmt.Errorf("could not unmarshal auction data: %v", err)
 	}
 
 	return auctionData, nil

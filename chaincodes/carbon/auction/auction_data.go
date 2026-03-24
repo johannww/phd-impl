@@ -117,7 +117,7 @@ func (a *AuctionData) ToSerializedAuctionData() (*SerializedAuctionData, error) 
 	serializedAuctionData := &SerializedAuctionData{}
 	var err error
 
-	auctionDataBytes, err := json.Marshal(a)
+	auctionDataBytes, err := state.MarshalStateAs(a)
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal auction data: %v", err)
 	}
