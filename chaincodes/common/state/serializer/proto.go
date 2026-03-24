@@ -9,6 +9,9 @@ type ProtoSerializer struct{}
 
 func NewProtoSerializer() *ProtoSerializer { return &ProtoSerializer{} }
 
+// Use deterministic marshaling to ensure consistent byte output across invocations
+var deterministicProto = proto.MarshalOptions{Deterministic: true}
+
 func (p *ProtoSerializer) Marshal(v ProtoConvertible) ([]byte, error) {
 	if v == nil {
 		return nil, fmt.Errorf("nil value")
@@ -17,7 +20,7 @@ func (p *ProtoSerializer) Marshal(v ProtoConvertible) ([]byte, error) {
 	if msg == nil {
 		return nil, fmt.Errorf("ToProto returned nil")
 	}
-	return proto.Marshal(msg)
+	return deterministicProto.Marshal(msg)
 }
 
 func (p *ProtoSerializer) Unmarshal(data []byte, v ProtoConvertible) error {
