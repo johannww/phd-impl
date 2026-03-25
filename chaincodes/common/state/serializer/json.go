@@ -1,6 +1,9 @@
 package serializer
 
-import "encoding/json"
+import (
+	"bytes"
+	"encoding/json"
+)
 
 type JSONSerializer struct{}
 
@@ -25,4 +28,16 @@ func (j *JSONSerializer) Unmarshal(data []byte, v ProtoConvertible) error {
 	// that pointer to json.Unmarshal works because json.Unmarshal accepts an
 	// interface{} and will update the underlying value.
 	return json.Unmarshal(data, v)
+}
+
+// StrictUnmarshal unmarshals data while disallowing unknown/extra fields.
+// This is useful for distinguishing between different message types that
+// might have overlapping field names.
+func (j *JSONSerializer) StrictUnmarshal(data []byte, v ProtoConvertible) error {
+	if v == nil {
+		return &ErrNotProtoCompatible{"nil target"}
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	return decoder.Decode(v)
 }

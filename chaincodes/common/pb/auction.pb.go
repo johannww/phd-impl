@@ -265,6 +265,170 @@ func (x *SerializedAuctionData) GetSum() []byte {
 	return nil
 }
 
+// OffChainIndepAuctionResult represents the result of an independent off-chain auction
+// with matched bids and adjusted bids (public and private components if applicable).
+type OffChainIndepAuctionResult struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	AuctionID        uint64                 `protobuf:"varint,1,opt,name=auctionID,proto3" json:"auctionID,omitempty"`
+	MatchedBids      []*MatchedBid          `protobuf:"bytes,2,rep,name=matchedBids,proto3" json:"matchedBids,omitempty"`
+	AdjustedSellBids []*SellBid             `protobuf:"bytes,3,rep,name=adjustedSellBids,proto3" json:"adjustedSellBids,omitempty"`
+	AdjustedBuyBids  []*BuyBid              `protobuf:"bytes,4,rep,name=adjustedBuyBids,proto3" json:"adjustedBuyBids,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *OffChainIndepAuctionResult) Reset() {
+	*x = OffChainIndepAuctionResult{}
+	mi := &file_auction_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OffChainIndepAuctionResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OffChainIndepAuctionResult) ProtoMessage() {}
+
+func (x *OffChainIndepAuctionResult) ProtoReflect() protoreflect.Message {
+	mi := &file_auction_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OffChainIndepAuctionResult.ProtoReflect.Descriptor instead.
+func (*OffChainIndepAuctionResult) Descriptor() ([]byte, []int) {
+	return file_auction_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *OffChainIndepAuctionResult) GetAuctionID() uint64 {
+	if x != nil {
+		return x.AuctionID
+	}
+	return 0
+}
+
+func (x *OffChainIndepAuctionResult) GetMatchedBids() []*MatchedBid {
+	if x != nil {
+		return x.MatchedBids
+	}
+	return nil
+}
+
+func (x *OffChainIndepAuctionResult) GetAdjustedSellBids() []*SellBid {
+	if x != nil {
+		return x.AdjustedSellBids
+	}
+	return nil
+}
+
+func (x *OffChainIndepAuctionResult) GetAdjustedBuyBids() []*BuyBid {
+	if x != nil {
+		return x.AdjustedBuyBids
+	}
+	return nil
+}
+
+// OffChainCoupledAuctionResult represents the result of a coupled off-chain auction
+// with separate matched bids and adjusted bids for public and private components.
+type OffChainCoupledAuctionResult struct {
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	MatchedBidsPublic       []*MatchedBid          `protobuf:"bytes,1,rep,name=matchedBidsPublic,proto3" json:"matchedBidsPublic,omitempty"`
+	MatchedBidsPrivate      []*MatchedBid          `protobuf:"bytes,2,rep,name=matchedBidsPrivate,proto3" json:"matchedBidsPrivate,omitempty"`
+	AdjustedSellBidsPublic  []*SellBid             `protobuf:"bytes,3,rep,name=adjustedSellBidsPublic,proto3" json:"adjustedSellBidsPublic,omitempty"`
+	AdjustedSellBidsPrivate []*SellBid             `protobuf:"bytes,4,rep,name=adjustedSellBidsPrivate,proto3" json:"adjustedSellBidsPrivate,omitempty"`
+	AdjustedBuyBidsPublic   []*BuyBid              `protobuf:"bytes,5,rep,name=adjustedBuyBidsPublic,proto3" json:"adjustedBuyBidsPublic,omitempty"`
+	AdjustedBuyBidsPrivate  []*BuyBid              `protobuf:"bytes,6,rep,name=adjustedBuyBidsPrivate,proto3" json:"adjustedBuyBidsPrivate,omitempty"`
+	AuctionID               uint64                 `protobuf:"varint,7,opt,name=auctionID,proto3" json:"auctionID,omitempty"` // to avoid marshalling conflicts with OffChainIndepAuctionResult
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *OffChainCoupledAuctionResult) Reset() {
+	*x = OffChainCoupledAuctionResult{}
+	mi := &file_auction_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OffChainCoupledAuctionResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OffChainCoupledAuctionResult) ProtoMessage() {}
+
+func (x *OffChainCoupledAuctionResult) ProtoReflect() protoreflect.Message {
+	mi := &file_auction_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OffChainCoupledAuctionResult.ProtoReflect.Descriptor instead.
+func (*OffChainCoupledAuctionResult) Descriptor() ([]byte, []int) {
+	return file_auction_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *OffChainCoupledAuctionResult) GetMatchedBidsPublic() []*MatchedBid {
+	if x != nil {
+		return x.MatchedBidsPublic
+	}
+	return nil
+}
+
+func (x *OffChainCoupledAuctionResult) GetMatchedBidsPrivate() []*MatchedBid {
+	if x != nil {
+		return x.MatchedBidsPrivate
+	}
+	return nil
+}
+
+func (x *OffChainCoupledAuctionResult) GetAdjustedSellBidsPublic() []*SellBid {
+	if x != nil {
+		return x.AdjustedSellBidsPublic
+	}
+	return nil
+}
+
+func (x *OffChainCoupledAuctionResult) GetAdjustedSellBidsPrivate() []*SellBid {
+	if x != nil {
+		return x.AdjustedSellBidsPrivate
+	}
+	return nil
+}
+
+func (x *OffChainCoupledAuctionResult) GetAdjustedBuyBidsPublic() []*BuyBid {
+	if x != nil {
+		return x.AdjustedBuyBidsPublic
+	}
+	return nil
+}
+
+func (x *OffChainCoupledAuctionResult) GetAdjustedBuyBidsPrivate() []*BuyBid {
+	if x != nil {
+		return x.AdjustedBuyBidsPrivate
+	}
+	return nil
+}
+
+func (x *OffChainCoupledAuctionResult) GetAuctionID() uint64 {
+	if x != nil {
+		return x.AuctionID
+	}
+	return 0
+}
+
 var File_auction_proto protoreflect.FileDescriptor
 
 const file_auction_proto_rawDesc = "" +
@@ -290,7 +454,23 @@ const file_auction_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2\v.pb.CompanyR\x05value:\x028\x01\"U\n" +
 	"\x15SerializedAuctionData\x12*\n" +
 	"\x10auctionDataBytes\x18\x01 \x01(\fR\x10auctionDataBytes\x12\x10\n" +
-	"\x03sum\x18\x02 \x01(\fR\x03sumB<Z:github.com/johannww/phd-impl/chaincodes/common/internal/pbb\x06proto3"
+	"\x03sum\x18\x02 \x01(\fR\x03sum\"\xdb\x01\n" +
+	"\x1aOffChainIndepAuctionResult\x12\x1c\n" +
+	"\tauctionID\x18\x01 \x01(\x04R\tauctionID\x120\n" +
+	"\vmatchedBids\x18\x02 \x03(\v2\x0e.pb.MatchedBidR\vmatchedBids\x127\n" +
+	"\x10adjustedSellBids\x18\x03 \x03(\v2\v.pb.SellBidR\x10adjustedSellBids\x124\n" +
+	"\x0fadjustedBuyBids\x18\x04 \x03(\v2\n" +
+	".pb.BuyBidR\x0fadjustedBuyBids\"\xcc\x03\n" +
+	"\x1cOffChainCoupledAuctionResult\x12<\n" +
+	"\x11matchedBidsPublic\x18\x01 \x03(\v2\x0e.pb.MatchedBidR\x11matchedBidsPublic\x12>\n" +
+	"\x12matchedBidsPrivate\x18\x02 \x03(\v2\x0e.pb.MatchedBidR\x12matchedBidsPrivate\x12C\n" +
+	"\x16adjustedSellBidsPublic\x18\x03 \x03(\v2\v.pb.SellBidR\x16adjustedSellBidsPublic\x12E\n" +
+	"\x17adjustedSellBidsPrivate\x18\x04 \x03(\v2\v.pb.SellBidR\x17adjustedSellBidsPrivate\x12@\n" +
+	"\x15adjustedBuyBidsPublic\x18\x05 \x03(\v2\n" +
+	".pb.BuyBidR\x15adjustedBuyBidsPublic\x12B\n" +
+	"\x16adjustedBuyBidsPrivate\x18\x06 \x03(\v2\n" +
+	".pb.BuyBidR\x16adjustedBuyBidsPrivate\x12\x1c\n" +
+	"\tauctionID\x18\a \x01(\x04R\tauctionIDB<Z:github.com/johannww/phd-impl/chaincodes/common/internal/pbb\x06proto3"
 
 var (
 	file_auction_proto_rawDescOnce sync.Once
@@ -304,27 +484,39 @@ func file_auction_proto_rawDescGZIP() []byte {
 	return file_auction_proto_rawDescData
 }
 
-var file_auction_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_auction_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_auction_proto_goTypes = []any{
-	(*AuctionCommitment)(nil),     // 0: pb.AuctionCommitment
-	(*AuctionType)(nil),           // 1: pb.AuctionType
-	(*AuctionData)(nil),           // 2: pb.AuctionData
-	(*SerializedAuctionData)(nil), // 3: pb.SerializedAuctionData
-	nil,                           // 4: pb.AuctionData.CompaniesPvtEntry
-	(*SellBid)(nil),               // 5: pb.SellBid
-	(*BuyBid)(nil),                // 6: pb.BuyBid
-	(*Company)(nil),               // 7: pb.Company
+	(*AuctionCommitment)(nil),            // 0: pb.AuctionCommitment
+	(*AuctionType)(nil),                  // 1: pb.AuctionType
+	(*AuctionData)(nil),                  // 2: pb.AuctionData
+	(*SerializedAuctionData)(nil),        // 3: pb.SerializedAuctionData
+	(*OffChainIndepAuctionResult)(nil),   // 4: pb.OffChainIndepAuctionResult
+	(*OffChainCoupledAuctionResult)(nil), // 5: pb.OffChainCoupledAuctionResult
+	nil,                                  // 6: pb.AuctionData.CompaniesPvtEntry
+	(*SellBid)(nil),                      // 7: pb.SellBid
+	(*BuyBid)(nil),                       // 8: pb.BuyBid
+	(*MatchedBid)(nil),                   // 9: pb.MatchedBid
+	(*Company)(nil),                      // 10: pb.Company
 }
 var file_auction_proto_depIdxs = []int32{
-	5, // 0: pb.AuctionData.sellBids:type_name -> pb.SellBid
-	6, // 1: pb.AuctionData.buyBids:type_name -> pb.BuyBid
-	4, // 2: pb.AuctionData.companiesPvt:type_name -> pb.AuctionData.CompaniesPvtEntry
-	7, // 3: pb.AuctionData.CompaniesPvtEntry.value:type_name -> pb.Company
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	7,  // 0: pb.AuctionData.sellBids:type_name -> pb.SellBid
+	8,  // 1: pb.AuctionData.buyBids:type_name -> pb.BuyBid
+	6,  // 2: pb.AuctionData.companiesPvt:type_name -> pb.AuctionData.CompaniesPvtEntry
+	9,  // 3: pb.OffChainIndepAuctionResult.matchedBids:type_name -> pb.MatchedBid
+	7,  // 4: pb.OffChainIndepAuctionResult.adjustedSellBids:type_name -> pb.SellBid
+	8,  // 5: pb.OffChainIndepAuctionResult.adjustedBuyBids:type_name -> pb.BuyBid
+	9,  // 6: pb.OffChainCoupledAuctionResult.matchedBidsPublic:type_name -> pb.MatchedBid
+	9,  // 7: pb.OffChainCoupledAuctionResult.matchedBidsPrivate:type_name -> pb.MatchedBid
+	7,  // 8: pb.OffChainCoupledAuctionResult.adjustedSellBidsPublic:type_name -> pb.SellBid
+	7,  // 9: pb.OffChainCoupledAuctionResult.adjustedSellBidsPrivate:type_name -> pb.SellBid
+	8,  // 10: pb.OffChainCoupledAuctionResult.adjustedBuyBidsPublic:type_name -> pb.BuyBid
+	8,  // 11: pb.OffChainCoupledAuctionResult.adjustedBuyBidsPrivate:type_name -> pb.BuyBid
+	10, // 12: pb.AuctionData.CompaniesPvtEntry.value:type_name -> pb.Company
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_auction_proto_init() }
@@ -340,7 +532,7 @@ func file_auction_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auction_proto_rawDesc), len(file_auction_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

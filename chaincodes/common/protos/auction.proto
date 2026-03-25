@@ -34,3 +34,24 @@ message SerializedAuctionData {
   bytes auctionDataBytes = 1;
   bytes sum = 2;
 }
+
+// OffChainIndepAuctionResult represents the result of an independent off-chain auction
+// with matched bids and adjusted bids (public and private components if applicable).
+message OffChainIndepAuctionResult {
+  uint64 auctionID = 1;
+  repeated MatchedBid matchedBids = 2;
+  repeated SellBid adjustedSellBids = 3;
+  repeated BuyBid adjustedBuyBids = 4;
+}
+
+// OffChainCoupledAuctionResult represents the result of a coupled off-chain auction
+// with separate matched bids and adjusted bids for public and private components.
+message OffChainCoupledAuctionResult {
+  repeated MatchedBid matchedBidsPublic = 1;
+  repeated MatchedBid matchedBidsPrivate = 2;
+  repeated SellBid adjustedSellBidsPublic = 3;
+  repeated SellBid adjustedSellBidsPrivate = 4;
+  repeated BuyBid adjustedBuyBidsPublic = 5;
+  repeated BuyBid adjustedBuyBidsPrivate = 6;
+  uint64 auctionID = 7; // to avoid marshalling conflicts with OffChainIndepAuctionResult
+}

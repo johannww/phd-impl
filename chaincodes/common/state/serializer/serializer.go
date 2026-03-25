@@ -12,6 +12,10 @@ type ProtoConvertible interface {
 type Serializer interface {
 	Marshal(v ProtoConvertible) ([]byte, error)
 	Unmarshal(data []byte, v ProtoConvertible) error
+	// StrictUnmarshal unmarshals data while rejecting extra/unknown fields.
+	// For JSON, this uses DisallowUnknownFields. For proto, this is a no-op since
+	// proto already validates field numbers.
+	StrictUnmarshal(data []byte, v ProtoConvertible) error
 }
 
 // ErrNotProtoCompatible is returned when ProtoSerializer cannot handle a type

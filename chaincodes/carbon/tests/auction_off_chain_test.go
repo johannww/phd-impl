@@ -1,7 +1,6 @@
 package carbon_tests
 
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -18,6 +17,9 @@ import (
 )
 
 func TestOffChainIndependentAuction(t *testing.T) {
+	// Ensure JSON serializer is set for this test
+	state.SetSerializer(serializer.NewJSONSerializer())
+
 	nOwners := 10
 	nChunks := 3
 	nCompanies := 5
@@ -52,9 +54,9 @@ func TestOffChainIndependentAuction(t *testing.T) {
 	verifyBidsQuantityConsistency(t, totalBuyBidQuantity, auctionResult)
 
 	stub.MockTransactionStart("process-auction-result-tx")
-	resultPubBytes, err := json.Marshal(auctionResultPub)
+	resultPubBytes, err := state.GetSerializer().Marshal(auctionResultPub)
 	require.NoError(t, err, "Failed to marshal public auction result")
-	resultPvtBytes, err := json.Marshal(auctionResultPvt)
+	resultPvtBytes, err := state.GetSerializer().Marshal(auctionResultPvt)
 	require.NoError(t, err, "Failed to marshal private auction result")
 	err = auction.ProcessOffChainAuctionResult(stub, resultPubBytes, resultPvtBytes)
 	require.NoError(t, err, "Failed to process off-chain auction result")
@@ -62,6 +64,9 @@ func TestOffChainIndependentAuction(t *testing.T) {
 }
 
 func TestOffChainIndependentAuctionWithRandomBids(t *testing.T) {
+	// Ensure JSON serializer is set for this test
+	state.SetSerializer(serializer.NewJSONSerializer())
+
 	nOwners := 10
 	nChunks := 3
 	nCompanies := 5
@@ -100,10 +105,17 @@ func TestOffChainCoupledAuctionWithProtoSerializer(t *testing.T) {
 	originalSerializer := state.GetSerializer()
 	defer state.SetSerializer(originalSerializer)
 	state.SetSerializer(serializer.NewProtoSerializer())
-	TestOffChainCoupledAuction(t)
+	testOffChainCoupledAuction(t)
 }
 
-func TestOffChainCoupledAuction(t *testing.T) {
+func TestOffChainCoupledAuctionJson(t *testing.T) {
+	originalSerializer := state.GetSerializer()
+	defer state.SetSerializer(originalSerializer)
+	state.SetSerializer(serializer.NewJSONSerializer())
+	testOffChainCoupledAuction(t)
+}
+
+func testOffChainCoupledAuction(t *testing.T) {
 	nOwners := 10
 	nChunks := 3
 	nCompanies := 5
@@ -157,9 +169,9 @@ func TestOffChainCoupledAuction(t *testing.T) {
 	verifyAdjustedBidsConsistency(t, mergedMatchedBids, adjustedSellBids, adjustedBuyBids)
 
 	stub.MockTransactionStart("process-auction-result-tx")
-	resultPubBytes, err := json.Marshal(auctionResultPub)
+	resultPubBytes, err := state.GetSerializer().Marshal(auctionResultPub)
 	require.NoError(t, err, "Failed to marshal public auction result")
-	resultPvtBytes, err := json.Marshal(auctionResultPvt)
+	resultPvtBytes, err := state.GetSerializer().Marshal(auctionResultPvt)
 	require.NoError(t, err, "Failed to marshal private auction result")
 	err = auction.ProcessOffChainAuctionResult(stub, resultPubBytes, resultPvtBytes)
 	require.NoError(t, err, "Failed to process off-chain auction result")

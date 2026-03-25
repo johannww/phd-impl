@@ -1,33 +1,34 @@
 package auction
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
 )
 
-// TODOHP: implement off chain auction result processing
+// ProcessOffChainAuctionResult processes off-chain auction results using strict unmarshaling
+// to distinguish between independent and coupled result types.
 func ProcessOffChainAuctionResult(stub shim.ChaincodeStubInterface, resultBytesPub, resultBytesPvt []byte) error {
 
 	indepResultPub, indepResultPvt := &OffChainIndepAuctionResult{}, &OffChainIndepAuctionResult{}
 
-	// Ensure that OffChainCoupledAuctionResult cannot be decoded into OffChainIndepAuctionResult by disallowing unknown fields in the JSON
-	customDecoder := json.NewDecoder(bytes.NewReader(resultBytesPub))
-	customDecoder.DisallowUnknownFields()
+	errPubIndep := state.UnmarshalStateAsStrict(resultBytesPub, indepResultPub)
+	errPvtIndep := state.UnmarshalStateAsStrict(resultBytesPvt, indepResultPvt)
 
-	err1 := customDecoder.Decode(indepResultPub)
-	err2 := json.Unmarshal(resultBytesPvt, indepResultPvt)
-	if err1 == nil && err2 == nil {
+	if errPubIndep == nil && errPvtIndep == nil && len(indepResultPub.MatchedBids) > 0 {
 		return processIndependentAuctionResult(stub, indepResultPub, indepResultPvt)
 	}
 
 	coupledResultPub, coupledResultPvt := &OffChainCoupledAuctionResult{}, &OffChainCoupledAuctionResult{}
-	err1 = json.Unmarshal(resultBytesPub, coupledResultPub)
-	err2 = json.Unmarshal(resultBytesPvt, coupledResultPvt)
-	if err1 != nil || err2 != nil {
-		return fmt.Errorf("could not unmarshal auction result into either independent or coupled result: %v, %v", err1, err2)
+	errPubCoupled := state.UnmarshalStateAsStrict(resultBytesPub, coupledResultPub)
+	errPvtCoupled := state.UnmarshalStateAsStrict(resultBytesPvt, coupledResultPvt)
+
+	if errPubCoupled == nil && errPvtCoupled == nil && len(coupledResultPub.MatchedBidsPublic) > 0 {
+		return processCoupledAuctionResult(stub, coupledResultPub, coupledResultPvt)
 	}
-	return processCoupledAuctionResult(stub, coupledResultPub, coupledResultPvt)
+
+	return fmt.Errorf("could not unmarshal auction result into either independent "+
+		"or coupled result: indep errors (%v, %v), coupled errors (%v, %v)",
+		errPubIndep, errPvtIndep, errPubCoupled, errPvtCoupled)
 }
