@@ -5,6 +5,7 @@ use (
 	./chaincodes/common
 	./chaincodes/interop
 	./data_api
+	./experiments/exp-app
 	./tee_auction/go
 )
 

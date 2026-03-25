@@ -11,6 +11,7 @@ COPY chaincodes/common/ ./chaincodes/common/
 COPY chaincodes/interop/ ./chaincodes/interop/
 COPY data_api/ ./data_api/
 COPY tee_auction/go/ ./tee_auction/go/
+COPY experiments/exp-app ./experiments/exp-app
 COPY vendor/ ./vendor/
 
 RUN go build -o /usr/local/bin/tee_auction ./tee_auction/go/cmd/auction
