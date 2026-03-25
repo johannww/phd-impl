@@ -10,18 +10,13 @@ import (
 
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/metrics"
+	"github.com/johannww/phd-impl/experiments/exp-app/pkg/network"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/workload"
 )
 
 func main() {
 	// Parse flags
-	peerAddr := flag.String("peer", "localhost:7051", "Peer address (host:port)")
-	tlsCertPath := flag.String("tls-cert", "", "Path to peer TLS certificate")
-	mspID := flag.String("msp-id", "Org1MSP", "MSP ID")
-	userCertPath := flag.String("user-cert", "", "Path to user certificate")
-	userKeyPath := flag.String("user-key", "", "Path to user private key")
-	channelName := flag.String("channel", "carbon", "Channel name")
-	chaincodeName := flag.String("chaincode", "carbon", "Chaincode name")
+	profilePath := flag.String("profile", "", "Path to network profile JSON (required)")
 	duration := flag.Duration("duration", 5*time.Minute, "Test duration")
 	concurrency := flag.Int("concurrency", 5, "Number of concurrent transactions")
 	outputJSON := flag.String("output-json", "results.json", "Output JSON file")
@@ -31,21 +26,67 @@ func main() {
 	flag.Parse()
 
 	// Validate required flags
-	if *tlsCertPath == "" || *userCertPath == "" || *userKeyPath == "" {
-		fmt.Fprintf(os.Stderr, "Error: --tls-cert, --user-cert, and --user-key are required\n")
+	if *profilePath == "" {
+		fmt.Fprintf(os.Stderr, "Error: --profile is required\n")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
+	// Load network profile
+	log.Printf("Loading network profile from %s...", *profilePath)
+	profile, err := network.LoadJSON(*profilePath)
+	if err != nil {
+		log.Fatalf("Failed to load network profile: %v", err)
+	}
+
+	// Get first organization from profile
+	var orgName string
+	var orgConfig network.PeerConfig
+	for name, config := range profile.Peers {
+		orgName = name
+		orgConfig = config
+		break
+	}
+
+	if orgName == "" {
+		log.Fatal("No organizations found in network profile")
+	}
+
+	log.Printf("Using organization: %s (MSP: %s)", orgName, orgConfig.MspID)
+
+	// Get first peer from organization
+	if len(orgConfig.Peers) == 0 {
+		log.Fatal("No peers found in organization")
+	}
+	peerNode := orgConfig.Peers[0]
+	peerAddr := peerNode.Address
+
+	log.Printf("Using peer: %s at %s", peerNode.Name, peerAddr)
+
+	// Get certificate paths
+	certs := orgConfig.Certificates
+	tlsCertPath := certs.TLSCACert
+	userCertPath := certs.User1Cert
+	userKeyPath := certs.User1Key
+	channelName := profile.Network.ChannelName
+	chaincodeName := profile.Chaincode.Name
+
+	// Validate certificates exist
+	for _, path := range []string{tlsCertPath, userCertPath, userKeyPath} {
+		if _, err := os.Stat(path); err != nil {
+			log.Fatalf("Certificate file not found: %s", path)
+		}
+	}
+
 	// Create gateway client
 	gatewayCfg := &gateway.GatewayConfig{
-		PeerAddr:      *peerAddr,
-		TLSCertPath:   *tlsCertPath,
-		MspID:         *mspID,
-		UserCertPath:  *userCertPath,
-		UserKeyPath:   *userKeyPath,
-		ChannelName:   *channelName,
-		ChaincodeName: *chaincodeName,
+		PeerAddr:      peerAddr,
+		TLSCertPath:   tlsCertPath,
+		MspID:         orgConfig.MspID,
+		UserCertPath:  userCertPath,
+		UserKeyPath:   userKeyPath,
+		ChannelName:   channelName,
+		ChaincodeName: chaincodeName,
 	}
 
 	log.Println("Connecting to gateway...")
