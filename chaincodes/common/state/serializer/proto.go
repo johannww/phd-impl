@@ -40,7 +40,7 @@ func (p *ProtoSerializer) Unmarshal(data []byte, v ProtoConvertible) error {
 	return v.FromProto(msg)
 }
 
-// StrictUnmarshal is identical to Unmarshal for proto format since proto validates field numbers
+// StrictUnmarshal is identical to Unmarshal for proto (field numbers are validated)
 func (p *ProtoSerializer) StrictUnmarshal(data []byte, v ProtoConvertible) error {
 	return p.Unmarshal(data, v)
 }

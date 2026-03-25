@@ -64,34 +64,26 @@ func GetSerializer() serializer.Serializer {
 	return currentSerializer
 }
 
-// UnmarshalStateAs unmarshals state bytes into an arbitrary target that implements
-// ProtoConvertible using the current package-level serializer. This is useful for
-// generic code that needs to unmarshal into a type parameter without compile-time
-// constraint validation.
-//
-// For types that do not implement ProtoConvertible (e.g., []string used in secondary
-// indexes), this function falls back to JSON unmarshaling. This ensures compatibility
-// with existing code that stores composite keys as JSON strings.
-//
-// Returns an error if:
-//   - The data is invalid for the target type
-//   - Unmarshaling fails in the serializer
-//
-// Example:
-//
-//	var bid Bid
-//	err := state.UnmarshalStateAs(stateBytes, &bid)
+// UnmarshalStateAs unmarshals state bytes into a ProtoConvertible target using the current serializer.
+// Falls back to JSON unmarshaling for types that don't implement ProtoConvertible (e.g., []string).
 func UnmarshalStateAs(data []byte, target any) error {
 	pc, ok := target.(ProtoConvertible)
 	if !ok {
-		// Fallback to JSON unmarshaling for types that don't implement ProtoConvertible
-		// This is useful for secondary index operations that store []string keys
 		return unmarshalJSON(data, target)
 	}
 	return GetSerializer().Unmarshal(data, pc)
 }
 
-// unmarshalJSON unmarshals JSON bytes into target. Used as fallback for non-ProtoConvertible types.
+// UnmarshalStateAsStrict unmarshals state bytes using strict validation.
+// For JSON: rejects unknown fields. For proto: identical to Unmarshal (validates field numbers).
+func UnmarshalStateAsStrict(data []byte, target any) error {
+	pc, ok := target.(ProtoConvertible)
+	if !ok {
+		return unmarshalJSON(data, target)
+	}
+	return GetSerializer().StrictUnmarshal(data, pc)
+}
+
 func unmarshalJSON(data []byte, target any) error {
 	var err error
 	switch t := target.(type) {
@@ -105,18 +97,7 @@ func unmarshalJSON(data []byte, target any) error {
 	return err
 }
 
-// MarshalStateAs marshals an arbitrary value that implements ProtoConvertible to bytes
-// using the current package-level serializer. This is useful for generic code that
-// needs to marshal from a type parameter without compile-time constraint validation.
-//
-// Returns an error if:
-//   - The value does not implement ProtoConvertible
-//   - Marshaling fails in the serializer
-//
-// Example:
-//
-//	bid := &Bid{BuyerID: "buyer1", ...}
-//	stateBytes, err := state.MarshalStateAs(bid)
+// MarshalStateAs marshals a ProtoConvertible value using the current serializer.
 func MarshalStateAs(value any) ([]byte, error) {
 	pc, ok := value.(ProtoConvertible)
 	if !ok {
