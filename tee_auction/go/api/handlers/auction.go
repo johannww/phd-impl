@@ -2,15 +2,20 @@ package handlers
 
 import (
 	"crypto/ed25519"
-	"encoding/json"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	cc_auction "github.com/johannww/phd-impl/chaincodes/carbon/auction"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"github.com/johannww/phd-impl/chaincodes/common/state/serializer"
 	"github.com/johannww/phd-impl/tee_auction/go/api/metrics"
 	"github.com/johannww/phd-impl/tee_auction/go/auction"
 	"github.com/johannww/phd-impl/tee_auction/go/report"
 )
+
+func init() {
+	state.SetSerializer(&serializer.ProtoSerializer{})
+}
 
 // TODOHP: review metrics
 func Auction(c *gin.Context, privateKey ed25519.PrivateKey, certDer []byte) {
@@ -23,7 +28,7 @@ func Auction(c *gin.Context, privateKey ed25519.PrivateKey, certDer []byte) {
 	}
 
 	var serializedAD cc_auction.SerializedAuctionData
-	err = json.Unmarshal(dataBytes, &serializedAD)
+	err = state.UnmarshalStateAs(dataBytes, &serializedAD)
 	if err != nil {
 		metrics.ObserveAuctionRequest("bad_request")
 		c.JSON(400, gin.H{"error": "Invalid auction data"})
