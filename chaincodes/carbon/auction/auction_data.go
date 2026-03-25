@@ -21,6 +21,7 @@ type AuctionData struct {
 	AuctionID      uint64                        `json:"auctionID"`
 	SellBids       []*bids.SellBid               `json:"sellBids"`
 	BuyBids        []*bids.BuyBid                `json:"buyBids"`
+	BidsMerkleRoot []byte                        `json:"merkleRoot"` // not used yet
 	ActivePolicies []policies.Name               `json:"activePolicies"`
 	CompaniesPvt   map[string]*companies.Company `json:"buyingCompanies"`
 	Coupled        bool                          `json:"coupled"`
