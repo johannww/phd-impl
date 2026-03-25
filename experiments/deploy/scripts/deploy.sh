@@ -71,6 +71,8 @@ helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
 . "${SCRIPT_DIR}/fetch_organizations.bash"
 . "${SCRIPT_DIR}/fetch_collections_config.bash"
 
+. "${SCRIPT_DIR}/generate_network_profile.bash"
+
 echo "Deploying confidential container (tee_auction): docker, policy, deploy..."
 make -C "${TEE_AUCTION_DIR}" docker policy deploy
 

@@ -10,6 +10,7 @@ build:
 build-all: build
 	@echo "Building generate-profile..."
 	go build -o bin/generate-profile ./cmd/generate-profile
+	go build -o bin/exp-app ./cmd
 	@echo "Built: bin/generate-profile"
 
 # Clean build artifacts
