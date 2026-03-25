@@ -203,8 +203,6 @@ func (s *SellBid) FromProto(m proto.Message) error {
 		pp.Price = pbSell.PrivatePrice.Price
 		pp.BidID = pbSell.PrivatePrice.BidID
 		s.PrivatePrice = pp
-	} else {
-		s.PrivatePrice = nil
 	}
 
 	if pbSell.Credit != nil {
@@ -213,6 +211,7 @@ func (s *SellBid) FromProto(m proto.Message) error {
 		if err != nil {
 			return fmt.Errorf("could not map pb.MintCredit to credits.MintCredit: %v", err)
 		}
+		s.Credit = mc
 	}
 
 	return nil
