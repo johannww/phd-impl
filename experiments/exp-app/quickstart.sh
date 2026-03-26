@@ -53,6 +53,8 @@ echo ""
 
 ${SCRIPT_DIR}/bin/exp-app \
     --profile="${PROFILE_FILE}" \
+    --tps=50 \
+    --burst=10 \
     --duration="${DURATION}" \
     --concurrency=5 \
     --output-json=results.json \

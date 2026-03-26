@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/time/rate"
+
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/metrics"
 )
@@ -17,6 +19,7 @@ type Executor struct {
 	client    *gateway.ClientWrapper
 	collector metrics.MetricsCollector
 	config    *ExecutorConfig
+	limiter   *rate.Limiter
 }
 
 // ExecutorConfig holds executor configuration
@@ -25,6 +28,8 @@ type ExecutorConfig struct {
 	TotalTransactions int           // Total transactions to execute
 	Duration          time.Duration // If set, ignore TotalTransactions
 	MetricsInterval   time.Duration // How often to print metrics
+	TPS               float64       // Target throughput (transactions per second); 0 = unlimited
+	BurstSize         int           // Token bucket burst size for rate limiting
 }
 
 // DefaultExecutorConfig returns default configuration
@@ -41,10 +46,22 @@ func NewExecutor(client *gateway.ClientWrapper, cfg *ExecutorConfig) *Executor {
 	if cfg == nil {
 		cfg = DefaultExecutorConfig()
 	}
+
+	// Create rate limiter if TPS is configured
+	var limiter *rate.Limiter
+	if cfg.TPS > 0 {
+		burst := cfg.BurstSize
+		if burst <= 0 {
+			burst = 1
+		}
+		limiter = rate.NewLimiter(rate.Limit(cfg.TPS), burst)
+	}
+
 	return &Executor{
 		client:    client,
 		collector: metrics.NewCollector(),
 		config:    cfg,
+		limiter:   limiter,
 	}
 }
 
@@ -86,6 +103,13 @@ func (e *Executor) Execute(ctx context.Context, txFunc TransactionFunc, scenario
 			}
 			if e.config.Duration > 0 && time.Now().After(endTime) {
 				break
+			}
+
+			// Apply rate limiting if configured
+			if e.limiter != nil {
+				if err := e.limiter.Wait(ctx); err != nil {
+					return // context cancelled
+				}
 			}
 
 			select {

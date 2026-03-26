@@ -19,6 +19,8 @@ func main() {
 	profilePath := flag.String("profile", "", "Path to network profile JSON (required)")
 	duration := flag.Duration("duration", 5*time.Minute, "Test duration")
 	concurrency := flag.Int("concurrency", 5, "Number of concurrent transactions")
+	tps := flag.Float64("tps", 0, "Target throughput in transactions per second (0 = unlimited)")
+	burst := flag.Int("burst", 1, "Token bucket burst size for rate limiting")
 	outputJSON := flag.String("output-json", "results.json", "Output JSON file")
 	outputCSV := flag.String("output-csv", "results.csv", "Output CSV file")
 	metricsInterval := flag.Duration("metrics-interval", 5*time.Second, "Metrics print interval")
@@ -103,6 +105,8 @@ func main() {
 		ConcurrencyLevel: *concurrency,
 		Duration:         *duration,
 		MetricsInterval:  *metricsInterval,
+		TPS:              *tps,
+		BurstSize:        *burst,
 	}
 
 	executor := workload.NewExecutor(client, execCfg)
