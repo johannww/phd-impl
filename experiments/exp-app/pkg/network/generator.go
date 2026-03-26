@@ -28,8 +28,8 @@ func NewGenerator(deployDir, minikubeIP string) *Generator {
 	}
 }
 
-// ValuesYAML represents the Helm values structure
-type ValuesYAML struct {
+// HelmValuesYAML represents the Helm values structure
+type HelmValuesYAML struct {
 	Network struct {
 		ChannelName   string `yaml:"channelName"`
 		Organizations []struct {
@@ -89,13 +89,13 @@ func (g *Generator) Generate() (*NetworkProfile, error) {
 }
 
 // loadValues loads and parses the Helm values.yaml
-func (g *Generator) loadValues() (*ValuesYAML, error) {
+func (g *Generator) loadValues() (*HelmValuesYAML, error) {
 	data, err := os.ReadFile(g.valuesFile)
 	if err != nil {
 		return nil, fmt.Errorf("read values.yaml: %w", err)
 	}
 
-	var values ValuesYAML
+	var values HelmValuesYAML
 	if err := yaml.Unmarshal(data, &values); err != nil {
 		return nil, fmt.Errorf("parse values.yaml: %w", err)
 	}
