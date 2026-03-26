@@ -14,7 +14,7 @@ import (
 // BiddingScenario creates buy and sell bids for auctions
 type BiddingScenario struct {
 	executor  *workload.Executor
-	collector *metrics.Collector
+	collector metrics.MetricsCollector
 }
 
 // NewBiddingScenario creates a new bidding scenario

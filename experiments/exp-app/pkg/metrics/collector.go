@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+// MetricsCollector is the interface for metrics collection
+type MetricsCollector interface {
+	Record(m *TransactionMetric)
+	GetSnapshot() *Snapshot
+	GetScenarioStats() map[string]*ScenarioStats
+	GetAllMetrics() []*TransactionMetric
+}
+
 // TransactionMetric holds a single transaction's performance data
 type TransactionMetric struct {
 	ID        string        `json:"id"`
@@ -54,12 +62,16 @@ type Collector struct {
 	lastSnapshot time.Time
 }
 
-// NewCollector creates a new metrics collector
-func NewCollector() *Collector {
-	return &Collector{
-		metrics:   make([]*TransactionMetric, 0, 10000),
-		startTime: time.Now(),
-	}
+// // NewCollector creates a new metrics collector
+// func NewCollector() *Collector {
+// 	return &Collector{
+// 		metrics:   make([]*TransactionMetric, 0, 10000),
+// 		startTime: time.Now(),
+// 	}
+// }
+
+func NewCollector() *BucketedCollector {
+	return NewBucketedCollector()
 }
 
 // Record adds a transaction metric

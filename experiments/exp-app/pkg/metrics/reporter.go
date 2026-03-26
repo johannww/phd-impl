@@ -9,11 +9,11 @@ import (
 
 // Reporter handles output of metrics in various formats
 type Reporter struct {
-	collector *Collector
+	collector MetricsCollector
 }
 
 // NewReporter creates a new reporter
-func NewReporter(c *Collector) *Reporter {
+func NewReporter(c MetricsCollector) *Reporter {
 	return &Reporter{collector: c}
 }
 

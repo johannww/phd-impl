@@ -14,7 +14,7 @@ import (
 // CoupledAuctionScenario manages coupled auction operations
 type CoupledAuctionScenario struct {
 	executor  *workload.Executor
-	collector *metrics.Collector
+	collector metrics.MetricsCollector
 }
 
 // NewCoupledAuctionScenario creates a new coupled auction scenario

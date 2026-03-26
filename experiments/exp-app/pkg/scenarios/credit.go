@@ -14,7 +14,7 @@ import (
 // CreditScenario manages credit lifecycle operations
 type CreditScenario struct {
 	executor  *workload.Executor
-	collector *metrics.Collector
+	collector metrics.MetricsCollector
 }
 
 // NewCreditScenario creates a new credit scenario

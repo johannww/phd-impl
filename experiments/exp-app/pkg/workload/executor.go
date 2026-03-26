@@ -15,7 +15,7 @@ type TransactionFunc func(ctx context.Context, client *gateway.ClientWrapper) (s
 // Executor orchestrates transaction execution with metrics collection
 type Executor struct {
 	client    *gateway.ClientWrapper
-	collector *metrics.Collector
+	collector metrics.MetricsCollector
 	config    *ExecutorConfig
 }
 
@@ -166,7 +166,7 @@ func (e *Executor) printMetrics(expectedTxs int) {
 }
 
 // GetCollector returns the metrics collector
-func (e *Executor) GetCollector() *metrics.Collector {
+func (e *Executor) GetCollector() metrics.MetricsCollector {
 	return e.collector
 }
 
