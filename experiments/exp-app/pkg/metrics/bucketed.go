@@ -16,12 +16,17 @@ type LatencyBucket struct {
 	mu        sync.Mutex
 }
 
+type TransactionMetricBucket struct {
+	metrics []*TransactionMetric
+	mu      sync.Mutex
+}
+
 // ScenarioBucket tracks metrics for a scenario within a time bucket
 type ScenarioBucket struct {
 	name         string
 	successCount int64
 	failCount    int64
-	latencies    *LatencyBucket
+	latencies    *TransactionMetricBucket
 }
 
 // BucketedCollector uses time-bucketed metrics to avoid hot-path locking
@@ -70,17 +75,19 @@ func (c *BucketedCollector) Record(m *TransactionMetric) {
 	bucket, ok := scenarioBuckets[bucketIdx]
 	if !ok {
 		bucket = &ScenarioBucket{
-			name:      m.Scenario,
-			latencies: &LatencyBucket{latencies: make([]float64, 0, 256)},
+			name: m.Scenario,
+			// latencies: &LatencyBucket{latencies: make([]float64, 0, 256)},
+			latencies: &TransactionMetricBucket{metrics: make([]*TransactionMetric, 0, 256)},
 		}
 		scenarioBuckets[bucketIdx] = bucket
 	}
 	c.bucketsLock.Unlock()
 
 	// Record metric in bucket (short lock, sharded by scenario+bucket)
-	latencyMS := float64(m.Latency.Milliseconds())
+	// latencyMS := float64(m.Latency.Milliseconds())
 	bucket.latencies.mu.Lock()
-	bucket.latencies.latencies = append(bucket.latencies.latencies, latencyMS)
+	// bucket.latencies.latencies = append(bucket.latencies.latencies, latencyMS)
+	bucket.latencies.metrics = append(bucket.latencies.metrics, m)
 	bucket.latencies.mu.Unlock()
 
 	// Atomic increments (no lock needed)
@@ -114,7 +121,9 @@ func (c *BucketedCollector) GetSnapshot() *Snapshot {
 
 			// Collect latencies from this bucket
 			bucket.latencies.mu.Lock()
-			for _, lat := range bucket.latencies.latencies {
+			// for _, lat := range bucket.latencies.latencies {
+			for _, m := range bucket.latencies.metrics {
+				lat := float64(m.Latency.Milliseconds())
 				allLatencies = append(allLatencies, lat)
 				totalLatency += lat
 			}
@@ -175,7 +184,9 @@ func (c *BucketedCollector) GetScenarioStats() map[string]*ScenarioStats {
 
 			// Collect latencies
 			bucket.latencies.mu.Lock()
-			for _, lat := range bucket.latencies.latencies {
+			// for _, lat := range bucket.latencies.latencies {
+			for _, m := range bucket.latencies.metrics {
+				lat := float64(m.Latency.Milliseconds())
 				allLatencies = append(allLatencies, lat)
 				totalLatency += lat
 				if lat < stats.LatencyMinMS {
@@ -208,14 +219,17 @@ func (c *BucketedCollector) GetScenarioStats() map[string]*ScenarioStats {
 
 // GetAllMetrics returns all collected metrics (expensive, for export)
 func (c *BucketedCollector) GetAllMetrics() []*TransactionMetric {
-	// Note: bucketed design doesn't store individual TransactionMetric pointers
-	// Return aggregated view as a reconstructed list (for compatibility)
 	c.bucketsLock.RLock()
 	defer c.bucketsLock.RUnlock()
 
 	result := make([]*TransactionMetric, 0)
-	// This is a compatibility shim; ideally callers would use GetSnapshot/GetScenarioStats
-	// For now, return empty (individual metrics are not preserved)
+	for _, scenarioBuckets := range c.buckets {
+		for _, bucket := range scenarioBuckets {
+			bucket.latencies.mu.Lock()
+			result = append(result, bucket.latencies.metrics...)
+			bucket.latencies.mu.Unlock()
+		}
+	}
 	return result
 }
 
