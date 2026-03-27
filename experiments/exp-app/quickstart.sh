@@ -57,6 +57,7 @@ ${SCRIPT_DIR}/bin/exp-app \
     --burst=10 \
     --duration="${DURATION}" \
     --concurrency=5 \
+    --metrics-interval=10m \
     --output-json=results.json \
     --output-csv=results.csv
 
