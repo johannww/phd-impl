@@ -15,6 +15,10 @@ import (
 )
 
 func main() {
+	// f, _ := os.Create("cpu.prof")
+	// pprof.StartCPUProfile(f)
+	// defer pprof.StopCPUProfile()
+
 	// Parse flags
 	profilePath := flag.String("profile", "", "Path to network profile JSON (required)")
 	duration := flag.Duration("duration", 5*time.Minute, "Test duration")
