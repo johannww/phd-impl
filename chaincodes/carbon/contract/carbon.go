@@ -444,3 +444,14 @@ func (c *CarbonContract) RefreshRegistryDataForProperty(
 	})
 	return summary, err
 }
+
+// GetAvailableCreditsByOwner returns all credits owned by the specified owner.
+func (c *CarbonContract) GetAvailableCreditsByOwner(ctx contractapi.TransactionContextInterface, ownerID string) ([]*credits.MintCredit, error) {
+	var mcs []*credits.MintCredit
+	err := c.withMetricsErr("GetCreditsByOwner", func() error {
+		var err error
+		mcs, err = credits.GetAvailableCreditsByOwner(ctx.GetStub(), ownerID)
+		return err
+	})
+	return mcs, err
+}

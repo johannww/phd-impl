@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	MINT_CREDIT_PREFIX = "mintCredit"
+	MINT_CREDIT_PREFIX        = "mintCredit"
+	ZEROED_MINT_CREDIT_PREFIX = "zeroedMintCredit"
 )
 
 // MintCredit represents a carbon credit that has been minted and
@@ -29,9 +30,14 @@ type MintCredit struct {
 var _ state.WorldStateManager = (*MintCredit)(nil)
 
 func (mc *MintCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
+	// Try to get from active credits first
 	err := state.GetStateWithCompositeKey(stub, MINT_CREDIT_PREFIX, keyAttributes, mc)
 	if err != nil {
-		return err
+		// Try to get from zeroed credits
+		err = state.GetStateWithCompositeKey(stub, ZEROED_MINT_CREDIT_PREFIX, keyAttributes, mc)
+		if err != nil {
+			return err
+		}
 	}
 
 	mc.Chunk = &properties.PropertyChunk{}
@@ -44,8 +50,23 @@ func (mc *MintCredit) FromWorldState(stub shim.ChaincodeStubInterface, keyAttrib
 func (mc *MintCredit) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	copyMc := *mc      // create a copy to avoid modifying the original object
 	copyMc.Chunk = nil // avoid storing the chunk in the world state, as it is already stored in the property chunk
-	if err := state.PutStateWithCompositeKey(stub, MINT_CREDIT_PREFIX, copyMc.GetID(), &copyMc); err != nil {
-		return fmt.Errorf("could not put mint credit in state: %v", err)
+
+	id := copyMc.GetID()
+
+	if mc.Quantity > 0 {
+		// Save to active credits
+		if err := state.PutStateWithCompositeKey(stub, MINT_CREDIT_PREFIX, id, &copyMc); err != nil {
+			return fmt.Errorf("could not put mint credit in state: %v", err)
+		}
+		// Ensure it's not in zeroed credits
+		_ = state.DeleteStateWithCompositeKey(stub, ZEROED_MINT_CREDIT_PREFIX, id)
+	} else {
+		// Save to zeroed credits
+		if err := state.PutStateWithCompositeKey(stub, ZEROED_MINT_CREDIT_PREFIX, id, &copyMc); err != nil {
+			return fmt.Errorf("could not put zeroed mint credit in state: %v", err)
+		}
+		// Remove from active credits
+		_ = state.DeleteStateWithCompositeKey(stub, MINT_CREDIT_PREFIX, id)
 	}
 
 	return nil
@@ -200,4 +221,30 @@ func MintEstimatedCreditsForProperty(
 	}
 
 	return mintedCredits, nil
+}
+
+// GetAvailableCreditsByOwner returns all MintCredits owned by the specified owner.
+func GetAvailableCreditsByOwner(stub shim.ChaincodeStubInterface, ownerID string) ([]*MintCredit, error) {
+	resultsIterator, err := stub.GetStateByPartialCompositeKey(MINT_CREDIT_PREFIX, []string{ownerID})
+	if err != nil {
+		return nil, fmt.Errorf("could not get credits by owner: %v", err)
+	}
+	defer resultsIterator.Close()
+
+	var credits []*MintCredit
+	for resultsIterator.HasNext() {
+		response, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		mc := &MintCredit{}
+		err = state.UnmarshalStateAs(response.Value, mc)
+		if err != nil {
+			return nil, fmt.Errorf("could not unmarshal mint credit: %v", err)
+		}
+		credits = append(credits, mc)
+	}
+
+	return credits, nil
 }
