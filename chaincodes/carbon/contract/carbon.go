@@ -9,6 +9,7 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 	"github.com/johannww/phd-impl/chaincodes/carbon/auction"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
+	"github.com/johannww/phd-impl/chaincodes/carbon/companies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data/registry"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
@@ -388,6 +389,12 @@ func (c *CarbonContract) DeleteActivePolicy(ctx contractapi.TransactionContextIn
 func (c *CarbonContract) RegisterProperty(ctx contractapi.TransactionContextInterface, property properties.Property) error {
 	return c.withMetricsErr("RegisterProperty", func() error {
 		return properties.RegisterProperty(ctx.GetStub(), &property)
+	})
+}
+
+func (c *CarbonContract) RegisterCompany(ctx contractapi.TransactionContextInterface, company companies.Company) error {
+	return c.withMetricsErr("RegisterCompany", func() error {
+		return companies.RegisterCompany(ctx.GetStub(), &company)
 	})
 }
 

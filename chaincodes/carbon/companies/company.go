@@ -38,7 +38,7 @@ func (c *Company) ToWorldState(stub shim.ChaincodeStubInterface) error {
 	return state.PutPvtDataWithCompositeKey(stub, COMPANY_PREFIX, firstID, state.COMPANIES_PVT_DATA_COLLECTION, c)
 }
 
-func CompanyToWorldState(stub shim.ChaincodeStubInterface, company *Company) error {
+func RegisterCompany(stub shim.ChaincodeStubInterface, company *Company) error {
 	if company == nil {
 		return nil
 	}

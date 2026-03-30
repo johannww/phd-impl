@@ -27,6 +27,6 @@ func TestCompanyRegister(t *testing.T) {
 		},
 	}
 
-	err := companies.CompanyToWorldState(stub, company)
+	err := companies.RegisterCompany(stub, company)
 	require.NoError(t, err, "Failed to register company")
 }
