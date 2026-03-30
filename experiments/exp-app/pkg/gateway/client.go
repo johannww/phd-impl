@@ -95,6 +95,26 @@ func (c *ClientWrapper) SubmitTransaction(functionName string, args ...string) (
 	return c.contract.SubmitTransaction(functionName, args...)
 }
 
+func (c *ClientWrapper) SubmitWithTransient(functionName string, transient map[string][]byte, args ...string) ([]byte, error) {
+	proposal, err := c.contract.NewProposal(functionName, client.WithArguments(args...), client.WithTransient(transient))
+	if err != nil {
+		return nil, fmt.Errorf("create proposal: %w", err)
+	}
+
+	transaction, err := proposal.Endorse()
+	if err != nil {
+		return nil, fmt.Errorf("endorse transaction: %w", err)
+	}
+
+	result := transaction.Result()
+	_, err = transaction.Submit()
+	if err != nil {
+		return nil, fmt.Errorf("submit transaction: %w", err)
+	}
+
+	return result, nil
+}
+
 func (c *ClientWrapper) Close() error {
 	return c.gateway.Close()
 }
