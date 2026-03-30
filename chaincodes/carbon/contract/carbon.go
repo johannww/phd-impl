@@ -12,6 +12,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/companies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data/registry"
+	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
@@ -396,6 +397,22 @@ func (c *CarbonContract) RegisterCompany(ctx contractapi.TransactionContextInter
 	return c.withMetricsErr("RegisterCompany", func() error {
 		return companies.RegisterCompany(ctx.GetStub(), &company)
 	})
+}
+
+func (c *CarbonContract) UpdateSellerAndBuyerVirtualTokenWallets(ctx contractapi.TransactionContextInterface, ownerID string, quantity int64) error {
+	return c.withMetricsErr("UpdateSellerAndBuyerVirtualTokenWallets", func() error {
+		return payment.UpdateVirtualTokenWallet(ctx.GetStub(), ownerID, quantity)
+	})
+}
+
+func (c *CarbonContract) MintVirtualToken(ctx contractapi.TransactionContextInterface, ownerID string, quantity int64) (*payment.VirtualTokenWallet, error) {
+	var wallet *payment.VirtualTokenWallet
+	err := c.withMetricsErr("MintVirtualToken", func() error {
+		var err error
+		wallet, err = payment.MintVirtualToken(ctx.GetStub(), ownerID, quantity)
+		return err
+	})
+	return wallet, err
 }
 
 // GetActivePolicies retrieves the list of caller's matched bids.

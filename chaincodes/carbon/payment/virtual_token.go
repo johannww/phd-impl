@@ -75,3 +75,22 @@ func MintVirtualToken(stub shim.ChaincodeStubInterface, ownerID string, quantity
 	}
 	return tokenWallet, nil
 }
+
+// UpdateVirtualTokenWallet updates the balance of a virtual token wallet.
+// If the wallet doesn't exist, it creates a new one.
+func UpdateVirtualTokenWallet(stub shim.ChaincodeStubInterface, ownerID string, quantity int64) error {
+	wallet := &VirtualTokenWallet{OwnerID: ownerID}
+	// Try to get existing wallet
+	err := wallet.FromWorldState(stub, []string{ownerID})
+	if err != nil {
+		// Wallet doesn't exist, start with 0
+		wallet.Quantity = 0
+	}
+
+	wallet.Quantity += quantity
+	if wallet.Quantity < 0 {
+		return fmt.Errorf("insufficient funds for owner %s: current balance %d, update amount %d", ownerID, wallet.Quantity-quantity, quantity)
+	}
+
+	return wallet.ToWorldState(stub)
+}
