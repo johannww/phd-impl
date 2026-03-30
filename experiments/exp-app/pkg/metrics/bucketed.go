@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"fmt"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -8,7 +9,10 @@ import (
 )
 
 // BucketSize defines the time window for each metrics bucket (100ms)
-const BucketSize = 100 * time.Millisecond
+const (
+	BucketSize       = 100 * time.Millisecond
+	MaxBucketSamples = 1000 // Cap samples per bucket to avoid memory blowup
+)
 
 // LatencyBucket holds latency samples for a time bucket
 type LatencyBucket struct {
@@ -35,9 +39,10 @@ type BucketedCollector struct {
 	buckets     map[string]map[int64]*ScenarioBucket // scenario -> bucket_index -> bucket
 	bucketsLock sync.RWMutex
 
-	startTime      time.Time
-	currentBucket  int64 // atomic: current bucket index
-	bucketDuration time.Duration
+	startTime           time.Time
+	currentBucket       int64 // atomic: current bucket index
+	bucketDuration      time.Duration
+	timeWaitingForMutex int64 // atomic: microseconds spent waiting for locks
 }
 
 // NewBucketedCollector creates a new bucketed metrics collector
@@ -63,8 +68,11 @@ func (c *BucketedCollector) Record(m *TransactionMetric) {
 	bucketIdx := c.getCurrentBucketIndex()
 	atomic.StoreInt64(&c.currentBucket, bucketIdx)
 
-	// Get or create scenario's bucket map (rare operation, quick lock)
+	// Measure lock contention for bucketsLock
+	startLock := time.Now()
 	c.bucketsLock.Lock()
+	atomic.AddInt64(&c.timeWaitingForMutex, time.Since(startLock).Microseconds())
+
 	scenarioBuckets, ok := c.buckets[m.Scenario]
 	if !ok {
 		scenarioBuckets = make(map[int64]*ScenarioBucket)
@@ -75,22 +83,27 @@ func (c *BucketedCollector) Record(m *TransactionMetric) {
 	bucket, ok := scenarioBuckets[bucketIdx]
 	if !ok {
 		bucket = &ScenarioBucket{
-			name: m.Scenario,
-			// latencies: &LatencyBucket{latencies: make([]float64, 0, 256)},
-			latencies: &TransactionMetricBucket{metrics: make([]*TransactionMetric, 0, 256)},
+			name:      m.Scenario,
+			latencies: &TransactionMetricBucket{metrics: make([]*TransactionMetric, 0, MaxBucketSamples)},
 		}
 		scenarioBuckets[bucketIdx] = bucket
 	}
 	c.bucketsLock.Unlock()
 
 	// Record metric in bucket (short lock, sharded by scenario+bucket)
-	// latencyMS := float64(m.Latency.Milliseconds())
+	startBucketLock := time.Now()
 	bucket.latencies.mu.Lock()
-	// bucket.latencies.latencies = append(bucket.latencies.latencies, latencyMS)
-	bucket.latencies.metrics = append(bucket.latencies.metrics, m)
+	atomic.AddInt64(&c.timeWaitingForMutex, time.Since(startBucketLock).Microseconds())
+
+	// Only append if under the safety cap (keep accurate throughput via atomic counters)
+	if len(bucket.latencies.metrics) < MaxBucketSamples {
+		// Store a shallow copy to ensure safety against caller mutation
+		metricCopy := *m
+		bucket.latencies.metrics = append(bucket.latencies.metrics, &metricCopy)
+	}
 	bucket.latencies.mu.Unlock()
 
-	// Atomic increments (no lock needed)
+	// Atomic increments (no lock needed, 100% accurate throughput)
 	if m.Success {
 		atomic.AddInt64(&bucket.successCount, 1)
 	} else {
@@ -109,6 +122,8 @@ func (c *BucketedCollector) GetSnapshot() *Snapshot {
 
 	allLatencies := make([]float64, 0, 10000)
 	totalLatency := float64(0)
+	waitMicros := atomic.LoadInt64(&c.timeWaitingForMutex)
+	fmt.Printf("Collector Lock Contention: %d us\n", waitMicros)
 
 	for _, scenarioBuckets := range c.buckets {
 		for _, bucket := range scenarioBuckets {
@@ -121,7 +136,6 @@ func (c *BucketedCollector) GetSnapshot() *Snapshot {
 
 			// Collect latencies from this bucket
 			bucket.latencies.mu.Lock()
-			// for _, lat := range bucket.latencies.latencies {
 			for _, m := range bucket.latencies.metrics {
 				lat := float64(m.Latency.Milliseconds())
 				allLatencies = append(allLatencies, lat)
