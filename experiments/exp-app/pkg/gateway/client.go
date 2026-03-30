@@ -87,12 +87,37 @@ func NewClientWrapper(cfg *GatewayConfig) (*ClientWrapper, error) {
 	}, nil
 }
 
+func (c *ClientWrapper) attachErrorInfo(res []byte, err error) (result []byte, finalErr error) {
+	if err == nil {
+		return res, nil
+	}
+
+	fmt.Printf("result: %s\n", string(res))
+	switch e := err.(type) {
+	case *client.EndorseError:
+		return res, fmt.Errorf("endorse error: %s", e.GRPCStatus().Details())
+	case *client.SubmitError:
+		return res, fmt.Errorf("submit error: %s", e.GRPCStatus().Details())
+	case *client.TransactionError:
+		return res, fmt.Errorf("transaction error: %s", e.GRPCStatus().Details())
+	case *client.CommitStatusError:
+		return res, fmt.Errorf("commit status error: %s", e.GRPCStatus().Details())
+	case *client.CommitError:
+		return res, fmt.Errorf("commit error: %s", e.Error())
+	default:
+		return res, fmt.Errorf("unexpected error type: %T: %w", err, err)
+	}
+
+}
+
 func (c *ClientWrapper) EvaluateTransaction(functionName string, args ...string) ([]byte, error) {
-	return c.contract.EvaluateTransaction(functionName, args...)
+	res, err := c.contract.EvaluateTransaction(functionName, args...)
+	return c.attachErrorInfo(res, err)
 }
 
 func (c *ClientWrapper) SubmitTransaction(functionName string, args ...string) ([]byte, error) {
-	return c.contract.SubmitTransaction(functionName, args...)
+	res, err := c.contract.SubmitTransaction(functionName, args...)
+	return c.attachErrorInfo(res, err)
 }
 
 func (c *ClientWrapper) SubmitWithTransient(functionName string, transient map[string][]byte, args ...string) ([]byte, error) {
@@ -103,13 +128,13 @@ func (c *ClientWrapper) SubmitWithTransient(functionName string, transient map[s
 
 	transaction, err := proposal.Endorse()
 	if err != nil {
-		return nil, fmt.Errorf("endorse transaction: %w", err)
+		return c.attachErrorInfo(nil, err)
 	}
 
 	result := transaction.Result()
 	_, err = transaction.Submit()
 	if err != nil {
-		return nil, fmt.Errorf("submit transaction: %w", err)
+		return c.attachErrorInfo(result, err)
 	}
 
 	return result, nil
