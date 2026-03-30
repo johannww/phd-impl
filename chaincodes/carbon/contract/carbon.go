@@ -12,6 +12,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data/registry"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
+	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
@@ -381,6 +382,12 @@ func (c *CarbonContract) DeleteActivePolicy(ctx contractapi.TransactionContextIn
 		stub := ctx.GetStub()
 		err := policies.DeleteActivePolicy(stub, policies.Name(policy))
 		return err
+	})
+}
+
+func (c *CarbonContract) RegisterProperty(ctx contractapi.TransactionContextInterface, property properties.Property) error {
+	return c.withMetricsErr("RegisterProperty", func() error {
+		return properties.RegisterProperty(ctx.GetStub(), &property)
 	})
 }
 

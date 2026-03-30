@@ -57,3 +57,25 @@ func (property *Property) GetID() *[][]string {
 		strconv.FormatUint(property.ID, 10),
 	}}
 }
+
+// RegisterProperty stores a new property and its chunks in the world state
+func RegisterProperty(stub shim.ChaincodeStubInterface, property *Property) error {
+	// Validate owner and ID
+	if property.OwnerID == "" {
+		return fmt.Errorf("property owner ID cannot be empty")
+	}
+	if property.ID == 0 {
+		return fmt.Errorf("property ID cannot be 0")
+	}
+
+	// Check if the property already exists
+	existing := &Property{}
+	// GetID returns *[][]string, we need the first inner slice for FromWorldState
+	id := *property.GetID()
+	err := existing.FromWorldState(stub, id[0])
+	if err == nil {
+		return fmt.Errorf("property with ID %v already exists for owner %s", property.ID, property.OwnerID)
+	}
+
+	return property.ToWorldState(stub)
+}
