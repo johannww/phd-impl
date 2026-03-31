@@ -223,6 +223,48 @@ func MintEstimatedCreditsForProperty(
 	return mintedCredits, nil
 }
 
+// MintQuantityCreditsForProperty mints credits for all chunks of a property with a fixed quantity per chunk.
+func MintQuantityCreditsForProperty(
+	stub shim.ChaincodeStubInterface,
+	propertyID []string,
+	quantity int64,
+	timestampRFC3339 string,
+) ([]*MintCredit, error) {
+	if cid.AssertAttributeValue(stub, identities.CreditMinter, "true") != nil {
+		return nil, fmt.Errorf("caller is not a minter")
+	}
+
+	// Load property (this also loads chunks)
+	property := &properties.Property{}
+	if err := property.FromWorldState(stub, propertyID); err != nil {
+		return nil, fmt.Errorf("could not get property from world state: %v", err)
+	}
+
+	var summary *registry.RegistrySummary
+	if property.RegistryProvider != "" {
+		summary = &registry.RegistrySummary{}
+		if err := summary.FromWorldState(stub, []string{property.RegistryID}); err != nil {
+			return nil, fmt.Errorf("failed to get registry summary from world state: %v", err)
+		}
+
+		if summary.Status != registry.ACTIVE_STATUS {
+			return nil, fmt.Errorf("property is not active in the registry: %s", summary.Status)
+		}
+	}
+
+	mintedCredits := make([]*MintCredit, 0, len(property.Chunks))
+
+	for _, chunk := range property.Chunks {
+		mc, err := mintCreditInternal(stub, property, summary, chunk, quantity, timestampRFC3339)
+		if err != nil {
+			return nil, fmt.Errorf("could not mint credit for chunk: %v", err)
+		}
+		mintedCredits = append(mintedCredits, mc)
+	}
+
+	return mintedCredits, nil
+}
+
 // GetAvailableCreditsByOwner returns all MintCredits owned by the specified owner.
 func GetAvailableCreditsByOwner(stub shim.ChaincodeStubInterface, ownerID string) ([]*MintCredit, error) {
 	resultsIterator, err := stub.GetStateByPartialCompositeKey(MINT_CREDIT_PREFIX, []string{ownerID})

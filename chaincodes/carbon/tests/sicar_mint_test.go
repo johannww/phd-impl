@@ -27,7 +27,7 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	registryPropID := "BR-SP-12345"
 	sicarData := registry.SicarData{
 		CodigoImovel:                    registryPropID,
-		SituacaoImovel:                  "Ativo",
+		SituacaoImovel:                  "AT",
 		AreaTotalImovel:                 100.0,
 		AreaPreservacaoPermanente:       20.0,
 		AreaReservaLegalDeclarada:       20.0,
@@ -140,6 +140,16 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	// Expected quantity is doubled due to VEGETATION policy (returns 1000 = 1x extra)
 	require.Equal(t, int64(200), mcQty.Quantity)
 	stub.MockTransactionEnd("tx_mint_qty_ok")
+
+	// Case B.2: Valid Minting for all chunks of Property
+	stub.MockTransactionStart("tx_mint_prop_qty_ok")
+	propMintQuantity := int64(150)
+	mcsProp, err := credits.MintQuantityCreditsForProperty(stub, propIDAttr, propMintQuantity, intervalEnd)
+	require.NoError(t, err)
+	require.Len(t, mcsProp, 1) // Property has 1 chunk
+	// Expected quantity is doubled due to VEGETATION policy (150 + 150 = 300)
+	require.Equal(t, int64(300), mcsProp[0].Quantity)
+	stub.MockTransactionEnd("tx_mint_prop_qty_ok")
 
 	// Case C: Deactivated Registry
 	sicarData.SituacaoImovel = "Cancelado"
