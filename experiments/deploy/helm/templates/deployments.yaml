@@ -158,6 +158,8 @@ spec:
             #  value: "debug"
             - name: CORE_PEER_LOCALMSPID
               value: "{{ $orgName | title }}MSP"
+            - name: CORE_PEER_GOSSIP_EXTERNALENDPOINT
+              value: "{{ $orgName }}-peer-{{ $i }}:7051"
             - name: CORE_OPERATIONS_LISTENADDRESS
               value: "0.0.0.0:9443"
             - name: CORE_METRICS_PROVIDER
