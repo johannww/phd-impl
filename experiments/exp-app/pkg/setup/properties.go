@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"log"
 
+	"math/rand"
+	"os"
+	"time"
+
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
@@ -18,6 +22,25 @@ func (s *SetupManager) SetupProperties(ctx context.Context, nPropsPerOrg int, nC
 	log.Printf("Preparing %d properties for each of the %d organizations...", nPropsPerOrg, len(s.profile.Peers))
 	ownerID := s.client.GetIdentityID()
 
+	// Load SICAR IDs from profile-defined path
+	sicarFile, err := os.ReadFile(s.profile.SICAR.DataPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read SICAR data from %s: %v", s.profile.SICAR.DataPath, err)
+	}
+	var sicarData map[string]interface{}
+	if err := json.Unmarshal(sicarFile, &sicarData); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal sicar.json: %v", err)
+	}
+	var sicarIDs []string
+	for id := range sicarData {
+		sicarIDs = append(sicarIDs, id)
+	}
+	if len(sicarIDs) == 0 {
+		return nil, fmt.Errorf("no SICAR IDs found in sicar.json")
+	}
+
+	rand.Seed(time.Now().UnixNano())
+
 	var commits []*client.Commit
 	propCounter := 1
 	for orgName := range s.profile.Peers {
@@ -25,6 +48,9 @@ func (s *SetupManager) SetupProperties(ctx context.Context, nPropsPerOrg int, nC
 		for i := 0; i < nPropsPerOrg; i++ {
 			propID := uint64(propCounter)
 			propCounter++
+
+			// Select a random SICAR ID
+			sicarID := sicarIDs[rand.Intn(len(sicarIDs))]
 
 			var chunks []*properties.PropertyChunk
 			for j := 0; j < nChunksPerProp; j++ {
@@ -51,7 +77,7 @@ func (s *SetupManager) SetupProperties(ctx context.Context, nPropsPerOrg int, nC
 			property := &properties.Property{
 				OwnerID:          ownerID,
 				ID:               propID,
-				RegistryID:       fmt.Sprintf("REG-%s-%d", orgName, propID),
+				RegistryID:       sicarID,
 				RegistryProvider: "SICAR",
 				Chunks:           chunks,
 			}

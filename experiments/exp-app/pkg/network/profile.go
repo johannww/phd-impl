@@ -72,6 +72,7 @@ type SICARConfig struct {
 	Certificate string `json:"certificate"` // Path to SICAR cert
 	PrivateKey  string `json:"private_key"` // Path to SICAR private key
 	Endpoint    string `json:"endpoint"`    // e.g., "localhost:30443"
+	DataPath    string `json:"data_path"`   // Path to sicar.json
 }
 
 // ChaincodeConfig contains chaincode information

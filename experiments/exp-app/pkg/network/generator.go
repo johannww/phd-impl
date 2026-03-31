@@ -184,6 +184,7 @@ func (g *Generator) generateSICARConfig() SICARConfig {
 		Certificate: filepath.Join(g.varsDir, "sicar", "server.crt"),
 		PrivateKey:  filepath.Join(g.varsDir, "sicar", "server.key"),
 		Endpoint:    fmt.Sprintf("%s:30443", g.minikubeIP),
+		DataPath:    filepath.Join(g.varsDir, "organizations", "sicar", "sicar.json"),
 	}
 }
 

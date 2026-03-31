@@ -14,8 +14,15 @@ func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nCh
 
 	var allCommits []*client.Commit
 
+	// 0. Setup SICAR
+	commits, err := s.SetupSICAR(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to setup SICAR: %v", err)
+	}
+	allCommits = append(allCommits, commits...)
+
 	// 1. Register Companies for each org
-	commits, err := s.SetupCompanies(ctx)
+	commits, err = s.SetupCompanies(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to setup companies: %v", err)
 	}
