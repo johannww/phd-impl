@@ -92,16 +92,15 @@ func (c *ClientWrapper) attachErrorInfo(res []byte, err error) (result []byte, f
 		return res, nil
 	}
 
-	fmt.Printf("result: %s\n", string(res))
 	switch e := err.(type) {
 	case *client.EndorseError:
-		return res, fmt.Errorf("endorse error: %s", e.GRPCStatus().Details())
+		return res, fmt.Errorf("endorse error: %s. details: %s", e.Error(), e.GRPCStatus().Details())
 	case *client.SubmitError:
-		return res, fmt.Errorf("submit error: %s", e.GRPCStatus().Details())
+		return res, fmt.Errorf("submit error: %s. details: %s", e.Error(), e.GRPCStatus().Details())
 	case *client.TransactionError:
-		return res, fmt.Errorf("transaction error: %s", e.GRPCStatus().Details())
+		return res, fmt.Errorf("transaction error: %s. details: %s", e.Error(), e.GRPCStatus().Details())
 	case *client.CommitStatusError:
-		return res, fmt.Errorf("commit status error: %s", e.GRPCStatus().Details())
+		return res, fmt.Errorf("commit status error: %s. details: %s", e.Error(), e.GRPCStatus().Details())
 	case *client.CommitError:
 		return res, fmt.Errorf("commit error: %s", e.Error())
 	default:
