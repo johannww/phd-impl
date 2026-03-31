@@ -19,13 +19,19 @@ type SicarData struct {
 
 // ToSummary converts SICAR-specific data into a generic RegistrySummary.
 func (s *SicarData) ToSummary() *RegistrySummary {
-	return &RegistrySummary{
+	summary := &RegistrySummary{
 		RegistryPropID:  s.CodigoImovel,
 		Status:          s.SituacaoImovel,
 		TotalArea:       s.AreaTotalImovel,
 		LegalForestArea: s.AreaPreservacaoPermanente + s.AreaReservaLegalDeclarada,
 		VerifiedForest:  s.AreaRemanescenteVegetacaoNativa,
 	}
+
+	summary.Status = INACTIVE_STATUS
+	if s.SituacaoImovel == "AT" || s.SituacaoImovel == "RE" {
+		summary.Status = ACTIVE_STATUS
+	}
+	return summary
 }
 
 // RefreshRegistryData fetches, verifies, and saves SICAR data for a given registry ID to the world state.

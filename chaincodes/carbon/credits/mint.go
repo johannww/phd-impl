@@ -151,7 +151,7 @@ func MintQuantityCreditForChunk(
 			return nil, fmt.Errorf("failed to get registry summary from world state: %v", err)
 		}
 
-		if summary.Status != "Ativo" {
+		if summary.Status != registry.ACTIVE_STATUS {
 			return nil, fmt.Errorf("property is not active in the registry: %s", summary.Status)
 		}
 	}
@@ -198,7 +198,7 @@ func MintEstimatedCreditsForProperty(
 			return nil, fmt.Errorf("failed to get registry summary from world state: %v", err)
 		}
 
-		if summary.Status != "Ativo" {
+		if summary.Status != registry.ACTIVE_STATUS {
 			return nil, fmt.Errorf("property is not active in the registry: %s", summary.Status)
 		}
 	}

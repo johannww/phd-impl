@@ -9,6 +9,8 @@ import (
 )
 
 const REGISTRY_SUMMARY_PREFIX = "registrySummary"
+const ACTIVE_STATUS = "ACTIVE"
+const INACTIVE_STATUS = "INACTIVE"
 
 // RegistrySummary represents a generic environmental registry response.
 // This is the canonical format used by the chaincode regardless of the data source.

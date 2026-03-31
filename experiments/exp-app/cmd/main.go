@@ -106,7 +106,8 @@ func main() {
 
 	// 0. Setup
 	setupManager := setup.NewSetupManager(client, profile)
-	if err := setupManager.InitializeBETS(context.Background(), 2, 2); err != nil {
+	err = setupManager.InitializeBETS(context.Background(), 2, 2)
+	if err != nil {
 		log.Fatalf("Setup failed: %v", err)
 	}
 

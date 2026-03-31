@@ -17,26 +17,30 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )
 
+type SicarData struct {
+	SicarIDs []string
+}
+
 // SetupProperties initializes nProps properties for each organization in the registry
-func (s *SetupManager) SetupProperties(ctx context.Context, nPropsPerOrg int, nChunksPerProp int) ([]*client.Commit, error) {
+func (s *SetupManager) SetupProperties(ctx context.Context, nPropsPerOrg int, nChunksPerProp int) ([]*client.Commit, *SicarData, error) {
 	log.Printf("Preparing %d properties for each of the %d organizations...", nPropsPerOrg, len(s.profile.Peers))
 	ownerID := s.client.GetIdentityID()
 
 	// Load SICAR IDs from profile-defined path
 	sicarFile, err := os.ReadFile(s.profile.SICAR.DataPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read SICAR data from %s: %v", s.profile.SICAR.DataPath, err)
+		return nil, nil, fmt.Errorf("failed to read SICAR data from %s: %v", s.profile.SICAR.DataPath, err)
 	}
 	var sicarData map[string]interface{}
 	if err := json.Unmarshal(sicarFile, &sicarData); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal sicar.json: %v", err)
+		return nil, nil, fmt.Errorf("failed to unmarshal sicar.json: %v", err)
 	}
 	var sicarIDs []string
 	for id := range sicarData {
 		sicarIDs = append(sicarIDs, id)
 	}
 	if len(sicarIDs) == 0 {
-		return nil, fmt.Errorf("no SICAR IDs found in sicar.json")
+		return nil, nil, fmt.Errorf("no SICAR IDs found in sicar.json")
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -90,6 +94,24 @@ func (s *SetupManager) SetupProperties(ctx context.Context, nPropsPerOrg int, nC
 			}
 			commits = append(commits, commit)
 		}
+	}
+
+	return commits, &SicarData{SicarIDs: sicarIDs}, nil
+}
+
+// RefreshProperties updates the registry data for each property in the world state
+func (s *SetupManager) RefreshProperties(ctx context.Context, sicarIDs []string) ([]*client.Commit, error) {
+	log.Printf("Refreshing registry data for %d properties...", len(sicarIDs))
+
+	var commits []*client.Commit
+	for _, sicarID := range sicarIDs {
+		// The chaincode expects providerName (SICAR) and registryPropID (sicarID)
+		_, commit, err := s.client.SubmitAsync("RefreshRegistryDataForProperty", "SICAR", sicarID)
+		if err != nil {
+			log.Printf("Warning: Failed to submit refresh for property %s: %v", sicarID, err)
+			continue
+		}
+		commits = append(commits, commit)
 	}
 
 	return commits, nil

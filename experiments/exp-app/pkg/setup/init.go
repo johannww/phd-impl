@@ -36,7 +36,7 @@ func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nCh
 	allCommits = append(allCommits, commits...)
 
 	// 3. Register Properties for each org
-	commits, err = s.SetupProperties(ctx, nPropsPerOrg, nChunksPerProp)
+	commits, sicarData, err := s.SetupProperties(ctx, nPropsPerOrg, nChunksPerProp)
 	if err != nil {
 		return fmt.Errorf("failed to setup properties: %v", err)
 	}
@@ -46,6 +46,21 @@ func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nCh
 	for i, commit := range allCommits {
 		if _, err := commit.Status(); err != nil {
 			log.Printf("Warning: Setup transaction commitment %d failed: %v", i+1, err)
+		}
+	}
+
+	// 4. Refresh Registry Data for each property
+	// This MUST be done after property registration is committed
+	log.Println("Refreshing property registry data from SICAR...")
+	refreshCommits, err := s.RefreshProperties(ctx, sicarData.SicarIDs)
+	if err != nil {
+		return fmt.Errorf("failed to refresh properties: %v", err)
+	}
+
+	log.Printf("Waiting for %d refresh transactions to commit...", len(refreshCommits))
+	for i, commit := range refreshCommits {
+		if _, err := commit.Status(); err != nil {
+			log.Printf("Warning: Refresh transaction commitment %d failed: %v", i+1, err)
 		}
 	}
 
