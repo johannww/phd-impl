@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "chaincode-service.fullname" . }}-install
+  name: {{ include "chaincode-service.name" . }}-install
   namespace: {{ include "chaincode-service.namespace" . }}
   labels:
     {{- include "chaincode-service.labels" . | nindent 4 }}
@@ -41,7 +41,7 @@ spec:
       volumes:
         - name: scripts
           configMap:
-            name: {{ include "chaincode-service.fullname" . }}-scripts
+            name: {{ include "chaincode-service.name" . }}-scripts
             defaultMode: 0755
         - name: packages
           configMap:

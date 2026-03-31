@@ -21,3 +21,6 @@ mkdir -p "${LOCAL_DIR}"
 echo "Copying /organizations from pod ${POD} (${NAMESPACE}) to ${LOCAL_DIR}..."
 kubectl -n "${NAMESPACE}" cp "${POD}:/organizations/." "${LOCAL_DIR}/" -c peer
 echo "Done."
+
+echo "Copying configtx configmap to ${LOCAL_DIR}/configtx.yaml"
+kubectl -n "${NAMESPACE}" get configmap "$NAMESPACE-configtx" -o jsonpath='{.data.configtx\.yaml}' > "${LOCAL_DIR}/../configtx.yaml"

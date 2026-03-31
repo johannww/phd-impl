@@ -2,7 +2,7 @@
 {{- $ns := include "fabric-experiments.namespace" . }}
 {{- $serviceName := "sicar-mock" }}
 {{- $tlsSecret := printf "%s-tls" $serviceName }}
-{{- $orgsPVC := printf "%s-organizations" (include "fabric-experiments.fullname" .) }}
+{{- $orgsPVC := printf "%s-organizations" (include "fabric-experiments.name" .) }}
 ---
 apiVersion: apps/v1
 kind: Deployment

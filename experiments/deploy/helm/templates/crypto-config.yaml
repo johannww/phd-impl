@@ -10,7 +10,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "fabric-experiments.fullname" . }}-crypto
+  name: {{ include "fabric-experiments.name" . }}-crypto
   namespace: {{ include "fabric-experiments.namespace" . }}
   labels:
     {{- include "fabric-experiments.labels" . | nindent 4 }}

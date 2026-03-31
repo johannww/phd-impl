@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "fabric-experiments.fullname" . }}-organizations
+  name: {{ include "fabric-experiments.name" . }}-organizations
   namespace: {{ include "fabric-experiments.namespace" . }}
   labels:
     {{- include "fabric-experiments.labels" . | nindent 4 }}

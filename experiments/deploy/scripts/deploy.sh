@@ -41,7 +41,7 @@ echo "Installing Helm release ${CHAINCODE_RELEASE_NAME} in namespace ${NAMESPACE
 helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
   --namespace "${NAMESPACE}" \
   -f <(yq e 'explode(.chaincodeService) | .chaincodeService' ${CHART_DIR}/values.yaml) \
-  --set organizationsClaimName="${RELEASE_NAME}-fabric-experiments-organizations" \
+  --set organizationsClaimName="${RELEASE_NAME}-organizations" \
   --set packageConfigMapName="${CHAINCODE_PACKAGE_CONFIGMAP}" \
   "${CC_SET_ARGS[@]}"
 

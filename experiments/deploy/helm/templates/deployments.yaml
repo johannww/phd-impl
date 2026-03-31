@@ -103,7 +103,7 @@ spec:
       volumes:
         - name: organizations
           persistentVolumeClaim:
-            claimName: {{ include "fabric-experiments.fullname" $ }}-organizations
+            claimName: {{ include "fabric-experiments.name" $ }}-organizations
 {{- end }}
 {{- range $i, $_ := until (int (default 0 $org.peers)) }}
 ---
@@ -179,6 +179,6 @@ spec:
       volumes:
         - name: organizations
           persistentVolumeClaim:
-            claimName: {{ include "fabric-experiments.fullname" $ }}-organizations
+            claimName: {{ include "fabric-experiments.name" $ }}-organizations
 {{- end }}
 {{- end }}

@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "fabric-experiments.fullname" . }}-post-bootstrap
+  name: {{ include "fabric-experiments.name" . }}-post-bootstrap
   namespace: {{ include "fabric-experiments.namespace" . }}
   labels:
     {{- include "fabric-experiments.labels" . | nindent 4 }}
@@ -40,14 +40,14 @@ spec:
       volumes:
         - name: scripts
           configMap:
-            name: {{ include "fabric-experiments.fullname" . }}-scripts
+            name: {{ include "fabric-experiments.name" . }}-scripts
             defaultMode: 0755
         - name: organizations
           persistentVolumeClaim:
-            claimName: {{ include "fabric-experiments.fullname" . }}-organizations
+            claimName: {{ include "fabric-experiments.name" . }}-organizations
         - name: configtx
           configMap:
-            name: {{ include "fabric-experiments.fullname" . }}-configtx
+            name: {{ include "fabric-experiments.name" . }}-configtx
             defaultMode: 0755
         - name: workspace
           emptyDir: {}
