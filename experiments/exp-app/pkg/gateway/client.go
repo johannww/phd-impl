@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	pb_msp "github.com/hyperledger/fabric-protos-go-apiv2/msp"
+	"github.com/johannww/phd-impl/chaincodes/common/state/mocks"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -107,6 +111,24 @@ func (c *ClientWrapper) attachErrorInfo(res []byte, err error) (result []byte, f
 		return res, fmt.Errorf("unexpected error type: %T: %w", err, err)
 	}
 
+}
+
+func (c *ClientWrapper) GetIdentityID() string {
+	// Create a SerializedIdentity that matches what the peer/orderer expects
+	sid := &pb_msp.SerializedIdentity{
+		Mspid:   c.gateway.Identity().MspID(),
+		IdBytes: c.gateway.Identity().Credentials(),
+	}
+	sidBytes, _ := proto.Marshal(sid)
+
+	// Create a mock stub and set the creator to our serialized identity
+	mockStub := mocks.NewMockStub("identity-calc", nil)
+	mockStub.Creator = sidBytes
+
+	// Use cid.New with the mock stub as requested by the user
+	cidObj, _ := cid.New(mockStub)
+	id, _ := cidObj.GetID()
+	return id
 }
 
 func (c *ClientWrapper) EvaluateTransaction(functionName string, args ...string) ([]byte, error) {
