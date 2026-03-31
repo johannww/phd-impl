@@ -141,6 +141,12 @@ func (c *ClientWrapper) SubmitTransaction(functionName string, args ...string) (
 	return c.attachErrorInfo(res, err)
 }
 
+func (c *ClientWrapper) SubmitAsync(functionName string, args ...string) ([]byte, *client.Commit, error) {
+	res, commit, err := c.contract.SubmitAsync(functionName, client.WithArguments(args...))
+	res, err = c.attachErrorInfo(res, err)
+	return res, commit, err
+}
+
 func (c *ClientWrapper) SubmitWithTransient(functionName string, transient map[string][]byte, args ...string) ([]byte, error) {
 	proposal, err := c.contract.NewProposal(functionName, client.WithArguments(args...), client.WithTransient(transient))
 	if err != nil {

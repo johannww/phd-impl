@@ -104,6 +104,12 @@ func main() {
 
 	log.Println("Connected! Starting performance test...")
 
+	// 0. Setup
+	setupManager := setup.NewSetupManager(client, profile)
+	if err := setupManager.InitializeBETS(context.Background(), 2, 2); err != nil {
+		log.Fatalf("Setup failed: %v", err)
+	}
+
 	// Create executor
 	execCfg := &workload.ExecutorConfig{
 		ConcurrencyLevel: *concurrency,
