@@ -147,7 +147,7 @@ func SetupIdentities(stub *mocks.MockStub) MockIdentities {
 
 	identityAttributes := []string{
 		identities.PriceViewer,
-		identities.VirtualTokenMinter,
+		identities.PaymentCompanyAttr,
 		identities.InteropRelayerAttr,
 		identities.PolicySetter,
 		identities.TEEConfigurer,

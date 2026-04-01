@@ -64,7 +64,7 @@ data:
           Count: 1
           Attrs:
             price_viewer: "true"
-            virtual_token_minter: "true"
+            payment_company: "true"
             interop_relayer: "true"
             policy_setter: "true"
             tee_configurer: "true"
