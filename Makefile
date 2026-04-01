@@ -1,3 +1,6 @@
+RESOURCE_GROUP ?= carbon
+CLUSTER_NAME  ?= carbon-aks
+
 diagrams:
 	$(MAKE) -C ./chaincodes/carbon docs
 	$(MAKE) -C tee_auction docs
@@ -30,6 +33,19 @@ experiments:
 	./scripts/deploy.sh; \
 	./scripts/shutdown.sh
 	
+aks-provision:
+	./experiments/deploy/azure/provision_aks.sh
+
+aks-stop:
+	./experiments/deploy/azure/shutdown_aks.sh
+
+aks-start:
+	az aks start --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME)
+
+aks-down:
+	@echo "Deleting Resource Group: $(RESOURCE_GROUP)..."
+	az group delete --name $(RESOURCE_GROUP) --yes --no-wait
+
 ai-list-structs:
 	./scripts/gopls_get_structs.sh ./chaincodes/carbon/
 	./scripts/gopls_get_structs.sh ./chaincodes/interop/
