@@ -96,7 +96,8 @@ func mintCreditInternal(
 
 	pApplier := policies.NewPolicyApplier()
 	pInput := &policies.PolicyInput{
-		Chunk: chunk,
+		Chunk:           chunk,
+		RegistrySummary: summary,
 	}
 
 	mintMult, err := pApplier.MintIndependentMult(pInput, activePolicies)

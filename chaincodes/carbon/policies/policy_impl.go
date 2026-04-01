@@ -23,18 +23,20 @@ const (
 	WIND_DIRECTION Name = "wind_direction"
 
 	// Independent policy names
-	VEGETATION   Name = "vegetation"
-	AUDIT_METHOD Name = "audit_method"
-	TEMPERATURE  Name = "temperature"
+	VEGETATION         Name = "vegetation"
+	AUDIT_METHOD       Name = "audit_method"
+	TEMPERATURE        Name = "temperature"
+	REGISTRY_FRESHNESS Name = "registry_freshness"
 )
 
 // TODO: add the actual implementations of the policies
 var DefinedPoliciesStatic = map[Name]PolicyFunc{
-	DISTANCE:       DistancePolicy,
-	WIND_DIRECTION: WindPolicy,
-	VEGETATION:     VegetationPolicy,
-	AUDIT_METHOD:   nil,
-	TEMPERATURE:    TemperaturePolicy,
+	DISTANCE:           DistancePolicy,
+	WIND_DIRECTION:     WindPolicy,
+	VEGETATION:         VegetationPolicy,
+	AUDIT_METHOD:       nil,
+	TEMPERATURE:        TemperaturePolicy,
+	REGISTRY_FRESHNESS: RegistryFreshnessPolicy,
 }
 
 type PolicyApplierImpl struct {

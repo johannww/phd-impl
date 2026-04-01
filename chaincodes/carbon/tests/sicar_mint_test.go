@@ -22,13 +22,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// expectedMintQuantity computes the effective minted quantity by running the real
+// policy applier against a minimal PolicyInput, mirroring what mintCreditInternal does.
+func expectedMintQuantity(baseQuantity int64, lastUpdateDate time.Time) int64 {
+	pApplier := policies.NewPolicyApplier()
+	pInput := &policies.PolicyInput{
+		RegistrySummary: &registry.RegistrySummary{LastUpdate: lastUpdateDate},
+	}
+	mult, _ := pApplier.MintIndependentMult(pInput, []policies.Name{policies.VEGETATION, policies.REGISTRY_FRESHNESS})
+	return baseQuantity + (baseQuantity * mult / policies.MULTIPLIER_SCALE)
+}
+
 func TestMintCreditWithSicarValidation(t *testing.T) {
 	// 1. Setup Mock SICAR Server
 	registryPropID := "BR-SP-12345"
+	lastUpdateStr := "15/01/2024"
+	lastUpdateDate, parseErr := time.Parse("02/01/2006", lastUpdateStr)
+	require.NoError(t, parseErr)
+
 	sicarData := registry.SicarData{
 		CodigoImovel:                    registryPropID,
 		SituacaoImovel:                  "AT",
-		DataUltimaAtualizacaoCadastro:   "15/01/2024",
+		DataUltimaAtualizacaoCadastro:   lastUpdateStr,
 		AreaTotalImovel:                 100.0,
 		AreaPreservacaoPermanente:       20.0,
 		AreaReservaLegalDeclarada:       20.0,
@@ -107,7 +122,7 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	stub.MockTransactionStart("tx_pol")
 	stub.Creator = mockIds[identities.PolicySetter]
 	pApplier := policies.NewPolicyApplier()
-	err = pApplier.SetActivePolicies(stub, []policies.Name{policies.VEGETATION})
+	err = pApplier.SetActivePolicies(stub, []policies.Name{policies.VEGETATION, policies.REGISTRY_FRESHNESS})
 	require.NoError(t, err)
 	stub.MockTransactionEnd("tx_pol")
 
@@ -138,8 +153,8 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	mcQty, err := credits.MintQuantityCreditForChunk(stub, propIDAttr, chunkID, mintQuantity, intervalEnd)
 	require.NoError(t, err)
 	require.NotNil(t, mcQty)
-	// Expected quantity is doubled due to VEGETATION policy (returns 1000 = 1x extra)
-	require.Equal(t, int64(200), mcQty.Quantity)
+	// Expected quantity applies VEGETATION (1x) and REGISTRY_FRESHNESS (time-dependent linear decay).
+	require.Equal(t, expectedMintQuantity(mintQuantity, lastUpdateDate), mcQty.Quantity)
 	stub.MockTransactionEnd("tx_mint_qty_ok")
 
 	// Case B.2: Valid Minting for all chunks of Property
@@ -148,8 +163,8 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	mcsProp, err := credits.MintQuantityCreditsForProperty(stub, propIDAttr, propMintQuantity, intervalEnd)
 	require.NoError(t, err)
 	require.Len(t, mcsProp, 1) // Property has 1 chunk
-	// Expected quantity is doubled due to VEGETATION policy (150 + 150 = 300)
-	require.Equal(t, int64(300), mcsProp[0].Quantity)
+	// Expected quantity applies VEGETATION (1x) and REGISTRY_FRESHNESS (time-dependent linear decay).
+	require.Equal(t, expectedMintQuantity(propMintQuantity, lastUpdateDate), mcsProp[0].Quantity)
 	stub.MockTransactionEnd("tx_mint_prop_qty_ok")
 
 	// Case C: Deactivated Registry
