@@ -3,14 +3,19 @@ package registry
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 )
+
+// sicarDateFormat is the date format used by the SICAR API: DD/MM/YYYY.
+const sicarDateFormat = "02/01/2006"
 
 // SicarData represents the specific structure returned by the SICAR mock API.
 type SicarData struct {
 	CodigoImovel                    string  `json:"codigoImovel"`
 	SituacaoImovel                  string  `json:"situacaoImovel"`
+	DataUltimaAtualizacaoCadastro   string  `json:"dataUltimaAtualizacaoCadastro"`
 	AreaTotalImovel                 float64 `json:"areaTotalImovel"`
 	AreaPreservacaoPermanente       float64 `json:"areaPreservacaoPermanente"`
 	AreaReservaLegalDeclarada       float64 `json:"areaReservaLegalDeclaradaProprietarioPossuidor"`
@@ -18,10 +23,19 @@ type SicarData struct {
 }
 
 // ToSummary converts SICAR-specific data into a generic RegistrySummary.
+// If DataUltimaAtualizacaoCadastro cannot be parsed, LastUpdate is left as zero time.
 func (s *SicarData) ToSummary() *RegistrySummary {
+	var lastUpdate time.Time
+	if s.DataUltimaAtualizacaoCadastro != "" {
+		if t, err := time.Parse(sicarDateFormat, s.DataUltimaAtualizacaoCadastro); err == nil {
+			lastUpdate = t
+		}
+	}
+
 	summary := &RegistrySummary{
 		RegistryPropID:  s.CodigoImovel,
 		Status:          s.SituacaoImovel,
+		LastUpdate:      lastUpdate,
 		TotalArea:       s.AreaTotalImovel,
 		LegalForestArea: s.AreaPreservacaoPermanente + s.AreaReservaLegalDeclarada,
 		VerifiedForest:  s.AreaRemanescenteVegetacaoNativa,

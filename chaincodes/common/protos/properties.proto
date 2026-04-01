@@ -71,6 +71,7 @@ message RegistrySummary {
   double totalArea = 3;
   double legalForestArea = 4;
   double verifiedForest = 5;
+  string lastUpdate = 6;
 }
 
 message RegistryProvider {

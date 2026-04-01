@@ -28,6 +28,7 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	sicarData := registry.SicarData{
 		CodigoImovel:                    registryPropID,
 		SituacaoImovel:                  "AT",
+		DataUltimaAtualizacaoCadastro:   "15/01/2024",
 		AreaTotalImovel:                 100.0,
 		AreaPreservacaoPermanente:       20.0,
 		AreaReservaLegalDeclarada:       20.0,
