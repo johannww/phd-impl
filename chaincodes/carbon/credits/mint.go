@@ -204,7 +204,7 @@ func MintEstimatedCreditsForProperty(
 		}
 	}
 
-	estimator := &policies.Estimator{}
+	estimator := &policies.Estimator{Summary: summary}
 	mintedCredits := make([]*MintCredit, 0, len(property.Chunks))
 
 	for _, chunk := range property.Chunks {
