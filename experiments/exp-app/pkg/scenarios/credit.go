@@ -2,6 +2,7 @@ package scenarios
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -25,91 +26,53 @@ func NewCreditScenario(executor *workload.Executor) *CreditScenario {
 	}
 }
 
-// MintCredits creates credits for properties
-func (s *CreditScenario) MintCredits(ctx context.Context, client *gateway.ClientWrapper, count int) error {
-	for i := 0; i < count; i++ {
+// MintCreditsContinuous runs a continuous minting loop.
+// On every tick it fires one SubmitAsync per property; each commit is awaited
+// in its own goroutine so the ticker loop never blocks on ordering latency.
+func (s *CreditScenario) MintCreditsContinuous(
+	ctx context.Context,
+	gw *gateway.ClientWrapper,
+	interval time.Duration,
+	nProps int,
+	quantityPerMint int64) error {
+	tick := 0
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	ownerID := gw.GetIdentityID()
+
+	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		default:
+		case <-ticker.C:
+			timestamp := time.Now().Format(time.RFC3339)
+
+			for propIdx := 0; propIdx < nProps; propIdx++ {
+				propID := uint64(propIdx + 1)
+				propertyID, _ := json.Marshal([]string{ownerID, fmt.Sprintf("%d", propID)})
+				txID := fmt.Sprintf("mint-tick%d-prop%d", tick, propID)
+
+				// Capture start time and submit without blocking the loop.
+				start := time.Now()
+				_, commit, err := gw.SubmitAsync(
+					"MintQuantityCreditsForProperty",
+					string(propertyID),
+					strconv.FormatInt(quantityPerMint, 10),
+					timestamp,
+				)
+				if err != nil {
+					fmt.Printf("MintCreditsContinuous submit error tick %d prop %d: %v\n", tick, propID, err)
+					recordTransaction(s.collector, txID, "credit-mint-continuous", start, err)
+					continue
+				}
+
+				// Wait for commit in a goroutine; records end-to-end latency when done.
+				awaitAndRecord(s.collector, txID, "credit-mint-continuous", start, commit)
+			}
+
+			tick++
 		}
-
-		quantity := int64((i + 1) * 1000) // 1000, 2000, 3000...
-		propertyID := fmt.Sprintf("property-%d", i)
-
-		txFunc := func(ctx context.Context, c *gateway.ClientWrapper) (string, error) {
-			_, err := c.SubmitTransaction(
-				"MintQuantityCreditForChunk",
-				propertyID,
-				strconv.FormatInt(quantity, 10),
-			)
-			return "", err
-		}
-
-		start := time.Now()
-		_, err := txFunc(ctx, client)
-		latency := time.Since(start)
-
-		metric := &metrics.TransactionMetric{
-			ID:       fmt.Sprintf("mint-credit-%d", i),
-			Scenario: "credit-mint",
-			Latency:  latency,
-			Success:  err == nil,
-			Error:    "",
-		}
-
-		if err != nil {
-			metric.Error = err.Error()
-		}
-
-		s.collector.Record(metric)
 	}
-
-	return nil
-}
-
-// TransferCredits transfers credits from mint to user wallet
-func (s *CreditScenario) TransferCredits(ctx context.Context, client *gateway.ClientWrapper, count int) error {
-	for i := 0; i < count; i++ {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		quantity := int64((i + 1) * 500)
-		mintCreditID := fmt.Sprintf("mint-credit-%d", i)
-
-		txFunc := func(ctx context.Context, c *gateway.ClientWrapper) (string, error) {
-			// TransferFromMintToWallet expects composite key as array
-			_, err := c.SubmitTransaction(
-				"TransferFromMintToWallet",
-				mintCreditID,
-				strconv.FormatInt(quantity, 10),
-			)
-			return "", err
-		}
-
-		start := time.Now()
-		_, err := txFunc(ctx, client)
-		latency := time.Since(start)
-
-		metric := &metrics.TransactionMetric{
-			ID:       fmt.Sprintf("transfer-credit-%d", i),
-			Scenario: "credit-transfer",
-			Latency:  latency,
-			Success:  err == nil,
-			Error:    "",
-		}
-
-		if err != nil {
-			metric.Error = err.Error()
-		}
-
-		s.collector.Record(metric)
-	}
-
-	return nil
 }
 
 // BurnCredits burns credits with multipliers
@@ -122,12 +85,12 @@ func (s *CreditScenario) BurnCredits(ctx context.Context, client *gateway.Client
 		}
 
 		quantity := int64((i + 1) * 100)
-		burnCreditID := fmt.Sprintf("burn-credit-%d", i)
+		burnCreditIDBytes, _ := json.Marshal([]string{fmt.Sprintf("burn-credit-%d", i)})
 
 		txFunc := func(ctx context.Context, c *gateway.ClientWrapper) (string, error) {
 			_, err := c.SubmitTransaction(
 				"BurnNominalQuantity",
-				burnCreditID,
+				string(burnCreditIDBytes),
 				strconv.FormatInt(quantity, 10),
 			)
 			return "", err
@@ -135,21 +98,13 @@ func (s *CreditScenario) BurnCredits(ctx context.Context, client *gateway.Client
 
 		start := time.Now()
 		_, err := txFunc(ctx, client)
-		latency := time.Since(start)
-
-		metric := &metrics.TransactionMetric{
+		s.collector.Record(&metrics.TransactionMetric{
 			ID:       fmt.Sprintf("burn-credit-%d", i),
 			Scenario: "credit-burn",
-			Latency:  latency,
+			Latency:  time.Since(start),
 			Success:  err == nil,
-			Error:    "",
-		}
-
-		if err != nil {
-			metric.Error = err.Error()
-		}
-
-		s.collector.Record(metric)
+			Error:    getErrorString(err),
+		})
 	}
 
 	return nil
@@ -164,20 +119,12 @@ func (s *CreditScenario) QueryCreditState(ctx context.Context, client *gateway.C
 
 	start := time.Now()
 	_, err := txFunc(ctx, client)
-	latency := time.Since(start)
-
-	metric := &metrics.TransactionMetric{
+	s.collector.Record(&metrics.TransactionMetric{
 		ID:       fmt.Sprintf("query-credit-%s", creditID),
 		Scenario: "credit-query",
-		Latency:  latency,
+		Latency:  time.Since(start),
 		Success:  err == nil,
-		Error:    "",
-	}
-
-	if err != nil {
-		metric.Error = err.Error()
-	}
-
-	s.collector.Record(metric)
+		Error:    getErrorString(err),
+	})
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
@@ -28,6 +29,7 @@ func main() {
 	outputJSON := flag.String("output-json", "results.json", "Output JSON file")
 	outputCSV := flag.String("output-csv", "results.csv", "Output CSV file")
 	metricsInterval := flag.Duration("metrics-interval", 5*time.Second, "Metrics print interval")
+	mintInterval := flag.Duration("mint-interval", 100*time.Millisecond, "Interval between credit minting rounds")
 
 	flag.Parse()
 
@@ -104,9 +106,14 @@ func main() {
 
 	log.Println("Connected! Starting performance test...")
 
-	// 0. Setup
+	const (
+		nPropsPerOrg    = 2
+		nChunksPerProp  = 2
+		quantityPerMint = int64(1000)
+	)
+
 	setupManager := setup.NewSetupManager(client, profile)
-	err = setupManager.InitializeBETS(context.Background(), 2, 2)
+	err = setupManager.InitializeBETS(context.Background(), nPropsPerOrg, nChunksPerProp)
 	if err != nil {
 		log.Fatalf("Setup failed: %v", err)
 	}
@@ -122,19 +129,29 @@ func main() {
 
 	executor := workload.NewExecutor(client, execCfg)
 
-	// Simple test transaction: CheckCredAttr
-	testTx := func(ctx context.Context, c *gateway.ClientWrapper) (string, error) {
-		result, err := c.EvaluateTransaction("CheckCredAttr", "price_viewer")
-		return string(result), err
-	}
+	// Scenarios setup
+	creditScenario := scenarios.NewCreditScenario(executor)
+	biddingScenario := scenarios.NewBiddingScenario(executor)
+	coupledScenario := scenarios.NewCoupledAuctionScenario(executor)
+	interopScenario := scenarios.NewInteropScenario(executor)
 
-	// Run test
-	ctx, cancel := context.WithTimeout(context.Background(), *duration+10*time.Second)
+	// Run full BETS workflow
+	ctx, cancel := context.WithTimeout(context.Background(), *duration+30*time.Second)
 	defer cancel()
 
-	if err := executor.Execute(ctx, testTx, "simple-read"); err != nil {
-		log.Printf("Execution error: %v", err)
-	}
+	var wg sync.WaitGroup
+
+	log.Println("Starting Parallel Continuous Workload...")
+
+	// 1. Continuous Minting (every 10 seconds)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		log.Println("Launcher: Continuous Minting started")
+		if err := creditScenario.MintCreditsContinuous(ctx, client, *mintInterval, nPropsPerOrg, quantityPerMint); err != nil && err != context.Canceled {
+			log.Printf("MintCreditsContinuous error: %v", err)
+		}
+	}()
 
 	// Print final report
 	reporter := metrics.NewReporter(executor.GetCollector())
