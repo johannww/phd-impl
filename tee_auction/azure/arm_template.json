@@ -11,7 +11,7 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "North Europe",
+      "defaultValue": "Central India",
       "metadata": {
         "description": "Location for all resources."
       }
