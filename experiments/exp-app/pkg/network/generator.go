@@ -16,15 +16,17 @@ type Generator struct {
 	varsDir    string
 	valuesFile string
 	minikubeIP string
+	teeIP      string
 }
 
 // NewGenerator creates a new network profile generator
-func NewGenerator(deployDir, minikubeIP string) *Generator {
+func NewGenerator(deployDir, minikubeIP, teeIP string) *Generator {
 	return &Generator{
 		deployDir:  deployDir,
 		varsDir:    filepath.Join(deployDir, "vars"),
 		valuesFile: filepath.Join(deployDir, "helm", "values.yaml"),
 		minikubeIP: minikubeIP,
+		teeIP:      teeIP,
 	}
 }
 
@@ -84,6 +86,9 @@ func (g *Generator) Generate() (*NetworkProfile, error) {
 
 	// Configure SICAR
 	profile.SICAR = g.generateSICARConfig()
+
+	// Configure TEE Auction container
+	profile.TEEAuction = g.generateTEEAuctionConfig()
 
 	return profile, nil
 }
@@ -185,6 +190,21 @@ func (g *Generator) generateSICARConfig() SICARConfig {
 		PrivateKey:  filepath.Join(g.varsDir, "sicar", "server.key"),
 		Endpoint:    fmt.Sprintf("%s:30443", g.minikubeIP),
 		DataPath:    filepath.Join(g.varsDir, "organizations", "sicar", "sicar.json"),
+	}
+}
+
+// generateTEEAuctionConfig generates TEE auction container configuration.
+// When teeIP is empty the service is marked as disabled.
+func (g *Generator) generateTEEAuctionConfig() TEEAuctionConfig {
+	if g.teeIP == "" {
+		return TEEAuctionConfig{Enabled: false}
+	}
+	const teePort = 8080
+	return TEEAuctionConfig{
+		Enabled: true,
+		IP:      g.teeIP,
+		Port:    teePort,
+		Address: fmt.Sprintf("%s:%d", g.teeIP, teePort),
 	}
 }
 
