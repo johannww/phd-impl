@@ -14,6 +14,7 @@ func main() {
 	// Parse flags
 	deployDir := flag.String("deploy-dir", "", "Path to deployment directory (experiments/deploy)")
 	minikubeIP := flag.String("minikube-ip", "127.0.0.1", "Minikube IP address")
+	teeIP := flag.String("tee-ip", "", "Public IP of the TEE auction confidential container (empty = disabled)")
 	outputFile := flag.String("output", "network-profile.json", "Output profile file")
 	verbose := flag.Bool("verbose", false, "Verbose output")
 
@@ -33,10 +34,13 @@ func main() {
 	if *verbose {
 		log.Printf("Generating network profile from: %s", *deployDir)
 		log.Printf("Using Minikube IP: %s", *minikubeIP)
+		if *teeIP != "" {
+			log.Printf("TEE auction IP: %s", *teeIP)
+		}
 	}
 
 	// Create generator
-	gen := network.NewGenerator(*deployDir, *minikubeIP)
+	gen := network.NewGenerator(*deployDir, *minikubeIP, *teeIP)
 
 	// Generate profile
 	profile, err := gen.Generate()
@@ -51,6 +55,7 @@ func main() {
 		log.Printf("  Organizations: %d", len(profile.Peers))
 		log.Printf("  Orderers: %d", len(profile.Orderers))
 		log.Printf("  SICAR: %v", profile.SICAR.Enabled)
+		log.Printf("  TEE Auction: enabled=%v address=%s", profile.TEEAuction.Enabled, profile.TEEAuction.Address)
 	}
 
 	// Ensure output directory exists

@@ -2,12 +2,13 @@ package network
 
 // NetworkProfile contains all network configuration for exp-app
 type NetworkProfile struct {
-	Network   NetworkConfig         `json:"network"`
-	Peers     map[string]PeerConfig `json:"peers"` // key: org_name, value: peer config
-	Orderers  []OrdererConfig       `json:"orderers"`
-	DataAPI   DataAPIConfig         `json:"data_api"`
-	SICAR     SICARConfig           `json:"sicar"`
-	Chaincode ChaincodeConfig       `json:"chaincode"`
+	Network    NetworkConfig         `json:"network"`
+	Peers      map[string]PeerConfig `json:"peers"` // key: org_name, value: peer config
+	Orderers   []OrdererConfig       `json:"orderers"`
+	DataAPI    DataAPIConfig         `json:"data_api"`
+	SICAR      SICARConfig           `json:"sicar"`
+	Chaincode  ChaincodeConfig       `json:"chaincode"`
+	TEEAuction TEEAuctionConfig      `json:"tee_auction"`
 }
 
 // NetworkConfig basic network information
@@ -82,14 +83,23 @@ type ChaincodeConfig struct {
 	Version string `json:"version"`
 }
 
+// TEEAuctionConfig holds the address of the confidential container running the TEE auction service
+type TEEAuctionConfig struct {
+	Enabled bool   `json:"enabled"`
+	IP      string `json:"ip"`      // Public IP assigned by Azure Container Instances
+	Port    int    `json:"port"`    // HTTPS port (default 8080)
+	Address string `json:"address"` // Full address, e.g. "1.2.3.4:8080"
+}
+
 // NewNetworkProfile creates a new empty network profile
 func NewNetworkProfile() *NetworkProfile {
 	return &NetworkProfile{
-		Network:   NetworkConfig{},
-		Peers:     make(map[string]PeerConfig),
-		Orderers:  make([]OrdererConfig, 0),
-		DataAPI:   DataAPIConfig{},
-		SICAR:     SICARConfig{},
-		Chaincode: ChaincodeConfig{},
+		Network:    NetworkConfig{},
+		Peers:      make(map[string]PeerConfig),
+		Orderers:   make([]OrdererConfig, 0),
+		DataAPI:    DataAPIConfig{},
+		SICAR:      SICARConfig{},
+		Chaincode:  ChaincodeConfig{},
+		TEEAuction: TEEAuctionConfig{},
 	}
 }
