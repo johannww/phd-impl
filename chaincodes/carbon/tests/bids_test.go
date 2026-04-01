@@ -143,7 +143,7 @@ func TestSellBidOwnerCanReadPrivatePrice(t *testing.T) {
 	initialCreditQuantity := testdata.MintCredits[0].Quantity
 	sellerID := identities.GetID(stub)
 
-	sellQuantity := int64(4000)
+	sellQuantity := initialCreditQuantity
 	stub.TransientMap = map[string][]byte{
 		"price": []byte("1234"),
 	}
