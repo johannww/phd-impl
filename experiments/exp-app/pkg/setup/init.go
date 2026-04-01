@@ -21,6 +21,13 @@ func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nCh
 	}
 	allCommits = append(allCommits, commits...)
 
+	// 1. Set active policies
+	commits, err = s.SetupPolicies(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to setup policies: %v", err)
+	}
+	allCommits = append(allCommits, commits...)
+
 	// 1. Register Companies for each org
 	commits, err = s.SetupCompanies(ctx)
 	if err != nil {
