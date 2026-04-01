@@ -337,7 +337,7 @@ func (c *CarbonContract) PublishTEEAuctionResults(
 		}
 
 		var serializedResultsPvt tee_auction.SerializedAuctionResultTEE
-		err = json.Unmarshal(serializedResultPvtBytes, &serializedResultsPub)
+		err = json.Unmarshal(serializedResultPvtBytes, &serializedResultsPvt)
 		if err != nil {
 			return fmt.Errorf("could not unmarshal serialized result pvt: %v", err)
 		}
