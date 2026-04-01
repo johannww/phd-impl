@@ -59,6 +59,9 @@ ${SCRIPT_DIR}/bin/exp-app \
     --concurrency=5 \
     --metrics-interval=10m \
     --mint-interval=100ms \
+    --buy-bid-interval=1s \
+    --sell-bid-interval=2s \
+    --auction-interval=15s \
     --output-json=results.json \
     --output-csv=results.csv
 

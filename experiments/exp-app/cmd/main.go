@@ -12,6 +12,8 @@ import (
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/metrics"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/network"
+	"github.com/johannww/phd-impl/experiments/exp-app/pkg/scenarios"
+	"github.com/johannww/phd-impl/experiments/exp-app/pkg/setup"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/workload"
 )
 
@@ -30,6 +32,9 @@ func main() {
 	outputCSV := flag.String("output-csv", "results.csv", "Output CSV file")
 	metricsInterval := flag.Duration("metrics-interval", 5*time.Second, "Metrics print interval")
 	mintInterval := flag.Duration("mint-interval", 100*time.Millisecond, "Interval between credit minting rounds")
+	buyBidInterval := flag.Duration("buy-bid-interval", 1*time.Second, "Interval between buy bid submissions")
+	sellBidInterval := flag.Duration("sell-bid-interval", 2*time.Second, "Interval between sell bid submissions")
+	auctionInterval := flag.Duration("auction-interval", 15*time.Second, "Interval between auction rounds")
 
 	flag.Parse()
 
