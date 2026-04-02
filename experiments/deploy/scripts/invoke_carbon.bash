@@ -10,6 +10,6 @@ export FABRIC_CFG_PATH="${SCRIPT_DIR}/../vars"
 peer chaincode invoke \
   -o "${ORDERER_ADDRESS}" --cafile "${ORDERER_TLS_CA}" --tls \
   -C "${CHANNEL}" -n carbon \
-  --peerAddresses "${CORE_PEER_ADDRESS}" \
-  --tlsRootCertFiles "${CORE_PEER_TLS_ROOTCERT_FILE}" \
+  ${PEER_ADDRESSES[*]} \
+  ${TLS_ROOTCERT_FILES[*]} \
   -c '{"function":"CheckCredAttr","Args":["price_viewer"]}'
