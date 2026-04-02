@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 )
 
 // Reporter handles output of metrics in various formats
@@ -110,11 +111,16 @@ func (r *Reporter) ExportCSV(filename string) error {
 	}
 
 	// Write metrics
-	for _, m := range r.collector.GetAllMetrics() {
+	allMetrics := r.collector.GetAllMetrics()
+	slices.SortFunc(allMetrics, func(a, b *TransactionMetric) int {
+		return a.Timestamp.Compare(b.Timestamp)
+	})
+
+	for _, m := range allMetrics {
 		record := []string{
 			m.ID,
 			m.Scenario,
-			m.Timestamp.Format("2006-01-02 15:04:05"),
+			m.Timestamp.Format("2006-01-02 15:04:05.000"),
 			fmt.Sprintf("%.2f", float64(m.Latency.Milliseconds())),
 			fmt.Sprintf("%v", m.Success),
 			m.Error,
