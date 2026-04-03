@@ -11,7 +11,6 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	ccstate "github.com/johannww/phd-impl/chaincodes/common/state"
-	carbon_utils "github.com/johannww/phd-impl/chaincodes/common/utils"
 	"github.com/johannww/phd-impl/chaincodes/interop/lock"
 	"google.golang.org/protobuf/proto"
 )
