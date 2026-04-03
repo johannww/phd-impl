@@ -130,6 +130,11 @@ func (c *CarbonContract) CreateBuyBidPrivateQuantity(ctx contractapi.Transaction
 	})
 }
 
+func (c *CarbonContract) ReturnCallerID(ctx contractapi.TransactionContextInterface) (string, error) {
+	id := identities.GetID(ctx.GetStub())
+	return id, nil
+}
+
 // CreateSellBid expects `quantity` and transient `price` to be provided as
 // scaled integers (see common.QUANTITY_SCALE and bids.PRICE_SCALE).
 func (c *CarbonContract) CreateSellBidFromCredit(
