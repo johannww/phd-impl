@@ -59,7 +59,7 @@ func CheckAuctionAllowedTimestamp(stub shim.ChaincodeStubInterface, bidTimestamp
 	if lockTimestamp == "" {
 		return true
 	}
-	return bidTimestamp < lockTimestamp
+	return bidTimestamp > lockTimestamp
 }
 
 // LockAuction sets the auction semaphore to the current transaction timestamp.
