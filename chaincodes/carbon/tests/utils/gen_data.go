@@ -229,7 +229,7 @@ func GenMintCredits(
 			for nDuration := int64(0); nDuration < nDurations; nDuration++ {
 				lastIssue := startTs.Add(time.Duration(nDuration-1) * issueInterval)
 				issueTs := startTs.Add(time.Duration(nDuration) * issueInterval)
-				issueTsStr := issueTs.Format(time.RFC3339)
+				issueTsStr := utils.UnixMillisNowFromGoTime(issueTs)
 
 				estimator := policies.Estimator{}
 				quantity, err := estimator.Estimate(chunk, lastIssue, issueTs)
@@ -284,7 +284,7 @@ func GenRandomBidsForMintCredits(issueStart time.Time, testData *TestData) {
 	var issueTsStr string
 	for i, mintCredit := range testData.MintCredits {
 		issueTs := issueStart.Add(time.Duration(time.Duration(i) * time.Second)).UTC()
-		issueTsStr = issueTs.Format(time.RFC3339)
+		issueTsStr = utils.UnixMillisNowFromGoTime(issueTs)
 		sellPrice := sellMinPrice + int64(mathrand.Intn(1000)) // Randomize sell price
 		sellBid := &bids.SellBid{
 			SellerID:  mintCredit.OwnerID,

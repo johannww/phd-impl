@@ -248,11 +248,7 @@ func publishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, withPrivate
 
 	buyerWallet.Quantity -= price * quantity
 
-	bidTS, err := stub.GetTxTimestamp()
-	if err != nil {
-		return fmt.Errorf("could not get transaction timestamp: %v", err)
-	}
-	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
+	bidTSStr := utils.UnixMillisNowFromStub(stub)
 
 	if !semaphore.CheckAuctionAllowedTimestamp(stub, bidTSStr) {
 		return fmt.Errorf(

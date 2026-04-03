@@ -288,11 +288,11 @@ func (c *CarbonContract) CommitDataForTEEAuction(ctx contractapi.TransactionCont
 				"which is required to commit auction data", identities.PriceViewer)
 		}
 
-		endRFC339Timestamp, err := semaphore.GetLockTimestamp(ctx.GetStub())
+		endUnixMillisHexTimestamp, err := semaphore.GetLockTimestamp(ctx.GetStub())
 		if err != nil {
 			return err
 		}
-		if endRFC339Timestamp == "" {
+		if endUnixMillisHexTimestamp == "" {
 			return fmt.Errorf("cannot commit data: auction semaphore must be locked first")
 		}
 
@@ -302,7 +302,7 @@ func (c *CarbonContract) CommitDataForTEEAuction(ctx contractapi.TransactionCont
 		}
 
 		auctionData := &auction.AuctionData{}
-		err = auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
+		err = auctionData.RetrieveData(ctx.GetStub(), endUnixMillisHexTimestamp)
 		if err != nil {
 			return fmt.Errorf("could not retrieve auction data: %v", err)
 		}
@@ -314,7 +314,7 @@ func (c *CarbonContract) CommitDataForTEEAuction(ctx contractapi.TransactionCont
 			return fmt.Errorf("could not serialize auction data: %v", err)
 		}
 
-		err = serializedAD.CommitmentToWorldState(ctx.GetStub(), endRFC339Timestamp)
+		err = serializedAD.CommitmentToWorldState(ctx.GetStub(), endUnixMillisHexTimestamp)
 		return err
 	})
 }

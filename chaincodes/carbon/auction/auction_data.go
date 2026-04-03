@@ -28,7 +28,7 @@ type AuctionData struct {
 }
 
 // TODO: ensure that all data is fetched
-func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Timestamp string) error {
+func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endUnixMillisHexTimestamp string) error {
 	if cid.AssertAttributeValue(stub, identities.PriceViewer, "true") != nil {
 		return fmt.Errorf("caller does not have the %s attribute, which is required to get prices", identities.PriceViewer)
 	}
@@ -41,12 +41,12 @@ func (a *AuctionData) RetrieveData(stub shim.ChaincodeStubInterface, endRFC339Ti
 	}
 	a.Coupled = auctionType == AUCTION_COUPLED
 
-	a.BuyBids, err = state.GetStatesByRangeCompositeKey[bids.BuyBid](stub, bids.BUY_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
+	a.BuyBids, err = state.GetStatesByRangeCompositeKey[bids.BuyBid](stub, bids.BUY_BID_PREFIX, []string{""}, []string{endUnixMillisHexTimestamp})
 	if err != nil {
 		return fmt.Errorf("could not get buy bids: %v", err)
 	}
 
-	a.SellBids, err = state.GetStatesByRangeCompositeKey[bids.SellBid](stub, bids.SELL_BID_PREFIX, []string{""}, []string{endRFC339Timestamp})
+	a.SellBids, err = state.GetStatesByRangeCompositeKey[bids.SellBid](stub, bids.SELL_BID_PREFIX, []string{""}, []string{endUnixMillisHexTimestamp})
 	if err != nil {
 		return fmt.Errorf("could not get sell bids: %v", err)
 	}

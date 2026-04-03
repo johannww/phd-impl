@@ -52,7 +52,7 @@ func TestBid(t *testing.T) {
 
 	creatorId := identities.GetID(stub)
 	protoTs, _ := stub.GetTxTimestamp()
-	lastInsertTimestamp := utils.TimestampRFC3339UtcString(protoTs)
+	lastInsertTimestamp := utils.UnixMillisNowFromStub(stub)
 	buyBid := &bids.BuyBid{}
 
 	err = buyBid.FromWorldState(stub, []string{lastInsertTimestamp, creatorId})
@@ -91,7 +91,7 @@ func TestBid(t *testing.T) {
 	require.NoError(t, err, "Error publishing buy bid with private quantity")
 
 	privateProtoTs, _ := stub.GetTxTimestamp()
-	privateInsertTimestamp := utils.TimestampRFC3339UtcString(privateProtoTs)
+	privateInsertTimestamp := utils.UnixMillisNowFromTransactionTimestamp(privateProtoTs)
 
 	// Owner should see private price and private quantity, while public quantity remains hidden.
 	privateQtyBid := &bids.BuyBid{}
@@ -152,9 +152,7 @@ func TestSellBidOwnerCanReadPrivatePrice(t *testing.T) {
 	stub.MockTransactionStart("tx-sell-1")
 	err := bids.PublishSellBidFromCredit(stub, sellQuantity, creditID)
 	require.NoError(t, err)
-	protoTs, err := stub.GetTxTimestamp()
-	require.NoError(t, err)
-	bidTS := utils.TimestampRFC3339UtcString(protoTs)
+	bidTS := utils.UnixMillisNowFromStub(stub)
 	stub.MockTransactionEnd("tx-sell-1")
 
 	bidKey := []string{bidTS, sellerID}
@@ -232,9 +230,7 @@ func TestRetractBidRefundsWalletAndDeletesBid(t *testing.T) {
 	require.NoError(t, err, "Error publishing buy bid")
 
 	creatorID := identities.GetID(stub)
-	protoTs, err := stub.GetTxTimestamp()
-	require.NoError(t, err)
-	bidTS := utils.TimestampRFC3339UtcString(protoTs)
+	bidTS := utils.UnixMillisNowFromStub(stub)
 	bidID := []string{bidTS, creatorID}
 
 	// Wallet should be debited after placing the bid.
@@ -311,9 +307,7 @@ func TestPublishSellBidFromWalletFlow(t *testing.T) {
 	stub.MockTransactionStart("tx-sell-wallet-1")
 	err = bids.PublishSellBidFromWallet(stub, sellQuantity)
 	require.NoError(t, err)
-	protoTs, err := stub.GetTxTimestamp()
-	require.NoError(t, err)
-	bidTS := utils.TimestampRFC3339UtcString(protoTs)
+	bidTS := utils.UnixMillisNowFromStub(stub)
 	stub.MockTransactionEnd("tx-sell-wallet-1")
 
 	// wallet should be debited
@@ -360,7 +354,7 @@ func TestBidBatchRecover(t *testing.T) {
 
 	numOfBids := int64(100)
 	initialTime := time.Now()
-	timeBeforeInsertion := utils.TimestampRFC3339UtcString(timestamppb.New(initialTime))
+	timeBeforeInsertion := utils.UnixMillisNowFromTransactionTimestamp(timestamppb.New(initialTime))
 	for i := range numOfBids {
 		stub.TransientMap = map[string][]byte{
 			"price": []byte(strconv.FormatInt(i+10, 10)),
@@ -372,7 +366,7 @@ func TestBidBatchRecover(t *testing.T) {
 			t.Fatalf("Error publishing buy bid: %v", err)
 		}
 	}
-	timeAfterInsertion := utils.TimestampRFC3339UtcString(timestamppb.New(stub.TxTimestamp.AsTime().Add(time.Duration(1) * time.Second)))
+	timeAfterInsertion := utils.UnixMillisNowFromTransactionTimestamp(timestamppb.New(stub.TxTimestamp.AsTime().Add(time.Duration(1) * time.Second)))
 
 	buyBids, err := state.GetStatesByRangeCompositeKey[bids.BuyBid](stub, bids.BUY_BID_PREFIX, []string{timeBeforeInsertion}, []string{timeAfterInsertion})
 	if err != nil {
@@ -524,13 +518,12 @@ func TestBidAllowedAfterAuctionLockTimestamp(t *testing.T) {
 	require.NoError(t, err)
 	stub.MockTransactionEnd("tx-lock")
 
-	// A bid whose tx timestamp is strictly before the lock timestamp (at
-	// second granularity, since RFC3339 has no sub-second precision) must be
+	// A bid whose tx timestamp is strictly before the lock timestamp  must be
 	// accepted even after the lock is in place.
 	stub.Creator = possibleIds[setup.IDEMIX_ID]
 	stub.TransientMap = map[string][]byte{"price": []byte("2000")}
 	stub.MockTransactionStart("tx-bid-just-before")
-	stub.TxTimestamp = timestamppb.New(lockTime.Add(-1 * time.Second))
+	stub.TxTimestamp = timestamppb.New(lockTime.Add(-1 * time.Millisecond))
 	err = bids.PublishBuyBidWithPublicQuanitity(stub, 50)
 	require.Error(t, err, "bid just before lock timestamp should be rejected")
 	stub.MockTransactionEnd("tx-bid-just-before")

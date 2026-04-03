@@ -370,11 +370,7 @@ func validateAndExtractSellBidInput(stub shim.ChaincodeStubInterface, quantity i
 		return "", 0, "", fmt.Errorf("could not parse price: %v", err)
 	}
 
-	bidTS, err := stub.GetTxTimestamp()
-	if err != nil {
-		return "", 0, "", fmt.Errorf("could not get transaction timestamp: %v", err)
-	}
-	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
+	bidTSStr := utils.UnixMillisNowFromStub(stub)
 
 	if !semaphore.CheckAuctionAllowedTimestamp(stub, bidTSStr) {
 		return "", 0, "", fmt.Errorf(

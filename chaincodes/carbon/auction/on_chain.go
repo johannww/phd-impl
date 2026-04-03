@@ -57,8 +57,7 @@ func getBids(stub shim.ChaincodeStubInterface) ([]*bids.SellBid, []*bids.BuyBid,
 	var sellBids []*bids.SellBid
 	var err1, err2 error
 
-	protoTs, _ := stub.GetTxTimestamp()
-	ts := utils.TimestampRFC3339UtcString(protoTs)
+	ts := utils.UnixMillisNowFromStub(stub)
 	rangeStart, rangeEnd := []string{""}, []string{ts}
 
 	wg := sync.WaitGroup{}

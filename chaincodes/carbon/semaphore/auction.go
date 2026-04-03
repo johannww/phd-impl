@@ -25,7 +25,7 @@ func IsLocked(stub shim.ChaincodeStubInterface) (bool, error) {
 	return len(val) > 0, nil
 }
 
-// GetLockTimestamp returns the RFC3339 UTC timestamp stored in the semaphore,
+// GetLockTimestamp returns the padded Unix millis timestamp string stored in the auction semaphore key,
 // or an empty string if the auction is not currently locked.
 func GetLockTimestamp(stub shim.ChaincodeStubInterface) (string, error) {
 	val, err := stub.GetState(AUCTION_KEY)
@@ -38,11 +38,7 @@ func GetLockTimestamp(stub shim.ChaincodeStubInterface) (string, error) {
 // Lock writes the current transaction timestamp into the semaphore key.
 // Callers are responsible for authorization checks before calling Lock.
 func Lock(stub shim.ChaincodeStubInterface) error {
-	txTS, err := stub.GetTxTimestamp()
-	if err != nil {
-		return fmt.Errorf("could not get transaction timestamp: %v", err)
-	}
-	lockTS := utils.TimestampRFC3339UtcString(txTS)
+	lockTS := utils.UnixMillisNowFromStub(stub)
 	return stub.PutState(AUCTION_KEY, []byte(lockTS))
 }
 

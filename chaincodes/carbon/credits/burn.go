@@ -118,8 +118,7 @@ func BurnNominalQuantity(stub shim.ChaincodeStubInterface, mintCreditID []string
 		return nil, err
 	}
 
-	protoTs, _ := stub.GetTxTimestamp()
-	burnTimestamp := utils.TimestampRFC3339UtcString(protoTs)
+	burnTimestamp := utils.UnixMillisNowFromStub(stub)
 
 	bc := &BurnCredit{
 		BurnQuantity:  burnQuantity,

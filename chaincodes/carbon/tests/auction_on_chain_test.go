@@ -12,6 +12,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
 	mocks "github.com/johannww/phd-impl/chaincodes/common/state/mocks"
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -63,7 +64,7 @@ func genAllMatchedBids(testData *utils_test.TestData, issueStart time.Time,
 	var issueTsStr string
 	for i, mintCredit := range testData.MintCredits {
 		issueTs := issueStart.Add(time.Duration(time.Duration(i) * time.Second)).UTC()
-		issueTsStr = issueTs.Format(time.RFC3339)
+		issueTsStr = utils.UnixMillisNowFromGoTime(issueTs)
 		sellBid := &bids.SellBid{
 			SellerID:  mintCredit.OwnerID,
 			CreditID:  (*mintCredit.GetID())[0],
