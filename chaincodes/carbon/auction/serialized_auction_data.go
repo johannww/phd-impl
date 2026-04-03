@@ -10,7 +10,7 @@ import (
 )
 
 type SerializedAuctionData struct {
-	AuctionDataBytes []byte // JSON Serialized AuctionData
+	AuctionDataBytes []byte // JSON Or Proto Serialized AuctionData
 	Sum              []byte // SHA256 sum of bytes of above fields
 }
 
