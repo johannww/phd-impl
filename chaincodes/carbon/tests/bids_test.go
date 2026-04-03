@@ -10,6 +10,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
+	"github.com/johannww/phd-impl/chaincodes/carbon/semaphore"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
 	utils_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/utils"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
@@ -408,6 +409,131 @@ func ensureAllBidsWereRetrieved(stub *mocks.MockStub, t *testing.T,
 			t.Fatalf("Expected private price %d, got %d", i+10, bid.PrivatePrice.Price)
 		}
 	}
+}
+
+func TestBidRejectedWhenAuctionLocked(t *testing.T) {
+	stub := mocks.NewMockStub("carbon", nil)
+	possibleIds := setup.SetupIdentities(stub)
+
+	// Set up a wallet for the bidder.
+	stub.Creator = possibleIds[setup.IDEMIX_ID]
+	stub.MockTransactionStart("tx-wallet")
+	createAndStoreWalletForCreator(t, stub, 200000000)
+	stub.MockTransactionEnd("tx-wallet")
+
+	// Lock the auction as TEEConfigurer — the lock timestamp is the tx timestamp.
+	// TxTimestamp must be set AFTER MockTransactionStart because MockTransactionStart
+	// overwrites it with time.Now().
+	stub.Creator = possibleIds[identities.TEEConfigurer]
+	stub.MockTransactionStart("tx-lock")
+	lockTime := time.Now().UTC().Truncate(time.Second)
+	stub.TxTimestamp = timestamppb.New(lockTime)
+	err := semaphore.LockAuction(stub)
+	require.NoError(t, err, "locking auction should succeed")
+	stub.MockTransactionEnd("tx-lock")
+
+	// Attempt a buy bid whose transaction timestamp equals the lock timestamp — must be rejected.
+	stub.Creator = possibleIds[setup.IDEMIX_ID]
+	stub.TransientMap = map[string][]byte{"price": []byte("1000")}
+	stub.MockTransactionStart("tx-bid-equal")
+	stub.TxTimestamp = timestamppb.New(lockTime) // same instant → >= lock
+	err = bids.PublishBuyBidWithPublicQuanitity(stub, 100)
+	require.Error(t, err, "bid at the lock timestamp should be rejected")
+	require.Contains(t, err.Error(), "auction lock timestamp")
+	stub.MockTransactionEnd("tx-bid-equal")
+
+	// A bid strictly after the lock timestamp must also be rejected.
+	stub.MockTransactionStart("tx-bid-after")
+	stub.TxTimestamp = timestamppb.New(lockTime.Add(1 * time.Second))
+	err = bids.PublishBuyBidWithPublicQuanitity(stub, 100)
+	require.Error(t, err, "bid after the lock timestamp should be rejected")
+	stub.MockTransactionEnd("tx-bid-after")
+}
+
+func TestSellBidRejectedWhenAuctionLocked(t *testing.T) {
+	nOwners := 1
+	nChunks := 1
+	nCompanies := 0
+	startTimestamp := "2023-01-01T00:00:00Z"
+	endTimestamp := "2023-01-01T00:05:00Z"
+	issueInterval := 30 * time.Second
+	testdata := utils_test.GenData(
+		nOwners, nChunks, nCompanies,
+		startTimestamp, endTimestamp, issueInterval,
+	)
+	stub := mocks.NewMockStub("carbon", nil)
+	possibleIds := *testdata.Identities
+
+	stub.MockTransactionStart("tx-setup")
+	testdata.SaveToWorldState(stub)
+	stub.MockTransactionEnd("tx-setup")
+
+	creditID := (*testdata.MintCredits[0].GetID())[0]
+	sellQuantity := testdata.MintCredits[0].Quantity
+
+	// Lock the auction as TEEConfigurer.
+	// TxTimestamp must be set AFTER MockTransactionStart because MockTransactionStart
+	// overwrites it with time.Now().
+	stub.Creator = possibleIds[identities.TEEConfigurer]
+	stub.MockTransactionStart("tx-lock")
+	lockTime := time.Now().UTC().Truncate(time.Second)
+	stub.TxTimestamp = timestamppb.New(lockTime)
+	err := semaphore.LockAuction(stub)
+	require.NoError(t, err)
+	stub.MockTransactionEnd("tx-lock")
+
+	// Attempt a sell bid at a timestamp >= the lock — must be rejected.
+	ownerID := possibleIds[utils_test.OWNER_PREFIX+"0"]
+	stub.Creator = ownerID
+	stub.TransientMap = map[string][]byte{"price": []byte("500")}
+	stub.MockTransactionStart("tx-sell-locked")
+	stub.TxTimestamp = timestamppb.New(lockTime) // same instant → >= lock
+	err = bids.PublishSellBidFromCredit(stub, sellQuantity, creditID)
+	require.Error(t, err, "sell bid at lock timestamp should be rejected")
+	require.Contains(t, err.Error(), "auction lock timestamp")
+	stub.MockTransactionEnd("tx-sell-locked")
+}
+
+func TestBidAllowedBeforeAuctionLockTimestamp(t *testing.T) {
+	stub := mocks.NewMockStub("carbon", nil)
+	possibleIds := setup.SetupIdentities(stub)
+
+	// Set up a wallet for the bidder.
+	stub.Creator = possibleIds[setup.IDEMIX_ID]
+	stub.MockTransactionStart("tx-wallet")
+	createAndStoreWalletForCreator(t, stub, 200000000)
+	stub.MockTransactionEnd("tx-wallet")
+
+	// Place a buy bid before locking.
+	// TxTimestamp must be set AFTER MockTransactionStart because MockTransactionStart
+	// overwrites it with time.Now().
+	stub.TransientMap = map[string][]byte{"price": []byte("1000")}
+	stub.MockTransactionStart("tx-bid-before")
+	bidTime := time.Now().UTC().Truncate(time.Second)
+	stub.TxTimestamp = timestamppb.New(bidTime)
+	err := bids.PublishBuyBidWithPublicQuanitity(stub, 100)
+	require.NoError(t, err, "bid before lock should succeed")
+	stub.MockTransactionEnd("tx-bid-before")
+
+	// Now lock the auction at a time strictly after the bid.
+	stub.Creator = possibleIds[identities.TEEConfigurer]
+	stub.MockTransactionStart("tx-lock")
+	lockTime := bidTime.Add(2 * time.Second)
+	stub.TxTimestamp = timestamppb.New(lockTime)
+	err = semaphore.LockAuction(stub)
+	require.NoError(t, err)
+	stub.MockTransactionEnd("tx-lock")
+
+	// A bid whose tx timestamp is strictly before the lock timestamp (at
+	// second granularity, since RFC3339 has no sub-second precision) must be
+	// accepted even after the lock is in place.
+	stub.Creator = possibleIds[setup.IDEMIX_ID]
+	stub.TransientMap = map[string][]byte{"price": []byte("2000")}
+	stub.MockTransactionStart("tx-bid-just-before")
+	stub.TxTimestamp = timestamppb.New(lockTime.Add(-1 * time.Second))
+	err = bids.PublishBuyBidWithPublicQuanitity(stub, 50)
+	require.NoError(t, err, "bid just before lock timestamp should be accepted")
+	stub.MockTransactionEnd("tx-bid-just-before")
 }
 
 func createAndStoreWalletForCreator(t *testing.T, stub *mocks.MockStub, currencyQuantity int64) {

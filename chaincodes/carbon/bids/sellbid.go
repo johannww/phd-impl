@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
+	"github.com/johannww/phd-impl/chaincodes/carbon/semaphore"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	ccstate "github.com/johannww/phd-impl/chaincodes/common/state"
@@ -374,6 +375,14 @@ func validateAndExtractSellBidInput(stub shim.ChaincodeStubInterface, quantity i
 		return "", 0, "", fmt.Errorf("could not get transaction timestamp: %v", err)
 	}
 	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
+
+	if !semaphore.CheckAuctionAllowedTimestamp(stub, bidTSStr) {
+		return "", 0, "", fmt.Errorf(
+			"bid timestamp %s is on or after the auction lock timestamp: "+
+				"no new bids are accepted until the current auction is finalized",
+			bidTSStr,
+		)
+	}
 
 	return ownerID, price, bidTSStr, nil
 }

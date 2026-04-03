@@ -15,6 +15,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
+	"github.com/johannww/phd-impl/chaincodes/carbon/semaphore"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
@@ -230,14 +231,20 @@ func (c *CarbonContract) ApplyBurnMultipliers(ctx contractapi.TransactionContext
 	})
 }
 
-// TODO: implement
+// LockAuctionSemaphore locks the auction semaphore to prevent concurrent auctions.
+// Only identities with the TEEConfigurer attribute are authorized.
 func (c *CarbonContract) LockAuctionSemaphore(ctx contractapi.TransactionContextInterface) error {
-	return c.withMetricsErr("LockAuctionSemaphore", func() error { return nil })
+	return c.withMetricsErr("LockAuctionSemaphore", func() error {
+		return semaphore.LockAuction(ctx.GetStub())
+	})
 }
 
-// TODO: implement
+// UnlockAuctionSemaphore releases the auction semaphore.
+// Only identities with the TEEConfigurer attribute are authorized.
 func (c *CarbonContract) UnlockAuctionSemaphore(ctx contractapi.TransactionContextInterface) error {
-	return c.withMetricsErr("UnlockAuctionSemaphore", func() error { return nil })
+	return c.withMetricsErr("UnlockAuctionSemaphore", func() error {
+		return semaphore.UnlockAuction(ctx.GetStub())
+	})
 }
 
 func (c *CarbonContract) SetAuctionType(
@@ -263,15 +270,24 @@ func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionCont
 	})
 }
 
-// CommitDataForTEEAuction commits the auction data to the world state
-// Since it is a write operation, it should not return the serialized auction data.
-// Thus, private data is not shared with the world state.
+// CommitDataForTEEAuction commits the auction data to the world state.
+// The end timestamp is taken from the auction lock timestamp set by
+// LockAuctionSemaphore — callers no longer supply it.
+// Since it is a write operation, private data is not shared with the world state.
 // To retrieve the auction data, use RetrieveDataForTEEAuction instead.
-func (c *CarbonContract) CommitDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) error {
+func (c *CarbonContract) CommitDataForTEEAuction(ctx contractapi.TransactionContextInterface) error {
 	return c.withMetricsErr("CommitDataForTEEAuction", func() error {
 		if cid.AssertAttributeValue(ctx.GetStub(), identities.PriceViewer, "true") != nil {
 			return fmt.Errorf("caller does not have the %s attribute, "+
 				"which is required to commit auction data", identities.PriceViewer)
+		}
+
+		endRFC339Timestamp, err := semaphore.GetLockTimestamp(ctx.GetStub())
+		if err != nil {
+			return err
+		}
+		if endRFC339Timestamp == "" {
+			return fmt.Errorf("cannot commit data: auction semaphore must be locked first")
 		}
 
 		auctionID, err := auction.IncrementAuctionID(ctx.GetStub())
@@ -298,11 +314,20 @@ func (c *CarbonContract) CommitDataForTEEAuction(ctx contractapi.TransactionCont
 }
 
 // RetrieveDataForTEEAuction retrieves the auction data from the world state.
+// The end timestamp is read from the auction semaphore — callers no longer supply it.
 // WARN: CALL THIS AS READ-ONLY OPERATION not to expose private data.
-func (c *CarbonContract) RetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface, endRFC339Timestamp string) (*auction.SerializedAuctionData, error) {
+func (c *CarbonContract) RetrieveDataForTEEAuction(ctx contractapi.TransactionContextInterface) (*auction.SerializedAuctionData, error) {
 	return c.withMetricsSerializedAuctionDataResult("RetrieveDataForTEEAuction", func() (*auction.SerializedAuctionData, error) {
+		endRFC339Timestamp, err := semaphore.GetLockTimestamp(ctx.GetStub())
+		if err != nil {
+			return nil, err
+		}
+		if endRFC339Timestamp == "" {
+			return nil, fmt.Errorf("cannot retrieve auction data: auction semaphore is not locked")
+		}
+
 		auctionData := &auction.AuctionData{}
-		err := auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
+		err = auctionData.RetrieveData(ctx.GetStub(), endRFC339Timestamp)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve auction data: %v", err)
 		}
@@ -346,6 +371,14 @@ func (c *CarbonContract) PublishTEEAuctionResults(
 		err2 := tee.VerifyTEEResult(ctx.GetStub(), &serializedResultsPvt)
 		if err1 != nil || err2 != nil {
 			return fmt.Errorf("could not verify TEE auction result: %v, %v", err1, err2)
+		}
+
+		locked, err := semaphore.IsLocked(ctx.GetStub())
+		if err != nil {
+			return err
+		}
+		if !locked {
+			return fmt.Errorf("cannot publish results: auction is not locked")
 		}
 
 		err = auction.ProcessOffChainAuctionResult(ctx.GetStub(),

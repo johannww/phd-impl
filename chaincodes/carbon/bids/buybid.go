@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
+	"github.com/johannww/phd-impl/chaincodes/carbon/semaphore"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	ccstate "github.com/johannww/phd-impl/chaincodes/common/state"
@@ -252,6 +253,14 @@ func publishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, withPrivate
 		return fmt.Errorf("could not get transaction timestamp: %v", err)
 	}
 	bidTSStr := utils.TimestampRFC3339UtcString(bidTS)
+
+	if !semaphore.CheckAuctionAllowedTimestamp(stub, bidTSStr) {
+		return fmt.Errorf(
+			"bid timestamp %s is on or after the auction lock timestamp: "+
+				"no new bids are accepted until the current auction is finalized",
+			bidTSStr,
+		)
+	}
 
 	buyBid := &BuyBid{
 		BuyerID:   buyerID,
