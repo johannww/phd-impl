@@ -68,13 +68,6 @@ func LockAuction(stub shim.ChaincodeStubInterface) error {
 	if err := cid.AssertAttributeValue(stub, identities.TEEConfigurer, "true"); err != nil {
 		return fmt.Errorf("caller is not authorized to lock auction: %v", err)
 	}
-	locked, err := IsLocked(stub)
-	if err != nil {
-		return err
-	}
-	if locked {
-		return fmt.Errorf("auction is already locked by another process")
-	}
 	return Lock(stub)
 }
 
