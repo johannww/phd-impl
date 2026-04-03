@@ -2,10 +2,13 @@ package scenarios
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
+	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/metrics"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/workload"
@@ -25,114 +28,83 @@ func NewBiddingScenario(executor *workload.Executor) *BiddingScenario {
 	}
 }
 
-// CreateBuyBids creates N buy bids with varying quantities
-func (s *BiddingScenario) CreateBuyBids(ctx context.Context, client *gateway.ClientWrapper, count int) error {
-	for i := 0; i < count; i++ {
+// CreateSellBidsContinuous runs a continuous sell bidding loop based on available credits
+func (s *BiddingScenario) CreateSellBidsContinuous(ctx context.Context, client *gateway.ClientWrapper, interval time.Duration) error {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	i := 0
+	sellerID := client.GetIdentityID()
+
+	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		default:
+		case <-ticker.C:
+			// 1. Fetch available credits
+			creditsList := []credits.MintCredit{}
+			creditsRes, err := client.EvaluateTransaction("GetAvailableCreditsByOwner", sellerID)
+			if err != nil {
+				log.Printf("Error fetching credits for seller %s: %v", sellerID, err)
+			}
+			err = json.Unmarshal(creditsRes, &creditsList)
+			if err != nil {
+				log.Printf("Error unmarshaling credits for seller %s: %v", sellerID, err)
+			}
+
+			if len(creditsList) == 0 {
+				continue
+			}
+
+			// 2. Create sell bid for available credits
+
+			for _, credit := range creditsList {
+				price := int64(20)
+
+				transient := map[string][]byte{
+					"price": []byte(strconv.FormatInt(price, 10)),
+				}
+
+				creditID := (*credit.GetID())[0]
+				creditIDStr, err := json.Marshal(creditID)
+				if err != nil {
+					log.Fatalf("Error marshaling credit ID for credit %v: %v", creditID, err)
+				}
+
+				start := time.Now()
+				_, txErr := client.SubmitWithTransient("CreateSellBidFromCredit", transient, strconv.FormatInt(credit.Quantity, 10), string(creditIDStr))
+				recordTransaction(s.collector, fmt.Sprintf("sell-bid-cont-%d", i), "bidding-sell-continuous", start, txErr)
+				i++
+
+			}
+
 		}
-
-		// Create buy bid with varying quantity
-		quantity := int64((i + 1) * 100) // 100, 200, 300...
-
-		txFunc := func(ctx context.Context, c *gateway.ClientWrapper) (string, error) {
-			_, err := c.SubmitTransaction("CreateBuyBidPublicQuantity", strconv.FormatInt(quantity, 10))
-			return "", err
-		}
-
-		start := time.Now()
-		_, err := txFunc(ctx, client)
-		latency := time.Since(start)
-
-		metric := &metrics.TransactionMetric{
-			ID:       fmt.Sprintf("buy-bid-%d", i),
-			Scenario: "bidding-buy",
-			Latency:  latency,
-			Success:  err == nil,
-			Error:    "",
-		}
-
-		if err != nil {
-			metric.Error = err.Error()
-		}
-
-		s.collector.Record(metric)
 	}
-
-	return nil
 }
 
-// CreateSellBids creates N sell bids with varying prices
-func (s *BiddingScenario) CreateSellBids(ctx context.Context, client *gateway.ClientWrapper, count int) error {
-	for i := 0; i < count; i++ {
+// CreateBuyBidsContinuous runs a continuous buy bidding loop
+func (s *BiddingScenario) CreateBuyBidsContinuous(ctx context.Context, client *gateway.ClientWrapper, interval time.Duration) error {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	i := 0
+
+	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		default:
+		case <-ticker.C:
+			quantity := int64(150)
+			price := int64(25)
+
+			transient := map[string][]byte{
+				"price":    []byte(strconv.FormatInt(price, 10)),
+				"quantity": []byte(strconv.FormatInt(quantity, 10)),
+			}
+
+			start := time.Now()
+			_, txErr := client.SubmitWithTransient("CreateBuyBidPrivateQuantity", transient)
+			recordTransaction(s.collector, fmt.Sprintf("buy-bid-cont-%d", i), "bidding-buy-continuous", start, txErr)
+
+			i++
 		}
-
-		// Create sell bid with varying quantity
-		quantity := int64((i + 1) * 50) // 50, 100, 150...
-		// Example credit ID - in real scenario this would come from minted credits
-		creditID := fmt.Sprintf("credit-%d", i)
-
-		txFunc := func(ctx context.Context, c *gateway.ClientWrapper) (string, error) {
-			_, err := c.SubmitTransaction(
-				"CreateSellBidFromWallet",
-				strconv.FormatInt(quantity, 10),
-				creditID,
-			)
-			return "", err
-		}
-
-		start := time.Now()
-		_, err := txFunc(ctx, client)
-		latency := time.Since(start)
-
-		metric := &metrics.TransactionMetric{
-			ID:       fmt.Sprintf("sell-bid-%d", i),
-			Scenario: "bidding-sell",
-			Latency:  latency,
-			Success:  err == nil,
-			Error:    "",
-		}
-
-		if err != nil {
-			metric.Error = err.Error()
-		}
-
-		s.collector.Record(metric)
 	}
-
-	return nil
-}
-
-// ReadBids reads existing bids for verification
-func (s *BiddingScenario) ReadBids(ctx context.Context, client *gateway.ClientWrapper, bidID string) error {
-	txFunc := func(ctx context.Context, c *gateway.ClientWrapper) (string, error) {
-		// This would be a read-only query function once implemented
-		_, err := c.EvaluateTransaction("QueryBid", bidID)
-		return "", err
-	}
-
-	start := time.Now()
-	_, err := txFunc(ctx, client)
-	latency := time.Since(start)
-
-	metric := &metrics.TransactionMetric{
-		ID:       fmt.Sprintf("read-bid-%s", bidID),
-		Scenario: "bidding-read",
-		Latency:  latency,
-		Success:  err == nil,
-		Error:    "",
-	}
-
-	if err != nil {
-		metric.Error = err.Error()
-	}
-
-	s.collector.Record(metric)
-	return nil
 }

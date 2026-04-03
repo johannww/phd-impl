@@ -158,6 +158,26 @@ func main() {
 		}
 	}()
 
+	// 2. Continuous Buy Bidding
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		log.Println("Launcher: Continuous Buy Bidding started")
+		if err := biddingScenario.CreateBuyBidsContinuous(ctx, client, *buyBidInterval); err != nil && err != context.Canceled {
+			log.Printf("CreateBuyBidsContinuous error: %v", err)
+		}
+	}()
+
+	// 3. Continuous Sell Bidding
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		log.Println("Launcher: Continuous Sell Bidding started")
+		if err := biddingScenario.CreateSellBidsContinuous(ctx, client, *sellBidInterval); err != nil && err != context.Canceled {
+			log.Printf("CreateSellBidsContinuous error: %v", err)
+		}
+	}()
+
 	// Print final report
 	reporter := metrics.NewReporter(executor.GetCollector())
 	reporter.PrintFinalReport()

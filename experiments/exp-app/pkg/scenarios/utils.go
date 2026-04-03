@@ -1,12 +1,10 @@
 package scenarios
 
 import (
-	"context"
 	"fmt"
 	"time"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
-	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/metrics"
 )
 
