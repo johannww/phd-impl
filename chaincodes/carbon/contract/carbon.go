@@ -254,9 +254,10 @@ func (c *CarbonContract) UnlockAuctionSemaphore(ctx contractapi.TransactionConte
 
 func (c *CarbonContract) SetAuctionType(
 	ctx contractapi.TransactionContextInterface,
-	auctionType auction.AuctionType,
+	auctionTypeStr string,
 ) error {
 	return c.withMetricsErr("SetAuctionType", func() error {
+		auctionType := auction.AuctionType(auctionTypeStr)
 		return auctionType.ToWorldState(ctx.GetStub())
 	})
 }
