@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -30,7 +31,7 @@ var _ state.WorldStateManager = (*RegistrySummary)(nil)
 func (r *RegistrySummary) ToProto() proto.Message {
 	lastUpdate := ""
 	if !r.LastUpdate.IsZero() {
-		lastUpdate = r.LastUpdate.UTC().Format(time.RFC3339)
+		lastUpdate = utils.UnixMillisNowFromGoTime(r.LastUpdate)
 	}
 	return &pb.RegistrySummary{
 		RegistryPropId:  r.RegistryPropID,
@@ -50,7 +51,7 @@ func (r *RegistrySummary) FromProto(m proto.Message) error {
 	r.RegistryPropID = pr.RegistryPropId
 	r.Status = pr.Status
 	if pr.LastUpdate != "" {
-		t, err := time.Parse(time.RFC3339, pr.LastUpdate)
+		t, err := utils.ParseHexTimestamp(pr.LastUpdate)
 		if err != nil {
 			return fmt.Errorf("could not parse LastUpdate %q: %v", pr.LastUpdate, err)
 		}
