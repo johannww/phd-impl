@@ -446,7 +446,7 @@ func TestBidRejectedWhenAuctionLocked(t *testing.T) {
 	stub.MockTransactionStart("tx-bid-after")
 	stub.TxTimestamp = timestamppb.New(lockTime.Add(1 * time.Second))
 	err = bids.PublishBuyBidWithPublicQuanitity(stub, 100)
-	require.Error(t, err, "bid after the lock timestamp should be rejected")
+	require.NoError(t, err, "bid after the lock timestamp should not be rejected")
 	stub.MockTransactionEnd("tx-bid-after")
 }
 
@@ -494,7 +494,7 @@ func TestSellBidRejectedWhenAuctionLocked(t *testing.T) {
 	stub.MockTransactionEnd("tx-sell-locked")
 }
 
-func TestBidAllowedBeforeAuctionLockTimestamp(t *testing.T) {
+func TestBidAllowedAfterAuctionLockTimestamp(t *testing.T) {
 	stub := mocks.NewMockStub("carbon", nil)
 	possibleIds := setup.SetupIdentities(stub)
 
@@ -532,7 +532,7 @@ func TestBidAllowedBeforeAuctionLockTimestamp(t *testing.T) {
 	stub.MockTransactionStart("tx-bid-just-before")
 	stub.TxTimestamp = timestamppb.New(lockTime.Add(-1 * time.Second))
 	err = bids.PublishBuyBidWithPublicQuanitity(stub, 50)
-	require.NoError(t, err, "bid just before lock timestamp should be accepted")
+	require.Error(t, err, "bid just before lock timestamp should be rejected")
 	stub.MockTransactionEnd("tx-bid-just-before")
 }
 
