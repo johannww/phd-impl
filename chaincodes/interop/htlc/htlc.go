@@ -70,11 +70,8 @@ func (h *HTLC) GetID() *[][]string {
 
 func (h *HTLC) UnlockCreditsAfterValidUntil(stub shim.ChaincodeStubInterface) error {
 	protoTs, _ := stub.GetTxTimestamp()
-	transactionTs := carbon_utils.TimestampRFC3339UtcString(protoTs)
-	now, err := time.Parse(time.RFC3339, transactionTs)
-	if err != nil {
-		return fmt.Errorf("failed to parse transaction timestamp %s: %v", transactionTs, err)
-	}
+	now := protoTs.AsTime().UTC()
+
 	validUntil, err := time.Parse(time.RFC3339, h.ValidUntil)
 	if err != nil {
 		return fmt.Errorf("failed to parse validUntil timestamp %s: %v", h.ValidUntil, err)
@@ -82,7 +79,7 @@ func (h *HTLC) UnlockCreditsAfterValidUntil(stub shim.ChaincodeStubInterface) er
 
 	if !now.After(validUntil) {
 		return fmt.Errorf("HTLC is still valid until %s, current time is %s",
-			h.ValidUntil, transactionTs)
+			h.ValidUntil, now.UTC().Format(time.RFC3339))
 	}
 
 	return nil
