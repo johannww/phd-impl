@@ -71,8 +71,8 @@ func (s *BiddingScenario) CreateSellBidsContinuous(ctx context.Context, client *
 				}
 
 				start := time.Now()
-				_, txErr := client.SubmitWithTransient("CreateSellBidFromCredit", transient, strconv.FormatInt(credit.Quantity, 10), string(creditIDStr))
-				recordTransaction(s.collector, fmt.Sprintf("sell-bid-cont-%d", i), "bidding-sell-continuous", start, txErr)
+				_, commit, txErr := client.SubmitAsyncWithTransient("CreateSellBidFromCredit", transient, strconv.FormatInt(credit.Quantity, 10), string(creditIDStr))
+				awaitAndRecord(s.collector, fmt.Sprintf("sell-bid-cont-%d", i), "bidding-sell-continuous", start, commit, txErr)
 				i++
 
 			}
@@ -101,8 +101,8 @@ func (s *BiddingScenario) CreateBuyBidsContinuous(ctx context.Context, client *g
 			}
 
 			start := time.Now()
-			_, txErr := client.SubmitWithTransient("CreateBuyBidPrivateQuantity", transient)
-			recordTransaction(s.collector, fmt.Sprintf("buy-bid-cont-%d", i), "bidding-buy-continuous", start, txErr)
+			_, commit, txErr := client.SubmitAsyncWithTransient("CreateBuyBidPrivateQuantity", transient)
+			awaitAndRecord(s.collector, fmt.Sprintf("buy-bid-cont-%d", i), "bidding-buy-continuous", start, commit, txErr)
 
 			i++
 		}

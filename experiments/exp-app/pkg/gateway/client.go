@@ -11,6 +11,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	pb_msp "github.com/hyperledger/fabric-protos-go-apiv2/msp"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/johannww/phd-impl/chaincodes/common/state/mocks"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -159,9 +160,18 @@ func (c *ClientWrapper) SubmitWithTransient(functionName string, transient map[s
 	}
 
 	result := transaction.Result()
-	_, err = transaction.Submit()
+	commit, err := transaction.Submit()
 	if err != nil {
 		return c.attachErrorInfo(result, err)
+	}
+
+	commitStatus, err := commit.Status()
+	if err != nil {
+		return c.attachErrorInfo(result, err)
+	}
+
+	if commitStatus.Code != peer.TxValidationCode_VALID {
+		return c.attachErrorInfo(result, fmt.Errorf("transaction commit failed with status code: %s", commitStatus.Code.String()))
 	}
 
 	return result, nil

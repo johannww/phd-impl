@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/metrics"
 )
 
@@ -31,11 +32,17 @@ func recordTransaction(collector metrics.MetricsCollector, id string, scenario s
 // awaitAndRecord waits for a Fabric async commit in a new goroutine and records
 // the end-to-end latency (from start) once the block is committed.
 // It is safe to call from any scenario: the goroutine owns all its arguments.
-func awaitAndRecord(collector metrics.MetricsCollector, id string, scenario string, start time.Time, commit *client.Commit) {
+func awaitAndRecord(collector metrics.MetricsCollector, id string, scenario string, start time.Time, commit *client.Commit, txErr error) {
 	go func() {
-		var commitErr error
-		if status, err := commit.Status(); err != nil {
-			commitErr = err
+		if txErr != nil {
+			recordTransaction(collector, id, scenario, start, txErr)
+			return
+		}
+		status, commitErr := commit.Status()
+		if commitErr != nil {
+			commitErr = fmt.Errorf("failed to get commit status: %w", commitErr)
+		} else if status.Code != peer.TxValidationCode_VALID {
+			commitErr = fmt.Errorf("failed due to %s", status.Code.String())
 		} else if !status.Successful {
 			commitErr = fmt.Errorf("transaction %s failed with code %s",
 				status.TransactionID, status.Code)

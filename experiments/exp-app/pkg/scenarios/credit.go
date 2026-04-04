@@ -67,7 +67,7 @@ func (s *CreditScenario) MintCreditsContinuous(
 				}
 
 				// Wait for commit in a goroutine; records end-to-end latency when done.
-				awaitAndRecord(s.collector, txID, "credit-mint-continuous", start, commit)
+				awaitAndRecord(s.collector, txID, "credit-mint-continuous", start, commit, err)
 			}
 
 			tick++
