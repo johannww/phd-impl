@@ -12,6 +12,7 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/carbon/properties"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )
 
 const (
@@ -108,6 +109,11 @@ func mintCreditInternal(
 	// Apply multiplier to quantity
 	effectiveQuantity := quantity + (quantity * mintMult / policies.MULTIPLIER_SCALE)
 
+	unixMillisTS, err := utils.UnixMillisNowFromRFC3339String(timestampRFC3339)
+	if err != nil {
+		return nil, fmt.Errorf("invalid timestamp format: %v", err)
+	}
+
 	credit := &MintCredit{
 		Credit: Credit{
 			OwnerID: property.OwnerID,
@@ -119,7 +125,7 @@ func mintCreditInternal(
 			Quantity: effectiveQuantity,
 		},
 		MintMult:      mintMult,
-		MintTimeStamp: timestampRFC3339,
+		MintTimeStamp: unixMillisTS,
 	}
 	if err := credit.ToWorldState(stub); err != nil {
 		return nil, err
