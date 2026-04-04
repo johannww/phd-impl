@@ -20,6 +20,11 @@ images:
 network: &defaultNetwork
   channelName: "carbon"
   externalIPs: []
+  batch:
+    timeout: "500ms"
+    maxMessageCount: 500
+    absoluteMaxBytes: "10 MB"
+    preferredMaxBytes: "2 MB"
   organizations:
     - name: "mma"
       peers: 1

@@ -168,11 +168,11 @@ data:
 
     Orderer: &OrdererDefaults
       OrdererType: etcdraft
-      BatchTimeout: 2s
+      BatchTimeout: {{  .Values.network.batch.timeout | default "2s" }}
       BatchSize:
-        MaxMessageCount: 500
-        AbsoluteMaxBytes: 10 MB
-        PreferredMaxBytes: 2 MB
+        MaxMessageCount: {{ .Values.network.batch.maxMessageCount | default 500 }}
+        AbsoluteMaxBytes: {{ .Values.network.batch.absoluteMaxBytes | default "10 MB" }}
+        PreferredMaxBytes: {{ .Values.network.batch.preferredMaxBytes | default "2 MB" }}
       EtcdRaft:
         Consenters:
     {{- range $org := .Values.network.organizations }}
