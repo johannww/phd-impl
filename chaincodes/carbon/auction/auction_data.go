@@ -128,6 +128,21 @@ func (a *AuctionData) ToSerializedAuctionData() (*SerializedAuctionData, error) 
 	return serializedAuctionData, nil
 }
 
+func InitAuctionID(stub shim.ChaincodeStubInterface) error {
+	var auctionID uint64 = 0
+
+	auctionIDBytes, err := json.Marshal(auctionID)
+	if err != nil {
+		return fmt.Errorf("could not marshal initial auction ID: %v", err)
+	}
+
+	if err = stub.PutState(AUCTION_ID_KEY, auctionIDBytes); err != nil {
+		return fmt.Errorf("could not put initial auction ID: %v", err)
+	}
+
+	return nil
+}
+
 func IncrementAuctionID(stub shim.ChaincodeStubInterface) (uint64, error) {
 	var auctionID uint64 = 0
 

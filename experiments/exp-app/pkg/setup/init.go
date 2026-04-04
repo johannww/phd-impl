@@ -14,6 +14,10 @@ func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nCh
 
 	var allCommits []*client.Commit
 
+	// Call init function to initialize chaincode state
+	_, commit, err := s.client.SubmitAsync("Init", "")
+	allCommits = append(allCommits, commit)
+
 	// 0. Setup SICAR
 	commits, err := s.SetupSICAR(ctx)
 	if err != nil {

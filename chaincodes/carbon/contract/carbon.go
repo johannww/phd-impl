@@ -3,6 +3,7 @@ package contract
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
@@ -43,6 +44,11 @@ func NewCarbonContract() *CarbonContract {
 	carbonContract.pApplier = policies.NewPolicyApplier()
 	carbonContract.metrics = NewPrometheusTxMetrics()
 	return carbonContract
+}
+
+func (c *CarbonContract) Init(ctx contractapi.TransactionContextInterface) error {
+	log.Println("Initializing chaincode and setting auction ID to 0")
+	return auction.InitAuctionID(ctx.GetStub())
 }
 
 func (c *CarbonContract) withMetricsErr(txName string, fn func() error) error {
