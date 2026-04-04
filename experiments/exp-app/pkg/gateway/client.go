@@ -167,6 +167,20 @@ func (c *ClientWrapper) SubmitWithTransient(functionName string, transient map[s
 	return result, nil
 }
 
+func (c *ClientWrapper) SubmitAsyncWithTransient(
+	functionName string,
+	transient map[string][]byte,
+	args ...string,
+) ([]byte, *client.Commit, error) {
+	res, commit, err := c.contract.SubmitAsync(
+		functionName,
+		client.WithArguments(args...),
+		client.WithTransient(transient),
+	)
+	res, err = c.attachErrorInfo(res, err)
+	return res, commit, err
+}
+
 func (c *ClientWrapper) Close() error {
 	return c.gateway.Close()
 }

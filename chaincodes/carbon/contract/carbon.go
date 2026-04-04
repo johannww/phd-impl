@@ -453,6 +453,14 @@ func (c *CarbonContract) RegisterCompany(ctx contractapi.TransactionContextInter
 	})
 }
 
+// CreatePseudonymToCompanyID creates a mapping between the caller's pseudonym and their company ID.
+// This mapping is stored in private data and is required for auction participation.
+func (c *CarbonContract) CreatePseudonymToCompanyID(ctx contractapi.TransactionContextInterface) error {
+	return c.withMetricsErr("CreatePseudonymToCompanyID", func() error {
+		return companies.CreatePseudonymToCompanyID(ctx.GetStub())
+	})
+}
+
 func (c *CarbonContract) UpdateSellerAndBuyerVirtualTokenWallets(ctx contractapi.TransactionContextInterface, ownerID string, quantity int64) error {
 	return c.withMetricsErr("UpdateSellerAndBuyerVirtualTokenWallets", func() error {
 		return payment.UpdateVirtualTokenWallet(ctx.GetStub(), ownerID, quantity)

@@ -1,6 +1,7 @@
 package companies
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
@@ -10,6 +11,7 @@ import (
 )
 
 const PSEUDONYM_TO_COMPANY_ID_PREFIX = "pseudonymToCompanyID"
+const PSEUDONYM_TO_COMPANY_ID_TRANSIENT_KEY = "pseudonymToCompanyID"
 
 type PseudonymToCompanyID struct {
 	Pseudonym string `json:"pseudonym"` // Pseudonym of the company (provided by identities.GetID(stub))
@@ -52,11 +54,22 @@ func (p *PseudonymToCompanyID) ToWorldState(stub shim.ChaincodeStubInterface) er
 }
 
 // CreatePseudonymToCompanyID creates a new mapping and saves it to the world state.
-func CreatePseudonymToCompanyID(stub shim.ChaincodeStubInterface, pseudonym, companyID string) error {
-	pseudonymToCompanyID := &PseudonymToCompanyID{
-		Pseudonym: pseudonym,
-		CompanyID: companyID,
+func CreatePseudonymToCompanyID(stub shim.ChaincodeStubInterface) error {
+	pseudonymToCompanyIDBytes, err := state.GetTransientData(stub, PSEUDONYM_TO_COMPANY_ID_TRANSIENT_KEY)
+	if err != nil {
+		return fmt.Errorf("failed to get transient data for %s: %v", PSEUDONYM_TO_COMPANY_ID_TRANSIENT_KEY, err)
 	}
+
+	pseudonymToCompanyID := &PseudonymToCompanyID{}
+	err = json.Unmarshal(pseudonymToCompanyIDBytes, pseudonymToCompanyID)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal transient data for %s: %v", PSEUDONYM_TO_COMPANY_ID_TRANSIENT_KEY, err)
+	}
+
+	if pseudonymToCompanyID.Pseudonym == "" || pseudonymToCompanyID.CompanyID == "" {
+		return fmt.Errorf("pseudonym and company ID cannot be empty")
+	}
+
 	return pseudonymToCompanyID.ToWorldState(stub)
 }
 
