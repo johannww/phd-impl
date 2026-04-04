@@ -14,7 +14,11 @@ CLUSTER_IP="$(minikube ip)"
 export CORE_PEER_TLS_ENABLED=true
 export CORE_PEER_ID=cli
 export CORE_PEER_ADDRESS="${CLUSTER_IP}:${PEER_NODE_PORT}"
-export CORE_PEER_LOCALMSPID="${FIRST_PEER_ORG^}MSP"
+if [[ "$(ps -p $$)" == *"zsh"* ]]; then
+    export CORE_PEER_LOCALMSPID="${(C)FIRST_PEER_ORG}MSP"
+else
+    export CORE_PEER_LOCALMSPID="${FIRST_PEER_ORG^}MSP"
+fi
 export CORE_PEER_MSPCONFIGPATH="${ORG_DIR}/peerOrganizations/${FIRST_PEER_ORG}/users/User1@${FIRST_PEER_ORG}/msp"
 export CORE_PEER_TLS_ROOTCERT_FILE="${ORG_DIR}/peerOrganizations/${FIRST_PEER_ORG}/peers/peer0.${FIRST_PEER_ORG}/tls/ca.crt"
 export ORDERER_ADDRESS="${CLUSTER_IP}:${ORDERER_NODE_PORT}"
