@@ -32,3 +32,6 @@ for org in $(yq e '.network.organizations[] | select(.peers) | .name' $VALUES_FI
     PEER_ADDRESSES+=("--peerAddresses ${PEER_ADDRESS}")
     TLS_ROOTCERT_FILES+=("--tlsRootCertFiles ${ORG_DIR}/peerOrganizations/${org}/peers/peer0.${org}/tls/ca.crt")
 done
+
+# set fabric cfg path for peer CLI commands
+export FABRIC_CFG_PATH="${SCRIPT_DIR}/../vars"
