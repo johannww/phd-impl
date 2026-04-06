@@ -84,7 +84,7 @@ func mintCreditInternal(
 	summary *registry.RegistrySummary,
 	chunk *properties.PropertyChunk,
 	quantity int64,
-	timestampRFC3339 string,
+	timestampRFC3339WithMillis string,
 ) (*MintCredit, error) {
 	activePolicies, err := policies.GetActivePolicies(stub)
 	if err != nil {
@@ -109,7 +109,7 @@ func mintCreditInternal(
 	// Apply multiplier to quantity
 	effectiveQuantity := quantity + (quantity * mintMult / policies.MULTIPLIER_SCALE)
 
-	unixMillisTS, err := utils.UnixMillisNowFromRFC3339String(timestampRFC3339)
+	unixMillisTS, err := utils.UnixMillisNowFromRFC3339WithMillisString(timestampRFC3339WithMillis)
 	if err != nil {
 		return nil, fmt.Errorf("invalid timestamp format: %v", err)
 	}
@@ -139,7 +139,7 @@ func MintQuantityCreditForChunk(
 	propertyID []string,
 	chunkID []string,
 	quantity int64,
-	timestampRFC3339 string,
+	timestampRFC3339WithMillis string,
 ) (*MintCredit, error) {
 	if cid.AssertAttributeValue(stub, identities.CreditMinter, "true") != nil {
 		return nil, fmt.Errorf("caller is not a minter")
@@ -169,25 +169,25 @@ func MintQuantityCreditForChunk(
 		return nil, fmt.Errorf("could not get property chunk from world state: %v", err)
 	}
 
-	return mintCreditInternal(stub, property, summary, chunk, quantity, timestampRFC3339)
+	return mintCreditInternal(stub, property, summary, chunk, quantity, timestampRFC3339WithMillis)
 }
 
 // MintEstimatedCreditsForProperty mints credits for all chunks of a property by estimating the quantity for each.
 func MintEstimatedCreditsForProperty(
 	stub shim.ChaincodeStubInterface,
 	propertyID []string,
-	intervalStartRFC3339 string,
-	intervalEndRFC3339 string,
+	intervalStartRFC3339WithMillis string,
+	intervalEndRFC3339WithMillis string,
 ) ([]*MintCredit, error) {
 	if cid.AssertAttributeValue(stub, identities.CreditMinter, "true") != nil {
 		return nil, fmt.Errorf("caller is not a minter")
 	}
 
-	intervalStart, err := time.Parse(time.RFC3339, intervalStartRFC3339)
+	intervalStart, err := time.Parse(utils.RFC3339WithMillis, intervalStartRFC3339WithMillis)
 	if err != nil {
 		return nil, fmt.Errorf("invalid interval start timestamp: %v", err)
 	}
-	intervalEnd, err := time.Parse(time.RFC3339, intervalEndRFC3339)
+	intervalEnd, err := time.Parse(utils.RFC3339WithMillis, intervalEndRFC3339WithMillis)
 	if err != nil {
 		return nil, fmt.Errorf("invalid interval end timestamp: %v", err)
 	}
@@ -220,7 +220,7 @@ func MintEstimatedCreditsForProperty(
 			return nil, fmt.Errorf("could not estimate credit quantity for chunk: %v", err)
 		}
 
-		mc, err := mintCreditInternal(stub, property, summary, chunk, quantity, intervalEndRFC3339)
+		mc, err := mintCreditInternal(stub, property, summary, chunk, quantity, intervalEndRFC3339WithMillis)
 		if err != nil {
 			return nil, fmt.Errorf("could not mint credit for chunk: %v", err)
 		}
@@ -235,7 +235,7 @@ func MintQuantityCreditsForProperty(
 	stub shim.ChaincodeStubInterface,
 	propertyID []string,
 	quantity int64,
-	timestampRFC3339 string,
+	timestampRFC3339WithMillis string,
 ) ([]*MintCredit, error) {
 	if cid.AssertAttributeValue(stub, identities.CreditMinter, "true") != nil {
 		return nil, fmt.Errorf("caller is not a minter")
@@ -262,7 +262,7 @@ func MintQuantityCreditsForProperty(
 	mintedCredits := make([]*MintCredit, 0, len(property.Chunks))
 
 	for _, chunk := range property.Chunks {
-		mc, err := mintCreditInternal(stub, property, summary, chunk, quantity, timestampRFC3339)
+		mc, err := mintCreditInternal(stub, property, summary, chunk, quantity, timestampRFC3339WithMillis)
 		if err != nil {
 			return nil, fmt.Errorf("could not mint credit for chunk: %v", err)
 		}

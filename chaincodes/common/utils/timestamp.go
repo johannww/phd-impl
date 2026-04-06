@@ -63,6 +63,14 @@ func UnixMillisNowFromRFC3339String(rfc3339Str string) (string, error) {
 	return UnixMillisNowFromGoTime(t), nil
 }
 
+func UnixMillisNowFromRFC3339WithMillisString(rfc3339WithMillisStr string) (string, error) {
+	t, err := time.Parse(RFC3339WithMillis, rfc3339WithMillisStr)
+	if err != nil {
+		return "", err
+	}
+	return UnixMillisNowFromGoTime(t), nil
+}
+
 func ParseHexTimestamp(hexStr string) (time.Time, error) {
 	unixMillis, err := strconv.ParseInt(hexStr, 16, 64)
 	if err != nil {

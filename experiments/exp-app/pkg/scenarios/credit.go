@@ -45,7 +45,7 @@ func (s *CreditScenario) MintCreditsContinuous(
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			timestamp := time.Now().Format(time.RFC3339)
+			timestamp := time.Now().Format(utils.RFC3339WithMillis)
 
 			for propIdx := 0; propIdx < nProps; propIdx++ {
 				propID := uint64(propIdx + 1)

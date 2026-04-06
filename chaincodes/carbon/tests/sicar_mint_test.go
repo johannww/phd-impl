@@ -135,8 +135,8 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	// 5. Attempt Minting
 	stub.Creator = mockIds[identities.CreditMinter]
 
-	intervalStart := time.Now().Format(time.RFC3339)
-	intervalEnd := time.Now().Add(1 * time.Hour).Format(time.RFC3339)
+	intervalStart := time.Now().Format(utils.RFC3339WithMillis)
+	intervalEnd := time.Now().Add(1 * time.Hour).Format(utils.RFC3339WithMillis)
 
 	// Case A: Valid Minting with Estimated Quantity
 	stub.MockTransactionStart("tx_mint_est_ok")
