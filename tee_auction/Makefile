@@ -23,7 +23,7 @@ policy:
     REGISTRY_PASS=`echo $$CREDS | cut -d: -f2`; \
 	sed -i "s/REGISTRY_USER/$$REGISTRY_USER/" ./azure/arm_template.json; \
 	sed -i "s/REGISTRY_PASS/$$REGISTRY_PASS/" ./azure/arm_template.json; \
-	az confcom acipolicygen -a ./azure/arm_template.json
+	echo y | az confcom acipolicygen -a ./azure/arm_template.json
 
 deploy:
 	az deployment group create --resource-group $(RESOURCE_GROUP) --template-file ./azure/arm_template.json $(AZ_QUIET)
