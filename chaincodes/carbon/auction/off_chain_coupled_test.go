@@ -120,13 +120,11 @@ func calculateClearingPriceAndQuantityUdecimal(
 	nominalQuantity := toBeAcquired
 
 	// Buyer pays both for the nominal quantity and for the seller's extra credits
-	buyerIsWillingToPayTotal := udecimal.MustFromInt64(buyBid.PrivatePrice.Price, 0).Mul(func() udecimal.Decimal {
-		v := nominalQuantity.Add(func() udecimal.Decimal {
-			v, _ := nominalQuantity.Mul(multiplier).Div(multiplierScale.Mul(udecimal.MustFromInt64(2, 0)))
-			return v
-		}())
-		return v
-	}())
+	// Multiply first, divide last to avoid premature truncation
+	buyerIsWillingToPayTotal, _ := udecimal.MustFromInt64(buyBid.PrivatePrice.Price, 0).
+		Mul(nominalQuantity).
+		Mul(multiplierScale.Mul(udecimal.MustFromInt64(2, 0)).Add(multiplier)).
+		Div(multiplierScale.Mul(udecimal.MustFromInt64(2, 0)))
 
 	// How much the seller receives for the nominal quantity
 	buyerIsWillingToPayPerNominalQuantity, _ := buyerIsWillingToPayTotal.Div(nominalQuantity)
