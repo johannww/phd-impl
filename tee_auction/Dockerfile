@@ -17,7 +17,7 @@ COPY vendor/ ./vendor/
 RUN go build -o /usr/local/bin/tee_auction ./tee_auction/go/cmd/auction
 
 # --- Final Stage ---
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # This will ensure golang uses the UTC timezone.
 ENV TZ=UTC
