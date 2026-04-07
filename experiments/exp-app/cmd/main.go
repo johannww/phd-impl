@@ -124,7 +124,7 @@ func main() {
 	)
 
 	setupManager := setup.NewSetupManager(client, profile)
-	err = setupManager.InitializeBETS(context.Background(), nPropsPerOrg, nChunksPerProp)
+	teeClient, err := setupManager.InitializeBETS(context.Background(), nPropsPerOrg, nChunksPerProp)
 	if err != nil {
 		log.Fatalf("Setup failed: %v", err)
 	}
@@ -145,6 +145,15 @@ func main() {
 	biddingScenario := scenarios.NewBiddingScenario(executor)
 	coupledScenario := scenarios.NewCoupledAuctionScenario(executor)
 	interopScenario := scenarios.NewInteropScenario(executor)
+	_ = interopScenario // Placeholder for future use
+
+	// Set TEE client if it was initialized
+	if teeClient != nil {
+		log.Println("Using real TEE service for coupled auctions")
+		coupledScenario.SetTEEClient(teeClient)
+	} else {
+		log.Println("TEE not available, using mock results for coupled auctions")
+	}
 
 	// Run full BETS workflow
 	ctx, cancel := context.WithTimeout(context.Background(), *duration+30*time.Second)
@@ -184,6 +193,15 @@ func main() {
 		}
 	}()
 
+	// 4. Periodic Auction Settlement (every 15 seconds)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		log.Println("Launcher: Periodic Auction started")
+		if err := coupledScenario.PeriodicAuction(ctx, client, *auctionInterval); err != nil && err != context.Canceled {
+			log.Printf("PeriodicAuction error: %v", err)
+		}
+	}()
 	// Print final report
 	reporter := metrics.NewReporter(executor.GetCollector())
 	reporter.PrintFinalReport()

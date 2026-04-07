@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"crypto/x509"
 	"fmt"
 	"os"
@@ -139,6 +140,11 @@ func (c *ClientWrapper) EvaluateTransaction(functionName string, args ...string)
 
 func (c *ClientWrapper) SubmitTransaction(functionName string, args ...string) ([]byte, error) {
 	res, err := c.contract.SubmitTransaction(functionName, args...)
+	return c.attachErrorInfo(res, err)
+}
+
+func (c *ClientWrapper) SubmitTransactionWithContext(ctx context.Context, functionName string, args ...string) ([]byte, error) {
+	res, err := c.contract.SubmitWithContext(ctx, functionName, client.WithArguments(args...))
 	return c.attachErrorInfo(res, err)
 }
 

@@ -16,10 +16,12 @@ import (
 
 func VerifyReportSignature(report *attest.SNPAttestationReport) (bool, error) {
 	certFetcher := attest.DefaultAMDMilanCertFetcherNew()
+	certFetcher.TEEType = "Genoa" // apparently, genoa is the newest tee type ()
 	chain, anInt, error := certFetcher.GetCertChain(report.ChipID, report.ReportedTCB)
 	if error != nil {
 		fmt.Printf("Error: %s\n", error)
 		fmt.Printf("Error: %d\n", anInt)
+		return false, fmt.Errorf("Failed to fetch cert chain: %v", error)
 	}
 	// fmt.Printf("chain: %+v\n", chain)
 	// os.WriteFile("cert_chain.pem", chain, 0o644)
@@ -95,6 +97,7 @@ func VerifyReportSignatureBase64(reportBase64Bytes []byte) (bool, error) {
 	}
 
 	certFetcher := attest.DefaultAMDMilanCertFetcherNew()
+	certFetcher.TEEType = "Genoa" // apparently, genoa is the newest tee type ()
 	chain, anInt, error := certFetcher.GetCertChain(report.ChipID, report.ReportedTCB)
 	if error != nil {
 		fmt.Printf("Error: %s\n", error)

@@ -6,10 +6,12 @@ import (
 	"log"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
+
+	"github.com/johannww/phd-impl/experiments/exp-app/pkg/tee"
 )
 
-// InitializeBETS performs all necessary setup steps
-func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nChunksPerProp int) error {
+// InitializeBETS performs all necessary setup steps and returns a TEE client if enabled
+func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nChunksPerProp int) (*tee.Client, error) {
 	log.Println("Starting BETS initialization...")
 
 	var allCommits []*client.Commit
@@ -21,35 +23,35 @@ func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nCh
 	// 0. Setup SICAR
 	commits, err := s.SetupSICAR(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to setup SICAR: %v", err)
+		return nil, fmt.Errorf("failed to setup SICAR: %v", err)
 	}
 	allCommits = append(allCommits, commits...)
 
 	// 1. Set active policies
 	commits, err = s.SetupPolicies(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to setup policies: %v", err)
+		return nil, fmt.Errorf("failed to setup policies: %v", err)
 	}
 	allCommits = append(allCommits, commits...)
 
-	// 1. Register Companies for each org
+	// 2. Register Companies for each org
 	commits, err = s.SetupCompanies(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to setup companies: %v", err)
+		return nil, fmt.Errorf("failed to setup companies: %v", err)
 	}
 	allCommits = append(allCommits, commits...)
 
-	// 2. Register Buyer Wallets for each org
+	// 3. Register Buyer Wallets for each org
 	commits, err = s.SetupBuyerWallets(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to setup buyer wallets: %v", err)
+		return nil, fmt.Errorf("failed to setup buyer wallets: %v", err)
 	}
 	allCommits = append(allCommits, commits...)
 
-	// 3. Register Properties for each org
+	// 4. Register Properties for each org
 	commits, sicarData, err := s.SetupProperties(ctx, nPropsPerOrg, nChunksPerProp)
 	if err != nil {
-		return fmt.Errorf("failed to setup properties: %v", err)
+		return nil, fmt.Errorf("failed to setup properties: %v", err)
 	}
 	allCommits = append(allCommits, commits...)
 
@@ -60,12 +62,12 @@ func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nCh
 		}
 	}
 
-	// 4. Refresh Registry Data for each property
+	// 5. Refresh Registry Data for each property
 	// This MUST be done after property registration is committed
 	log.Println("Refreshing property registry data from SICAR...")
 	refreshCommits, err := s.RefreshProperties(ctx, sicarData.SicarIDs)
 	if err != nil {
-		return fmt.Errorf("failed to refresh properties: %v", err)
+		return nil, fmt.Errorf("failed to refresh properties: %v", err)
 	}
 
 	log.Printf("Waiting for %d refresh transactions to commit...", len(refreshCommits))
@@ -75,6 +77,21 @@ func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nCh
 		}
 	}
 
+	// 6. Setup TEE if enabled
+	var teeClient *tee.Client
+	if s.profile.TEEAuction.Enabled {
+		log.Println("Setting up TEE auction service...")
+		teeSetupMgr := NewTEESetupManager(s.client, s.profile)
+		teeClient, err = teeSetupMgr.SetupTEE(ctx)
+		if err != nil {
+			log.Fatalf("WARNING: TEE setup failed: %v", err)
+			log.Println("Continuing without TEE - will fall back to mock results")
+			teeClient = nil
+		} else {
+			log.Println("TEE setup completed successfully")
+		}
+	}
+
 	log.Println("BETS initialization complete.")
-	return nil
+	return teeClient, nil
 }

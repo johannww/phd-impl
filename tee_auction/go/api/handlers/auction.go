@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"crypto/ed25519"
+	"encoding/json"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	state.SetSerializer(&serializer.ProtoSerializer{})
+	state.SetSerializer(serializer.NewProtoSerializer())
 }
 
 // TODOHP: review metrics
@@ -28,7 +29,7 @@ func Auction(c *gin.Context, privateKey ed25519.PrivateKey, certDer []byte) {
 	}
 
 	var serializedAD cc_auction.SerializedAuctionData
-	err = state.UnmarshalStateAs(dataBytes, &serializedAD)
+	err = json.Unmarshal(dataBytes, &serializedAD)
 	if err != nil {
 		metrics.ObserveAuctionRequest("bad_request")
 		c.JSON(400, gin.H{"error": "Invalid auction data"})

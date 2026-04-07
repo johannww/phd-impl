@@ -40,7 +40,7 @@ verify-policy-image-layers:
 	touch .nosync; \
 	echo ""; \
 	echo "Local image FS layers:"; \
-	go run cmd/dmverity-vhd/main.go -d roothash -i $(REGISTRY)/carbon_auction:latest; \
+	GOWORK=off go run cmd/dmverity-vhd/main.go -d roothash -i $(REGISTRY)/carbon_auction:latest; \
 	cd ../..; \
 	echo "Policy FS layers:"; \
 	container_info=$$(az confcom acipolicygen -a ./azure/arm_template.json --outraw 2> /dev/null | grep "^containers :="); \

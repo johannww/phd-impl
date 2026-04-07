@@ -3,12 +3,12 @@ package auction
 import (
 	"crypto/ed25519"
 	"crypto/sha512"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	cc_auction "github.com/johannww/phd-impl/chaincodes/carbon/auction"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
+	"github.com/johannww/phd-impl/chaincodes/common/state"
 	"github.com/johannww/phd-impl/tee_auction/go/report"
 )
 
@@ -92,13 +92,13 @@ func (r *AuctionRunnerTEE) runAuctionFunction(auctionData *cc_auction.AuctionDat
 
 	if auctionData.Coupled {
 		coupledResPub, coupledResPvt, errAuction = r.coupledRunner.RunCoupled(auctionData, pApplier)
-		resultBytesPub, errPub = json.Marshal(coupledResPub)
-		resultBytesPvt, errPvt = json.Marshal(coupledResPvt)
+		resultBytesPub, errPub = state.MarshalStateAs(coupledResPub)
+		resultBytesPvt, errPvt = state.MarshalStateAs(coupledResPvt)
 	} else {
 		// indepRes, errAuction = cc_auction.RunIndependent(auctionData)
 		indepResPub, indepResPvt, errAuction = r.indepRunner.RunIndependent(auctionData)
-		resultBytesPub, errPub = json.Marshal(indepResPub)
-		resultBytesPvt, errPvt = json.Marshal(indepResPvt)
+		resultBytesPub, errPub = state.MarshalStateAs(indepResPub)
+		resultBytesPvt, errPvt = state.MarshalStateAs(indepResPvt)
 	}
 
 	if errPub != nil || errPvt != nil || errAuction != nil {

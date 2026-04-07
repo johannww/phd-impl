@@ -54,7 +54,7 @@ func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes
 }
 
 func VerifyAuctionResultReportSignature(
-	auctionReportJsonBytes []byte,
+	auctionReportBytes []byte,
 	expectedResult []byte,
 	hashReceivedByTEE []byte,
 ) (bool, error) {
@@ -63,10 +63,10 @@ func VerifyAuctionResultReportSignature(
 	bytesHashedByTEE = append(bytesHashedByTEE, hashReceivedByTEE...)
 	expectedResultHash := sha512.Sum512(bytesHashedByTEE)
 
-	report := attest.SNPAttestationReport{}
-	err := json.Unmarshal(auctionReportJsonBytes, &report)
+	report := &attest.SNPAttestationReport{}
+	err := report.DeserializeReport(auctionReportBytes)
 	if err != nil {
-		return false, fmt.Errorf("could not unmarshal auction report: %v", err)
+		return false, fmt.Errorf("could not deserialize auction report: %v", err)
 	}
 
 	reportDataBytes, err := hex.DecodeString(report.ReportData)
@@ -74,11 +74,11 @@ func VerifyAuctionResultReportSignature(
 		return false, fmt.Errorf("could not decode report data string as hex: %v", err)
 	}
 
-	if bytes.Equal(reportDataBytes, expectedResultHash[:]) {
-		return false, fmt.Errorf("report data does not match expected result hash")
+	if !bytes.Equal(reportDataBytes, expectedResultHash[:]) {
+		return false, fmt.Errorf("report data %x does not match expected result hash %x", reportDataBytes, expectedResultHash[:])
 	}
 
-	verifies, err := report_verifier.VerifyReportSignatureJsonBytes(auctionReportJsonBytes)
+	verifies, err := report_verifier.VerifyReportSignature(report)
 	if err != nil || !verifies {
 		return false, fmt.Errorf("could not verify TEE report signature: %v", err)
 	}
