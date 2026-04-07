@@ -12,7 +12,28 @@ import (
 	"slices"
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
+	"github.com/google/go-sev-guest/abi"
+	"github.com/google/go-sev-guest/verify"
 )
+
+func VerifyReportSignatureWithGoSev(reportRawBytes []byte) (bool, error) {
+	reportProto, err := abi.ReportToProto(reportRawBytes)
+	if err != nil {
+		return false, fmt.Errorf("Failed to convert report to proto: %v", err)
+	}
+
+	myAttestation, err := verify.GetAttestationFromReport(reportProto, verify.DefaultOptions())
+	if err != nil {
+		return false, fmt.Errorf("Failed to get attestation from report: %v", err)
+	}
+
+	err = verify.SnpAttestation(myAttestation, verify.DefaultOptions())
+	if err != nil {
+		return false, fmt.Errorf("Failed to verify attestation: %v", err)
+	}
+
+	return true, nil
+}
 
 func VerifyReportSignature(report *attest.SNPAttestationReport) (bool, error) {
 	certFetcher := attest.DefaultAMDMilanCertFetcherNew()

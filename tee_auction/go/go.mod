@@ -9,6 +9,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
+	github.com/google/go-sev-guest v0.0.0-20251119154202-af1c107a648f
 )
 
 require (

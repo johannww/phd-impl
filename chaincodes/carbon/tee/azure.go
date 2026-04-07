@@ -35,7 +35,12 @@ func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes
 		return fmt.Errorf("could not unmarshal initial TEE report: %v", err)
 	}
 
-	verifies, err := report_verifier.VerifyReportSignature(&report)
+	reportBytes, err := report.SerializeReport()
+	if err != nil {
+		return fmt.Errorf("could not serialize initial TEE report: %v", err)
+	}
+
+	verifies, err := report_verifier.VerifyReportSignatureWithGoSev(reportBytes)
 	if err != nil || !verifies {
 		return fmt.Errorf("could not verify TEE report signature: %v", err)
 	}
@@ -78,7 +83,7 @@ func VerifyAuctionResultReportSignature(
 		return false, fmt.Errorf("report data %x does not match expected result hash %x", reportDataBytes, expectedResultHash[:])
 	}
 
-	verifies, err := report_verifier.VerifyReportSignature(report)
+	verifies, err := report_verifier.VerifyReportSignatureWithGoSev(auctionReportBytes)
 	if err != nil || !verifies {
 		return false, fmt.Errorf("could not verify TEE report signature: %v", err)
 	}
