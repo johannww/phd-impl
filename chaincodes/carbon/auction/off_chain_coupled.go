@@ -293,8 +293,8 @@ func calculateClearingPriceAndQuantity(
 	buyBid *bids.BuyBid,
 	mult int64) (Cp int64, Cq int64, hasClearingPrice bool) {
 
-	// For now, multiplier must be positive.
-	if mult <= 0 {
+	// For now, multiplier must be positive or zero.
+	if mult < 0 {
 		return 0, 0, false
 	}
 
