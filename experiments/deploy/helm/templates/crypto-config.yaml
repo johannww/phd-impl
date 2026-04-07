@@ -61,7 +61,7 @@ data:
 {{- end }}
 {{- end }}
         Users:
-          Count: 1
+          Count: {{ $.Values.network.userCount | default 1 }}
           Attrs:
             price_viewer: "true"
             payment_company: "true"

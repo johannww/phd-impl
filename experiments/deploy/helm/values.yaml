@@ -20,6 +20,7 @@ images:
 network: &defaultNetwork
   channelName: "carbon"
   externalIPs: []
+  userCount: 1
   peerLedgerStateTotalQueryLimit: 150000
   batch:
     timeout: "500ms"
