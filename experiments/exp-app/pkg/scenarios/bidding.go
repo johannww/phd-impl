@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
@@ -34,6 +35,12 @@ func (s *BiddingScenario) CreateSellBidsContinuous(ctx context.Context, client *
 	defer ticker.Stop()
 	i := 0
 	sellerID := client.GetIdentityID()
+	usedCredits := &sync.Map{}
+	runOnErrorGenerator := func(creditIDStr string) RunOnErrorFunc {
+		return func() {
+			usedCredits.Store(creditIDStr, false)
+		}
+	}
 
 	for {
 		select {
@@ -58,21 +65,29 @@ func (s *BiddingScenario) CreateSellBidsContinuous(ctx context.Context, client *
 			// 2. Create sell bid for available credits
 
 			for _, credit := range creditsList {
+				creditID := (*credit.GetID())[0]
+				creditIDBytes, err := json.Marshal(creditID)
+				if err != nil {
+					log.Fatalf("Error marshaling credit ID for credit %v: %v", creditID, err)
+				}
+				creditIDStr := string(creditIDBytes)
+
+				if val, ok := usedCredits.Load(creditIDStr); ok && val.(bool) {
+					// fmt.Printf("Credit %s already. %t\n", creditIDStr, val.(bool))
+					continue
+				}
+				// fmt.Printf("Using credit %s to create sell bid.\n", creditIDStr)
+				usedCredits.Store(creditIDStr, true)
+
 				price := int64(20)
 
 				transient := map[string][]byte{
 					"price": []byte(strconv.FormatInt(price, 10)),
 				}
 
-				creditID := (*credit.GetID())[0]
-				creditIDStr, err := json.Marshal(creditID)
-				if err != nil {
-					log.Fatalf("Error marshaling credit ID for credit %v: %v", creditID, err)
-				}
-
 				start := time.Now()
-				_, commit, txErr := client.SubmitAsyncWithTransient("CreateSellBidFromCredit", transient, strconv.FormatInt(credit.Quantity, 10), string(creditIDStr))
-				awaitAndRecord(s.collector, fmt.Sprintf("sell-bid-cont-%d", i), "bidding-sell-continuous", start, commit, txErr)
+				_, commit, txErr := client.SubmitAsyncWithTransient("CreateSellBidFromCredit", transient, strconv.FormatInt(credit.Quantity, 10), creditIDStr)
+				awaitAndRecord(s.collector, fmt.Sprintf("sell-bid-cont-%d", i), "bidding-sell-continuous", start, commit, txErr, runOnErrorGenerator(creditIDStr))
 				i++
 
 			}
@@ -102,7 +117,7 @@ func (s *BiddingScenario) CreateBuyBidsContinuous(ctx context.Context, client *g
 
 			start := time.Now()
 			_, commit, txErr := client.SubmitAsyncWithTransient("CreateBuyBidPrivateQuantity", transient)
-			awaitAndRecord(s.collector, fmt.Sprintf("buy-bid-cont-%d", i), "bidding-buy-continuous", start, commit, txErr)
+			awaitAndRecord(s.collector, fmt.Sprintf("buy-bid-cont-%d", i), "bidding-buy-continuous", start, commit, txErr, nil)
 
 			i++
 		}

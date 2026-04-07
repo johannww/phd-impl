@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/johannww/phd-impl/chaincodes/common/utils"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/metrics"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/workload"
@@ -67,7 +68,7 @@ func (s *CreditScenario) MintCreditsContinuous(
 				}
 
 				// Wait for commit in a goroutine; records end-to-end latency when done.
-				awaitAndRecord(s.collector, txID, "credit-mint-continuous", start, commit, err)
+				awaitAndRecord(s.collector, txID, "credit-mint-continuous", start, commit, err, nil)
 			}
 
 			tick++
