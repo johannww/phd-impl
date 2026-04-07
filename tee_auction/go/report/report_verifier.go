@@ -16,6 +16,9 @@ import (
 	"github.com/google/go-sev-guest/verify"
 )
 
+// VerifyReportSignatureWithGoSev uses the go-sev library to verify the signature of the attestation report.
+// This is weird, but with recent hardware the confidential-sidecar-containers library
+// returns an inconsisent certification chain that causes errors. The go-sev library seems to be more robust to this issue.
 func VerifyReportSignatureWithGoSev(reportRawBytes []byte) (bool, error) {
 	reportProto, err := abi.ReportToProto(reportRawBytes)
 	if err != nil {
