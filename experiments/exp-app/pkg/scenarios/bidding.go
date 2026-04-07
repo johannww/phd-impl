@@ -107,7 +107,7 @@ func (s *BiddingScenario) CreateBuyBidsContinuous(ctx context.Context, client *g
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			quantity := int64(150)
+			quantity := int64(2000) // must be greater than common.QUANTITY_SCALE
 			price := int64(25)
 
 			transient := map[string][]byte{
