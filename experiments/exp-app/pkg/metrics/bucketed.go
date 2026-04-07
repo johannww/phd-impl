@@ -6,12 +6,16 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 )
 
 // BucketSize defines the time window for each metrics bucket (100ms)
 const (
 	BucketSize       = 100 * time.Millisecond
 	MaxBucketSamples = 1000 // Cap samples per bucket to avoid memory blowup
+	DefaultWorkers   = 10   // Number of worker goroutines for commit awaiting
+	CommitQueueSize  = 1000 // Buffered channel size for commit tasks
 )
 
 // LatencyBucket holds latency samples for a time bucket
@@ -43,16 +47,32 @@ type BucketedCollector struct {
 	currentBucket       int64 // atomic: current bucket index
 	bucketDuration      time.Duration
 	timeWaitingForMutex int64 // atomic: microseconds spent waiting for locks
+
+	// Worker pool for commit awaiting
+	commitTasks chan *CommitTask
+	workers     int
+	wg          sync.WaitGroup
+	done        chan struct{}
 }
 
 // NewBucketedCollector creates a new bucketed metrics collector
 func NewBucketedCollector() *BucketedCollector {
-	return &BucketedCollector{
+	return NewBucketedCollectorWithWorkers(DefaultWorkers)
+}
+
+// NewBucketedCollectorWithWorkers creates a collector with a specified number of workers
+func NewBucketedCollectorWithWorkers(workers int) *BucketedCollector {
+	c := &BucketedCollector{
 		buckets:        make(map[string]map[int64]*ScenarioBucket),
 		startTime:      time.Now(),
 		currentBucket:  0,
 		bucketDuration: BucketSize,
+		commitTasks:    make(chan *CommitTask, CommitQueueSize),
+		workers:        workers,
+		done:           make(chan struct{}),
 	}
+	c.startWorkers()
+	return c
 }
 
 // getCurrentBucketIndex returns the bucket index for the current time
@@ -260,4 +280,96 @@ func calculatePercentileFromSorted(sorted []float64, percentile float64) float64
 		index = 0
 	}
 	return sorted[index]
+}
+
+// startWorkers starts the worker goroutines for commit awaiting
+func (c *BucketedCollector) startWorkers() {
+	for i := 0; i < c.workers; i++ {
+		c.wg.Add(1)
+		go c.commitWorker()
+	}
+}
+
+// commitWorker processes commit tasks from the channel
+func (c *BucketedCollector) commitWorker() {
+	defer c.wg.Done()
+
+	for {
+		select {
+		case <-c.done:
+			return
+		case task := <-c.commitTasks:
+			c.processCommitTask(task)
+		}
+	}
+}
+
+// processCommitTask awaits a commit and records the metric
+func (c *BucketedCollector) processCommitTask(task *CommitTask) {
+	var finalErr error
+
+	if task.TxErr != nil {
+		finalErr = task.TxErr
+	} else if task.Commit == nil {
+		finalErr = fmt.Errorf("commit is nil")
+	} else {
+		status, commitErr := task.Commit.Status()
+		if commitErr != nil {
+			finalErr = fmt.Errorf("failed to get commit status: %w", commitErr)
+		} else if status.Code != peer.TxValidationCode_VALID {
+			finalErr = fmt.Errorf("failed due to %s", status.Code.String())
+		} else if !status.Successful {
+			finalErr = fmt.Errorf("transaction %s failed with code %s",
+				status.TransactionID, status.Code)
+		}
+
+		if finalErr != nil && task.RunOnError != nil {
+			task.RunOnError()
+		}
+	}
+
+	// Record the metric
+	c.Record(&TransactionMetric{
+		ID:       task.ID,
+		Scenario: task.Scenario,
+		Latency:  time.Since(task.Start),
+		Success:  finalErr == nil,
+		Error:    getErrorString(finalErr),
+	})
+}
+
+// SubmitCommitTask submits a commit task to the worker pool
+func (c *BucketedCollector) SubmitCommitTask(task *CommitTask) {
+	// Check if stopped first
+	select {
+	case <-c.done:
+		// Collector is stopped, process synchronously
+		c.processCommitTask(task)
+		return
+	default:
+	}
+
+	// Try to submit to workers
+	select {
+	case c.commitTasks <- task:
+		// Task submitted successfully
+	default:
+		// Channel is full, handle asynchronously to avoid blocking
+		go c.processCommitTask(task)
+	}
+}
+
+// Stop gracefully shuts down the worker pool
+func (c *BucketedCollector) Stop() {
+	close(c.done)
+	c.wg.Wait()
+	close(c.commitTasks)
+}
+
+// getErrorString returns the error message or an empty string if nil
+func getErrorString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
 }

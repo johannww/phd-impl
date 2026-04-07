@@ -3,7 +3,19 @@ package metrics
 import (
 	"sync"
 	"time"
+
+	"github.com/hyperledger/fabric-gateway/pkg/client"
 )
+
+// CommitTask represents a pending commit to await and record
+type CommitTask struct {
+	ID         string
+	Scenario   string
+	Start      time.Time
+	Commit     *client.Commit
+	TxErr      error
+	RunOnError func()
+}
 
 // MetricsCollector is the interface for metrics collection
 type MetricsCollector interface {
@@ -11,6 +23,8 @@ type MetricsCollector interface {
 	GetSnapshot() *Snapshot
 	GetScenarioStats() map[string]*ScenarioStats
 	GetAllMetrics() []*TransactionMetric
+	SubmitCommitTask(task *CommitTask)
+	Stop()
 }
 
 // TransactionMetric holds a single transaction's performance data
@@ -228,4 +242,15 @@ func (c *Collector) GetAllMetrics() []*TransactionMetric {
 	result := make([]*TransactionMetric, len(c.metrics))
 	copy(result, c.metrics)
 	return result
+}
+
+// SubmitCommitTask is a stub for the old Collector (not implemented)
+func (c *Collector) SubmitCommitTask(task *CommitTask) {
+	// Not implemented for the old Collector
+	panic("SubmitCommitTask not implemented for legacy Collector")
+}
+
+// Stop is a stub for the old Collector (no-op)
+func (c *Collector) Stop() {
+	// No-op for legacy Collector
 }
