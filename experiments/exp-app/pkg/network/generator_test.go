@@ -13,7 +13,7 @@ func TestGeneratorWithDeploymentArtifacts(t *testing.T) {
 		t.Skipf("deployment directory not found: %s", deployDir)
 	}
 
-	gen := NewGenerator(deployDir, "127.0.0.1")
+	gen := NewGenerator(deployDir, "127.0.0.1", "")
 	profile, err := gen.Generate()
 	if err != nil {
 		t.Fatalf("failed to generate profile: %v", err)
@@ -90,7 +90,7 @@ func TestGeneratorSaveLoadJSON(t *testing.T) {
 	}
 
 	// Generate profile
-	gen := NewGenerator(deployDir, "127.0.0.1")
+	gen := NewGenerator(deployDir, "127.0.0.1", "")
 	profile, err := gen.Generate()
 	if err != nil {
 		t.Fatalf("failed to generate profile: %v", err)

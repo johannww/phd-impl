@@ -78,9 +78,15 @@ func main() {
 
 	// Get certificate paths
 	certs := orgConfig.Certificates
+
+	// Validate that at least one user exists
+	if len(certs.Users) == 0 {
+		log.Fatal("No user certificates found in organization")
+	}
+
 	tlsCertPath := certs.TLSCACert
-	userCertPath := certs.User1Cert
-	userKeyPath := certs.User1Key
+	userCertPath := certs.Users[0].Cert
+	userKeyPath := certs.Users[0].Key
 	channelName := profile.Network.ChannelName
 	chaincodeName := profile.Chaincode.Name
 

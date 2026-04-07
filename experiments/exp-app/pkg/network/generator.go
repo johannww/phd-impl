@@ -34,6 +34,7 @@ func NewGenerator(deployDir, minikubeIP, teeIP string) *Generator {
 type HelmValuesYAML struct {
 	Network struct {
 		ChannelName   string `yaml:"channelName"`
+		UserCount     int    `yaml:"userCount"`
 		Organizations []struct {
 			Name         string   `yaml:"name"`
 			Peers        int      `yaml:"peers"`
@@ -63,9 +64,14 @@ func (g *Generator) Generate() (*NetworkProfile, error) {
 	profile.Chaincode.Version = "1.0"
 
 	// Process organizations
+	userCount := values.Network.UserCount
+	if userCount == 0 {
+		userCount = 1 // Default to 1 user if not specified
+	}
+
 	for _, org := range values.Network.Organizations {
 		if org.Peers > 0 {
-			peerCfg, err := g.generatePeerConfig(org.Name, org.Peers, org.NodePortBase, org.Collections)
+			peerCfg, err := g.generatePeerConfig(org.Name, org.Peers, org.NodePortBase, org.Collections, userCount)
 			if err != nil {
 				return nil, fmt.Errorf("generate peer config for %s: %w", org.Name, err)
 			}
@@ -109,7 +115,7 @@ func (g *Generator) loadValues() (*HelmValuesYAML, error) {
 }
 
 // generatePeerConfig generates configuration for a peer organization
-func (g *Generator) generatePeerConfig(name string, peerCount, nodePortBase int, collections []string) (*PeerConfig, error) {
+func (g *Generator) generatePeerConfig(name string, peerCount, nodePortBase int, collections []string, userCount int) (*PeerConfig, error) {
 	cfg := &PeerConfig{
 		Organization: name,
 		MspID:        fmt.Sprintf("%sMSP", capitalizeFirst(name)),
@@ -131,12 +137,23 @@ func (g *Generator) generatePeerConfig(name string, peerCount, nodePortBase int,
 
 	// Load certificates
 	orgPath := filepath.Join(g.varsDir, "organizations", "peerOrganizations", name)
+
+	// Generate user certificates (User1, User2, ..., UserN)
+	users := make([]UserCert, userCount)
+	for i := 0; i < userCount; i++ {
+		userNum := i + 1
+		userName := fmt.Sprintf("User%d@%s", userNum, name)
+		users[i] = UserCert{
+			Cert: filepath.Join(orgPath, "users", userName, "msp", "signcerts", fmt.Sprintf("%s-cert.pem", userName)),
+			Key:  filepath.Join(orgPath, "users", userName, "msp", "keystore", "priv_sk"),
+		}
+	}
+
 	certs := PeerCerts{
 		TLSCACert: filepath.Join(orgPath, "peers", fmt.Sprintf("peer0.%s", name), "tls", "ca.crt"),
 		AdminCert: filepath.Join(orgPath, "users", fmt.Sprintf("Admin@%s", name), "msp", "signcerts", fmt.Sprintf("Admin@%s-cert.pem", name)),
 		AdminKey:  filepath.Join(orgPath, "users", fmt.Sprintf("Admin@%s", name), "msp", "keystore", "priv_sk"),
-		User1Cert: filepath.Join(orgPath, "users", fmt.Sprintf("User1@%s", name), "msp", "signcerts", fmt.Sprintf("User1@%s-cert.pem", name)),
-		User1Key:  filepath.Join(orgPath, "users", fmt.Sprintf("User1@%s", name), "msp", "keystore", "priv_sk"),
+		Users:     users,
 	}
 
 	// Verify certificates exist
@@ -214,8 +231,11 @@ func (g *Generator) verifyCertificates(certs *PeerCerts) error {
 		certs.TLSCACert,
 		certs.AdminCert,
 		certs.AdminKey,
-		certs.User1Cert,
-		certs.User1Key,
+	}
+
+	// Add all user certificates and keys
+	for _, user := range certs.Users {
+		paths = append(paths, user.Cert, user.Key)
 	}
 
 	for _, path := range paths {

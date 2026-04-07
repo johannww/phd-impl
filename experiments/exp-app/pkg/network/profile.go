@@ -35,15 +35,20 @@ type PeerNode struct {
 	PortExternal int    `json:"port_external"` // NodePort
 }
 
+// UserCert contains certificate and key paths for a single user
+type UserCert struct {
+	Cert string `json:"cert"` // Path to user certificate
+	Key  string `json:"key"`  // Path to user private key
+}
+
 // PeerCerts contains paths to peer certificates
 type PeerCerts struct {
-	TLSCACert    string `json:"tls_ca_cert"`    // Path to TLS CA cert
-	AdminCert    string `json:"admin_cert"`     // Path to admin certificate
-	AdminKey     string `json:"admin_key"`      // Path to admin private key
-	User1Cert    string `json:"user1_cert"`     // Path to User1 certificate
-	User1Key     string `json:"user1_key"`      // Path to User1 private key
-	AdminTLSCert string `json:"admin_tls_cert"` // Path to admin TLS cert
-	AdminTLSKey  string `json:"admin_tls_key"`  // Path to admin TLS key
+	TLSCACert    string     `json:"tls_ca_cert"`    // Path to TLS CA cert
+	AdminCert    string     `json:"admin_cert"`     // Path to admin certificate
+	AdminKey     string     `json:"admin_key"`      // Path to admin private key
+	Users        []UserCert `json:"users"`          // User certificates (User1, User2, ...)
+	AdminTLSCert string     `json:"admin_tls_cert"` // Path to admin TLS cert
+	AdminTLSKey  string     `json:"admin_tls_key"`  // Path to admin TLS key
 }
 
 // OrdererConfig represents an orderer

@@ -34,27 +34,34 @@ func NewPeerPool(
 		return nil, fmt.Errorf("no peers configured for organization %s", orgName)
 	}
 
+	if len(peerCfg.Certificates.Users) == 0 {
+		return nil, fmt.Errorf("no user certificates configured for organization %s", orgName)
+	}
+
 	pool := &PeerPool{
-		clients:  make([]*ClientWrapper, 0, len(peerCfg.Peers)),
+		clients:  make([]*ClientWrapper, 0, len(peerCfg.Certificates.Users)),
 		strategy: strategy,
 		orgName:  orgName,
 	}
 
-	// Create a client for each peer
-	for _, peerNode := range peerCfg.Peers {
+	// Use peer0 for all connections
+	peerNode := peerCfg.Peers[0]
+
+	// Create a client for each user identity
+	for _, user := range peerCfg.Certificates.Users {
 		cfg := &GatewayConfig{
 			PeerAddr:      peerNode.Address,
 			TLSCertPath:   peerCfg.Certificates.TLSCACert,
 			MspID:         peerCfg.MspID,
-			UserCertPath:  peerCfg.Certificates.User1Cert,
-			UserKeyPath:   peerCfg.Certificates.User1Key,
+			UserCertPath:  user.Cert,
+			UserKeyPath:   user.Key,
 			ChannelName:   "", // Will be set when connecting
 			ChaincodeName: "", // Will be set when connecting
 		}
 
 		client, err := NewClientWrapper(cfg)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create client for %s: %w", peerNode.Address, err)
+			return nil, fmt.Errorf("failed to create client for user %s: %w", user.Cert, err)
 		}
 
 		pool.clients = append(pool.clients, client)
