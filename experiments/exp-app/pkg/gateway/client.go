@@ -177,7 +177,9 @@ func (c *ClientWrapper) SubmitWithTransient(functionName string, transient map[s
 	}
 
 	if commitStatus.Code != peer.TxValidationCode_VALID {
-		return c.attachErrorInfo(result, fmt.Errorf("transaction commit failed with status code: %s", commitStatus.Code.String()))
+		return c.attachErrorInfo(result, fmt.Errorf("transaction %s commit failed with status code: %s",
+			commit.TransactionID(),
+			commitStatus.Code.String()))
 	}
 
 	return result, nil
