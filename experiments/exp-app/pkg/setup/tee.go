@@ -10,11 +10,11 @@ import (
 
 	attest "github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
 	"github.com/google/go-sev-guest/abi"
+	"github.com/google/go-sev-guest/proto/sevsnp"
 	"github.com/google/go-sev-guest/verify"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/network"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/tee"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // TEESetupManager handles TEE service initialization
@@ -164,7 +164,7 @@ func (m *TEESetupManager) publishTEEReport(ctx context.Context, reportJSON []byt
 	log.Println("Successfully fetched certificate chain from AMD KDS")
 
 	// Marshal the certificate chain to JSON
-	certChainJSON, err := protojson.Marshal(myAttestation.CertificateChain)
+	certChainJSON, err := MarshalCertChain(myAttestation.CertificateChain)
 	if err != nil {
 		return fmt.Errorf("failed to marshal certificate chain to JSON: %w", err)
 	}
@@ -175,4 +175,35 @@ func (m *TEESetupManager) publishTEEReport(ctx context.Context, reportJSON []byt
 	// Pass both the report JSON and the cert chain JSON as arguments
 	_, err = m.client.SubmitTransactionWithContext(ctx, "PublishInitialTEEReport", string(reportJSON), string(certChainJSON))
 	return err
+}
+
+
+// CertificateChainJSON avoids the omission of empty fields, which the 
+// fabric-contract-api requires to be defined (even if empty) for correct deserialization in the chaincode.
+type CertificateChainJSON struct {
+	VcekCert     []byte            `json:"vcek_cert"`
+	VlekCert     []byte            `json:"vlek_cert"`
+	AskCert      []byte            `json:"ask_cert"`
+	ArkCert      []byte            `json:"ark_cert"`
+	FirmwareCert []byte            `json:"firmware_cert"`
+	Extras       map[string][]byte `json:"extras"`
+}
+
+func  MarshalCertChain(c *sevsnp.CertificateChain) ([]byte, error) {
+	out := CertificateChainJSON{
+		VcekCert:     nonNil(c.VcekCert),
+		VlekCert:     nonNil(c.VlekCert),
+		AskCert:      nonNil(c.AskCert),
+		ArkCert:      nonNil(c.ArkCert),
+		FirmwareCert: nonNil(c.FirmwareCert),
+		Extras:       c.Extras,
+	}
+	return json.Marshal(out)
+}
+
+func nonNil(b []byte) []byte {
+	if b == nil {
+		return []byte{}
+	}
+	return b
 }
