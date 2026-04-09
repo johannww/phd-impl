@@ -82,14 +82,10 @@ func (m *TEESetupManager) SetupTEE(ctx context.Context) (*tee.Client, error) {
 
 // getCCEPolicy returns the expected CCE policy from the ARM template
 func (m *TEESetupManager) getCCEPolicy() (string, error) {
-	// Determine path relative to project root
-	// Assumes this code runs from experiments/exp-app/
-	armTemplatePath := filepath.Join("..", "..", "tee_auction", "azure", "arm_template.json")
-
 	// Read the ARM template JSON file
-	data, err := os.ReadFile(armTemplatePath)
+	data, err := os.ReadFile(m.armTemplatePath)
 	if err != nil {
-		return "", fmt.Errorf("failed to read ARM template: %w", err)
+		return "", fmt.Errorf("failed to read ARM template from %s: %w", m.armTemplatePath, err)
 	}
 
 	// Parse the JSON to extract ccePolicy

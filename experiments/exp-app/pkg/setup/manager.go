@@ -7,14 +7,16 @@ import (
 
 // SetupManager handles initialization of blockchain state before performance tests
 type SetupManager struct {
-	client  *gateway.ClientWrapper
-	profile *network.NetworkProfile
+	client          *gateway.ClientWrapper
+	profile         *network.NetworkProfile
+	armTemplatePath string
 }
 
 // NewSetupManager creates a new setup manager
-func NewSetupManager(client *gateway.ClientWrapper, profile *network.NetworkProfile) *SetupManager {
+func NewSetupManager(client *gateway.ClientWrapper, profile *network.NetworkProfile, armTemplatePath string) *SetupManager {
 	return &SetupManager{
-		client:  client,
-		profile: profile,
+		client:          client,
+		profile:         profile,
+		armTemplatePath: armTemplatePath,
 	}
 }
