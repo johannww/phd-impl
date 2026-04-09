@@ -239,7 +239,7 @@ func VerifyTEEResult(stub shim.ChaincodeStubInterface, serializedResults *tee_au
 
 func getGoSevCertificationChain(stub shim.ChaincodeStubInterface) (*sevsnp.CertificateChain, error) {
 	// Try to load from world state first
-	sevCertChain := &SevCertChain{}
+	sevCertChain := &SevCertChain{CertificateChain: &sevsnp.CertificateChain{}}
 	err := sevCertChain.FromWorldState(stub, []string{"chain"})
 	if err == nil && sevCertChain.CertificateChain != nil {
 		// Successfully loaded from world state

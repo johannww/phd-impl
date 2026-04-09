@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
+	"github.com/google/go-sev-guest/proto/sevsnp"
 	"github.com/johannww/phd-impl/chaincodes/carbon/tee"
 	setup "github.com/johannww/phd-impl/chaincodes/carbon/tests/setup"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
@@ -53,13 +54,20 @@ func TestAzureCEEPolicyVerification(t *testing.T) {
 	require.NoError(t, err, "Failed to serialize report")
 
 	// Fetch certificate chain from AMD KDS
-	certChain, err := tee.FetchAndStoreCertChain(stub, reportBytes)
+	_, err = tee.FetchAndStoreCertChain(stub, reportBytes)
 	require.NoError(t, err, "Failed to fetch certificate chain from AMD KDS")
+	stub.MockTransactionEnd("tx2")
 
+	sevChainObject := &tee.SevCertChain{CertificateChain: &sevsnp.CertificateChain{}}
+	err = sevChainObject.FromWorldState(stub, []string{"chain"})
+	require.NoError(t, err, "Failed to fetch SEV certificate chain from world state")
+	certChain := sevChainObject.CertificateChain
+
+	stub.MockTransactionStart("tx3")
 	err = tee.InitialReportToWorldState(stub, reportJsonBytes, certChain)
 	require.NoError(t, err, "Failed to store initial TEE report in world state")
+	stub.MockTransactionEnd("tx3")
 
-	stub.MockTransactionEnd("tx2")
 }
 
 func TestVerifyAuctionAppSignature(t *testing.T) {
