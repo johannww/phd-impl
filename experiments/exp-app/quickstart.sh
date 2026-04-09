@@ -45,7 +45,7 @@ ARM_FILE="${SCRIPT_DIR}/../../tee_auction/azure/arm_template.json"
 
 ${SCRIPT_DIR}/bin/exp-app \
     --profile="${PROFILE_FILE}" \
-    --arm-template="${ARM_FILE}"
+    --arm-template="${ARM_FILE}" \
     --tps=50 \
     --burst=10 \
     --duration="${DURATION}" \
