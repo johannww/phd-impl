@@ -189,7 +189,7 @@ type CertificateChainJSON struct {
 	Extras       map[string][]byte `json:"extras"`
 }
 
-func  MarshalCertChain(c *sevsnp.CertificateChain) ([]byte, error) {
+func MarshalCertChain(c *sevsnp.CertificateChain) ([]byte, error) {
 	out := CertificateChainJSON{
 		VcekCert:     nonNil(c.VcekCert),
 		VlekCert:     nonNil(c.VlekCert),
