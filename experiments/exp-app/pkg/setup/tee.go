@@ -19,15 +19,17 @@ import (
 
 // TEESetupManager handles TEE service initialization
 type TEESetupManager struct {
-	client  *gateway.ClientWrapper
-	profile *network.NetworkProfile
+	client          *gateway.ClientWrapper
+	profile         *network.NetworkProfile
+	armTemplatePath string
 }
 
 // NewTEESetupManager creates a new TEE setup manager
-func NewTEESetupManager(client *gateway.ClientWrapper, profile *network.NetworkProfile) *TEESetupManager {
+func NewTEESetupManager(client *gateway.ClientWrapper, profile *network.NetworkProfile, armTemplatePath string) *TEESetupManager {
 	return &TEESetupManager{
-		client:  client,
-		profile: profile,
+		client:          client,
+		profile:         profile,
+		armTemplatePath: armTemplatePath,
 	}
 }
 

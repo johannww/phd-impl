@@ -81,7 +81,7 @@ func (s *SetupManager) InitializeBETS(ctx context.Context, nPropsPerOrg int, nCh
 	var teeClient *tee.Client
 	if s.profile.TEEAuction.Enabled {
 		log.Println("Setting up TEE auction service...")
-		teeSetupMgr := NewTEESetupManager(s.client, s.profile)
+		teeSetupMgr := NewTEESetupManager(s.client, s.profile, s.armTemplatePath)
 		teeClient, err = teeSetupMgr.SetupTEE(ctx)
 		if err != nil {
 			log.Fatalf("WARNING: TEE setup failed: %v", err)
