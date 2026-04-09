@@ -17,6 +17,16 @@ CHAINCODE_RELEASE_NAME="${CHAINCODE_RELEASE_NAME:-${RELEASE_NAME}-chaincode}"
 TEE_AUCTION_DIR="${TEE_AUCTION_DIR:-${SCRIPT_DIR}/../../../tee_auction}"
 CPUS="${CPUS:-6}"
 MEMORY="${MEMORY:-12000}"
+COLOR_RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+(
+    echo "Deploying confidential container (tee_auction): docker, policy, deploy..."
+    make -C "${TEE_AUCTION_DIR}" docker policy deploy > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${COLOR_RED}Error deploying tee_auction confidential container. Please check the output above for details.${NC}"
+    fi
+) &
 
 . "${SCRIPT_DIR}/install_fabric_binaries.bash"
 
@@ -48,8 +58,7 @@ helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
 . "${SCRIPT_DIR}/fetch_organizations.bash"
 . "${SCRIPT_DIR}/fetch_collections_config.bash"
 
-echo "Deploying confidential container (tee_auction): docker, policy, deploy..."
-make -C "${TEE_AUCTION_DIR}" docker policy deploy
+wait
 
 . "${SCRIPT_DIR}/generate_network_profile.bash"
 
