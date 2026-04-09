@@ -12,6 +12,9 @@ import (
 	"fmt"
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
+	"github.com/google/go-sev-guest/abi"
+	"github.com/google/go-sev-guest/proto/sevsnp"
+	"github.com/google/go-sev-guest/verify"
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
@@ -24,7 +27,7 @@ const (
 	CCE_POLICY         = "ccePolicy"
 )
 
-func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes []byte) error {
+func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes []byte, certChain *sevsnp.CertificateChain) error {
 	if cid.AssertAttributeValue(stub, identities.TEEConfigurer, "true") != nil {
 		return fmt.Errorf("this identity cannot set the initial TEE report")
 	}
@@ -40,7 +43,16 @@ func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes
 		return fmt.Errorf("could not serialize initial TEE report: %v", err)
 	}
 
-	verifies, err := report_verifier.VerifyReportSignatureWithGoSev(reportBytes)
+	// Store the certificate chain in world state for future use
+	worldStateSevChain := &SevCertChain{
+		CertificateChain: certChain,
+	}
+	err = worldStateSevChain.ToWorldState(stub)
+	if err != nil {
+		return fmt.Errorf("failed to store cert chain in world state: %v", err)
+	}
+
+	verifies, err := report_verifier.VerifyReportSignatureWithGoSev(reportBytes, certChain)
 	if err != nil || !verifies {
 		return fmt.Errorf("could not verify TEE report signature: %v", err)
 	}
@@ -59,6 +71,7 @@ func InitialReportToWorldState(stub shim.ChaincodeStubInterface, reportJsonBytes
 }
 
 func VerifyAuctionResultReportSignature(
+	stub shim.ChaincodeStubInterface,
 	auctionReportBytes []byte,
 	expectedResult []byte,
 	hashReceivedByTEE []byte,
@@ -83,7 +96,13 @@ func VerifyAuctionResultReportSignature(
 		return false, fmt.Errorf("report data %x does not match expected result hash %x", reportDataBytes, expectedResultHash[:])
 	}
 
-	verifies, err := report_verifier.VerifyReportSignatureWithGoSev(auctionReportBytes)
+	// Load certificate chain from world state
+	certChain, err := getGoSevCertificationChain(stub)
+	if err != nil {
+		return false, fmt.Errorf("could not get certificate chain: %v", err)
+	}
+
+	verifies, err := report_verifier.VerifyReportSignatureWithGoSev(auctionReportBytes, certChain)
 	if err != nil || !verifies {
 		return false, fmt.Errorf("could not verify TEE report signature: %v", err)
 	}
@@ -192,7 +211,8 @@ func GetCCEPolicy(stub shim.ChaincodeStubInterface) (string, error) {
 }
 
 func VerifyTEEResult(stub shim.ChaincodeStubInterface, serializedResults *tee_auction.SerializedAuctionResultTEE) error {
-	verifies, err := VerifyAuctionResultReportSignature(serializedResults.AmdReportBytes,
+	verifies, err := VerifyAuctionResultReportSignature(stub,
+		serializedResults.AmdReportBytes,
 		serializedResults.ResultBytes,
 		serializedResults.ReceivedHash)
 	if err != nil {
@@ -215,4 +235,48 @@ func VerifyTEEResult(stub shim.ChaincodeStubInterface, serializedResults *tee_au
 	}
 
 	return nil
+}
+
+func getGoSevCertificationChain(stub shim.ChaincodeStubInterface) (*sevsnp.CertificateChain, error) {
+	// Try to load from world state first
+	sevCertChain := &SevCertChain{}
+	err := sevCertChain.FromWorldState(stub, []string{"chain"})
+	if err == nil && sevCertChain.CertificateChain != nil {
+		// Successfully loaded from world state
+		return sevCertChain.CertificateChain, nil
+	}
+
+	// If not found in world state, return error
+	// The cert chain should have been stored during InitialReportToWorldState
+	return nil, fmt.Errorf("certificate chain not found in world state: %v", err)
+}
+
+// FetchAndStoreCertChain fetches the AMD SEV-SNP certificate chain from AMD KDS
+// using the go-sev-guest library and stores it in the world state for future use.
+// If the chain already exists in world state, it returns the cached version.
+func FetchAndStoreCertChain(stub shim.ChaincodeStubInterface, reportBytes []byte) (*sevsnp.CertificateChain, error) {
+	reportProto, err := abi.ReportToProto(reportBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert report to proto: %v", err)
+	}
+
+	// Fetch the cert chain from AMD KDS using go-sev-guest
+	attestOpts := verify.DefaultOptions()
+	attestOpts.DisableCertFetching = false
+
+	myAttestation, err := verify.GetAttestationFromReport(reportProto, attestOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get attestation from report: %v", err)
+	}
+
+	// Store the certificate chain in world state for future use
+	worldStateSevChain := &SevCertChain{
+		CertificateChain: myAttestation.CertificateChain,
+	}
+	err = worldStateSevChain.ToWorldState(stub)
+	if err != nil {
+		return nil, fmt.Errorf("failed to store cert chain in world state: %v", err)
+	}
+
+	return myAttestation.CertificateChain, nil
 }

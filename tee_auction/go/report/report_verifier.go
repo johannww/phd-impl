@@ -13,24 +13,32 @@ import (
 
 	"github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
 	"github.com/google/go-sev-guest/abi"
+	"github.com/google/go-sev-guest/proto/sevsnp"
 	"github.com/google/go-sev-guest/verify"
 )
 
 // VerifyReportSignatureWithGoSev uses the go-sev library to verify the signature of the attestation report.
 // This is weird, but with recent hardware the confidential-sidecar-containers library
 // returns an inconsisent certification chain that causes errors. The go-sev library seems to be more robust to this issue.
-func VerifyReportSignatureWithGoSev(reportRawBytes []byte) (bool, error) {
+func VerifyReportSignatureWithGoSev(reportRawBytes []byte, certChain *sevsnp.CertificateChain) (bool, error) {
 	reportProto, err := abi.ReportToProto(reportRawBytes)
 	if err != nil {
 		return false, fmt.Errorf("Failed to convert report to proto: %v", err)
 	}
 
-	myAttestation, err := verify.GetAttestationFromReport(reportProto, verify.DefaultOptions())
+	// We save the cert chain on the world state
+	attestOpts := verify.DefaultOptions()
+	attestOpts.DisableCertFetching = true
+
+	myAttestation, err := verify.GetAttestationFromReport(reportProto, attestOpts)
+
 	if err != nil {
 		return false, fmt.Errorf("Failed to get attestation from report: %v", err)
 	}
 
-	err = verify.SnpAttestation(myAttestation, verify.DefaultOptions())
+	myAttestation.CertificateChain = certChain
+
+	err = verify.SnpAttestation(myAttestation, attestOpts)
 	if err != nil {
 		return false, fmt.Errorf("Failed to verify attestation: %v", err)
 	}

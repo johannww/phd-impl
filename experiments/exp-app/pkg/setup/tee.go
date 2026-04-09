@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"time"
 
+	attest "github.com/Microsoft/confidential-sidecar-containers/pkg/attest"
+	"github.com/google/go-sev-guest/abi"
+	"github.com/google/go-sev-guest/verify"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/network"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/tee"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // TEESetupManager handles TEE service initialization
@@ -121,7 +124,9 @@ func (m *TEESetupManager) publishCCEPolicy(ctx context.Context, base64Policy str
 	return err
 }
 
-// publishTEEReport publishes the initial TEE report to the chaincode
+// publishTEEReport publishes the initial TEE report to the chaincode.
+// It also fetches the AMD SEV-SNP certificate chain from AMD KDS and passes it
+// as a second argument to avoid non-deterministic endorsement failures.
 func (m *TEESetupManager) publishTEEReport(ctx context.Context, reportJSON []byte) error {
 	// Validate that it's valid JSON
 	var testJSON map[string]interface{}
@@ -129,9 +134,43 @@ func (m *TEESetupManager) publishTEEReport(ctx context.Context, reportJSON []byt
 		return fmt.Errorf("invalid JSON in TEE report: %w", err)
 	}
 
+	// Deserialize the report to get raw bytes for cert chain fetch
+	report := attest.SNPAttestationReport{}
+	if err := json.Unmarshal(reportJSON, &report); err != nil {
+		return fmt.Errorf("failed to unmarshal TEE report: %w", err)
+	}
+
+	reportBytes, err := report.SerializeReport()
+	if err != nil {
+		return fmt.Errorf("failed to serialize TEE report: %w", err)
+	}
+
+	// Fetch the AMD SEV-SNP certificate chain from AMD KDS
+	log.Println("Fetching AMD SEV-SNP certificate chain from AMD KDS...")
+	reportProto, err := abi.ReportToProto(reportBytes)
+	if err != nil {
+		return fmt.Errorf("failed to convert report to proto: %w", err)
+	}
+
+	attestOpts := verify.DefaultOptions()
+	attestOpts.DisableCertFetching = false
+
+	myAttestation, err := verify.GetAttestationFromReport(reportProto, attestOpts)
+	if err != nil {
+		return fmt.Errorf("failed to get attestation from report (AMD KDS fetch): %w", err)
+	}
+	log.Println("Successfully fetched certificate chain from AMD KDS")
+
+	// Marshal the certificate chain to JSON
+	certChainJSON, err := protojson.Marshal(myAttestation.CertificateChain)
+	if err != nil {
+		return fmt.Errorf("failed to marshal certificate chain to JSON: %w", err)
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	_, err := m.client.SubmitTransactionWithContext(ctx, "PublishInitialTEEReport", string(reportJSON))
+	// Pass both the report JSON and the cert chain JSON as arguments
+	_, err = m.client.SubmitTransactionWithContext(ctx, "PublishInitialTEEReport", string(reportJSON), string(certChainJSON))
 	return err
 }

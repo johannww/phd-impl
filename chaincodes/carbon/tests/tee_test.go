@@ -23,7 +23,7 @@ func TestAzureCEEPolicyVerification(t *testing.T) {
 	require.NoError(t, err, "Failed to read ARM template JSON file")
 
 	reportJsonBytes, err := os.ReadFile("./data/azure/report.json")
-	require.NoError(t, err, "Failed to read ARM template JSON file")
+	require.NoError(t, err, "Failed to read report JSON file")
 
 	var armJson map[string]interface{}
 	err = json.Unmarshal(armTemplateJsonBytes, &armJson)
@@ -41,10 +41,25 @@ func TestAzureCEEPolicyVerification(t *testing.T) {
 
 	err = tee.ExpectedCCEPolicyToWorldState(stub, ccePolicyB64)
 	require.NoError(t, err, "Failed to store CCE policy in world state")
+	stub.MockTransactionEnd("tx1")
 
-	err = tee.InitialReportToWorldState(stub, reportJsonBytes)
+	stub.MockTransactionStart("tx2")
+	// Deserialize and re-serialize to get raw report bytes for cert chain fetch
+	report := attest.SNPAttestationReport{}
+	err = json.Unmarshal(reportJsonBytes, &report)
+	require.NoError(t, err, "Failed to unmarshal report JSON")
+
+	reportBytes, err := report.SerializeReport()
+	require.NoError(t, err, "Failed to serialize report")
+
+	// Fetch certificate chain from AMD KDS
+	certChain, err := tee.FetchAndStoreCertChain(stub, reportBytes)
+	require.NoError(t, err, "Failed to fetch certificate chain from AMD KDS")
+
+	err = tee.InitialReportToWorldState(stub, reportJsonBytes, certChain)
 	require.NoError(t, err, "Failed to store initial TEE report in world state")
 
+	stub.MockTransactionEnd("tx2")
 }
 
 func TestVerifyAuctionAppSignature(t *testing.T) {

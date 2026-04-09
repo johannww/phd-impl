@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/go-sev-guest/proto/sevsnp"
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 	"github.com/johannww/phd-impl/chaincodes/carbon/auction"
@@ -275,10 +276,12 @@ func (c *CarbonContract) PublishExpectedTEECCEPolicy(ctx contractapi.Transaction
 }
 
 // PublishInitialTEEReport stores the initial TEE report containing the
-// confidential container's public key for communication and verification
-func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionContextInterface, reportJsonBytes []byte) error {
+// confidential container's public key for communication and verification.
+// The AMD SEV-SNP certificate chain must be provided to avoid non-deterministic
+// fetches from AMD KDS (which generates fresh VCEK certificates on each request).
+func (c *CarbonContract) PublishInitialTEEReport(ctx contractapi.TransactionContextInterface, reportJsonBytes []byte, certChain *sevsnp.CertificateChain) error {
 	return c.withMetricsErr("PublishInitialTEEReport", func() error {
-		return tee.InitialReportToWorldState(ctx.GetStub(), reportJsonBytes)
+		return tee.InitialReportToWorldState(ctx.GetStub(), reportJsonBytes, certChain)
 	})
 }
 
