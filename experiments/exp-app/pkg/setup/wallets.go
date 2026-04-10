@@ -3,6 +3,7 @@ package setup
 import (
 	"context"
 	"log"
+	"math"
 	"strconv"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
@@ -12,7 +13,7 @@ import (
 func (s *SetupManager) SetupBuyerWallets(ctx context.Context) ([]*client.Commit, error) {
 	id := s.client.GetIdentityID()
 	log.Printf("Preparing wallet for current identity: %s", id)
-	initialBalance := int64(1000000000) // Large enough for many auctions
+	initialBalance := int64(math.MaxInt64 >> 1) // Use a very large initial balance for testing
 
 	callerID, err := s.client.SubmitTransaction("ReturnCallerID")
 	if err != nil {
