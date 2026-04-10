@@ -8,3 +8,9 @@ message VirtualTokenWallet {
   string owner = 1;
   int64 quantity = 2;
 }
+
+message VirtualTokenUTXO {
+  string ownerID = 1;
+  int64 amount = 2;
+  string txID = 3;
+}

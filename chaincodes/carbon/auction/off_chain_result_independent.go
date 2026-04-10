@@ -18,12 +18,7 @@ func processIndependentAuctionResult(stub shim.ChaincodeStubInterface,
 
 	stub.StartWriteBatch()
 
-	paymentWalletAdjustments, err := storeIndependentMatchedBids(stub, result)
-	if err != nil {
-		return err
-	}
-
-	if err := updateWalletsForAdjustments(stub, paymentWalletAdjustments); err != nil {
+	if err := storeIndependentMatchedBids(stub, result); err != nil {
 		return err
 	}
 
@@ -37,27 +32,28 @@ func processIndependentAuctionResult(stub shim.ChaincodeStubInterface,
 }
 
 // storeIndependentMatchedBids persists matched bids and performs credit transfers
-// and payment/refund calculations. It returns the aggregated wallet adjustments
-// map that the caller should persist to world state.
-func storeIndependentMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainIndepAuctionResult) (map[string]int64, error) {
-	paymentWalletAdjustments := make(map[string]int64)
+// and creates aggregated payment/refund UTXOs per seller/buyer per auction.
+func storeIndependentMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainIndepAuctionResult) error {
+	// Aggregate payments and refunds per owner (seller/buyer)
+	payments := make(map[string]int64) // sellerID -> total payment
+	refunds := make(map[string]int64)  // buyerID -> total refund
 
 	for i := range result.MatchedBids {
 		mb := result.MatchedBids[i]
 		if err := mb.ToWorldState(stub); err != nil {
-			return nil, fmt.Errorf("could not store matched bid %d: %v", i, err)
+			return fmt.Errorf("could not store matched bid %d: %v", i, err)
 		}
 
 		if err := transferCreditToBuyerCreditWallet(stub, mb); err != nil {
-			return nil, err
+			return err
 		}
 
-		if err := calculatePaymentsAndRefunds(mb, &paymentWalletAdjustments); err != nil {
-			return nil, err
-		}
+		// Accumulate payments and refunds
+		accumulatePaymentsAndRefunds(mb, payments, refunds)
 	}
 
-	return paymentWalletAdjustments, nil
+	// Create aggregated UTXOs for payments and refunds
+	return createPaymentAndRefundUTXOs(stub, result.AuctionID, payments, refunds)
 }
 
 func transferCreditToBuyerCreditWallet(
@@ -75,25 +71,6 @@ func transferCreditToBuyerCreditWallet(
 	err := buyerCreditWallet.ToWorldState(stub)
 	if err != nil {
 		return fmt.Errorf("could not materialize credit for buyer %s: %v", mergedMb.BuyBid.BuyerID, err)
-	}
-	return nil
-}
-
-// updateWalletsForAdjustments writes aggregated wallet adjustments to world state.
-func updateWalletsForAdjustments(stub shim.ChaincodeStubInterface, walletAdjustments map[string]int64) error {
-	for ownerID, amount := range walletAdjustments {
-		wallet := &payment.VirtualTokenWallet{OwnerID: ownerID}
-		err := wallet.FromWorldState(stub, []string{ownerID})
-		if err != nil {
-			// If it doesn't exist, assume the balance was 0 and set to adjustment amount
-			wallet.Quantity = amount
-		} else {
-			wallet.Quantity += amount
-		}
-
-		if err := wallet.ToWorldState(stub); err != nil {
-			return fmt.Errorf("failed to update wallet for owner %s: %v", ownerID, err)
-		}
 	}
 	return nil
 }

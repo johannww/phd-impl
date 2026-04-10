@@ -40,8 +40,9 @@ func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainC
 		return fmt.Errorf("could not merge coupled auction results into single matched bids: %v", err)
 	}
 
-	// Aggregate wallet adjustments to minimize world state updates
-	walletAdjustments := make(map[string]int64)
+	// Aggregate payments and refunds per owner (seller/buyer)
+	payments := make(map[string]int64) // sellerID -> total payment
+	refunds := make(map[string]int64)  // buyerID -> total refund
 
 	for _, mergedMb := range mergedMbs {
 		err = mergedMb.ToWorldState(stub)
@@ -53,28 +54,12 @@ func storeCoupledMatchedBids(stub shim.ChaincodeStubInterface, result *OffChainC
 			return err
 		}
 
-		if err := calculatePaymentsAndRefunds(mergedMb, &walletAdjustments); err != nil {
-			return err
-		}
+		// Accumulate payments and refunds
+		accumulatePaymentsAndRefunds(mergedMb, payments, refunds)
 	}
 
-	// Update all adjusted wallets
-	for ownerID, amount := range walletAdjustments {
-		wallet := &payment.VirtualTokenWallet{OwnerID: ownerID}
-		err := wallet.FromWorldState(stub, []string{ownerID})
-		if err != nil {
-			// If it doesn't exist, we assume the balance was 0
-			wallet.Quantity = amount
-		} else {
-			wallet.Quantity += amount
-		}
-
-		if err := wallet.ToWorldState(stub); err != nil {
-			return fmt.Errorf("failed to update wallet for owner %s: %v", ownerID, err)
-		}
-	}
-
-	return nil
+	// Create aggregated UTXOs for payments and refunds
+	return createPaymentAndRefundUTXOs(stub, result.AuctionID, payments, refunds)
 }
 
 // transferCreditToBuyer transfers ownership of credits from the seller to the buyer
@@ -116,23 +101,49 @@ func transferCreditToBuyer(
 	return nil
 }
 
-func calculatePaymentsAndRefunds(mergedMb *bids.MatchedBid, walletAdjustments *map[string]int64) error {
-	if walletAdjustments == nil {
-		return fmt.Errorf("wallet adjustments map cannot be nil")
-	}
-
-	matchPrice := mergedMb.PrivatePrice.Price
-	matchQuantity := mergedMb.Quantity
+// accumulatePaymentsAndRefunds calculates and accumulates payments and refunds
+// for a matched bid into the provided maps.
+func accumulatePaymentsAndRefunds(mb *bids.MatchedBid, payments, refunds map[string]int64) {
+	matchPrice := mb.PrivatePrice.Price
+	matchQuantity := mb.Quantity
 
 	// TODOHP: we have to be careful here. we must consider the extra credits from the multiplier.
 	// 1. Seller payment: Sellers are paid the clearing price
-	(*walletAdjustments)[mergedMb.SellBid.SellerID] += matchPrice * matchQuantity
+	payments[mb.SellBid.SellerID] += matchPrice * matchQuantity
 
 	// 2. Buyer refund: Buyers committed at their limit price, refund difference
-	originalPrice := mergedMb.BuyBid.PrivatePrice.Price
+	originalPrice := mb.BuyBid.PrivatePrice.Price
 	refund := (originalPrice - matchPrice) * matchQuantity
 	if refund > 0 {
-		(*walletAdjustments)[mergedMb.BuyBid.BuyerID] += refund
+		refunds[mb.BuyBid.BuyerID] += refund
+	}
+}
+
+// createPaymentAndRefundUTXOs creates aggregated UTXOs for all payments and refunds
+// for a given auction.
+func createPaymentAndRefundUTXOs(stub shim.ChaincodeStubInterface, auctionID uint64, payments, refunds map[string]int64) error {
+	auctionIDStr := fmt.Sprintf("%d", auctionID)
+
+	// Create aggregated UTXOs for payments
+	for sellerID, totalPayment := range payments {
+		if totalPayment > 0 {
+			txID := fmt.Sprintf("%s-seller", auctionIDStr)
+			err := payment.CreatePaymentUTXO(stub, sellerID, totalPayment, txID)
+			if err != nil {
+				return fmt.Errorf("could not create payment UTXO for seller %s: %v", sellerID, err)
+			}
+		}
+	}
+
+	// Create aggregated UTXOs for refunds
+	for buyerID, totalRefund := range refunds {
+		if totalRefund > 0 {
+			txID := fmt.Sprintf("%s-buyer", auctionIDStr)
+			err := payment.CreateRefundUTXO(stub, buyerID, totalRefund, txID)
+			if err != nil {
+				return fmt.Errorf("could not create refund UTXO for buyer %s: %v", buyerID, err)
+			}
+		}
 	}
 
 	return nil

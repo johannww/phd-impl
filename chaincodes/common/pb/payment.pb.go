@@ -73,6 +73,66 @@ func (x *VirtualTokenWallet) GetQuantity() int64 {
 	return 0
 }
 
+type VirtualTokenUTXO struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OwnerID       string                 `protobuf:"bytes,1,opt,name=ownerID,proto3" json:"ownerID,omitempty"`
+	Amount        int64                  `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
+	TxID          string                 `protobuf:"bytes,3,opt,name=txID,proto3" json:"txID,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VirtualTokenUTXO) Reset() {
+	*x = VirtualTokenUTXO{}
+	mi := &file_payment_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VirtualTokenUTXO) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VirtualTokenUTXO) ProtoMessage() {}
+
+func (x *VirtualTokenUTXO) ProtoReflect() protoreflect.Message {
+	mi := &file_payment_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VirtualTokenUTXO.ProtoReflect.Descriptor instead.
+func (*VirtualTokenUTXO) Descriptor() ([]byte, []int) {
+	return file_payment_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *VirtualTokenUTXO) GetOwnerID() string {
+	if x != nil {
+		return x.OwnerID
+	}
+	return ""
+}
+
+func (x *VirtualTokenUTXO) GetAmount() int64 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+func (x *VirtualTokenUTXO) GetTxID() string {
+	if x != nil {
+		return x.TxID
+	}
+	return ""
+}
+
 var File_payment_proto protoreflect.FileDescriptor
 
 const file_payment_proto_rawDesc = "" +
@@ -80,7 +140,11 @@ const file_payment_proto_rawDesc = "" +
 	"\rpayment.proto\x12\x02pb\"F\n" +
 	"\x12VirtualTokenWallet\x12\x14\n" +
 	"\x05owner\x18\x01 \x01(\tR\x05owner\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\x03R\bquantityB<Z:github.com/johannww/phd-impl/chaincodes/common/internal/pbb\x06proto3"
+	"\bquantity\x18\x02 \x01(\x03R\bquantity\"X\n" +
+	"\x10VirtualTokenUTXO\x12\x18\n" +
+	"\aownerID\x18\x01 \x01(\tR\aownerID\x12\x16\n" +
+	"\x06amount\x18\x02 \x01(\x03R\x06amount\x12\x12\n" +
+	"\x04txID\x18\x03 \x01(\tR\x04txIDB<Z:github.com/johannww/phd-impl/chaincodes/common/internal/pbb\x06proto3"
 
 var (
 	file_payment_proto_rawDescOnce sync.Once
@@ -94,9 +158,10 @@ func file_payment_proto_rawDescGZIP() []byte {
 	return file_payment_proto_rawDescData
 }
 
-var file_payment_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_payment_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_payment_proto_goTypes = []any{
 	(*VirtualTokenWallet)(nil), // 0: pb.VirtualTokenWallet
+	(*VirtualTokenUTXO)(nil),   // 1: pb.VirtualTokenUTXO
 }
 var file_payment_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -117,7 +182,7 @@ func file_payment_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_payment_proto_rawDesc), len(file_payment_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

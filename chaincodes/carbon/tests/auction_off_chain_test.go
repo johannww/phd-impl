@@ -1,12 +1,14 @@
 package carbon_tests
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/johannww/phd-impl/chaincodes/carbon/auction"
 	"github.com/johannww/phd-impl/chaincodes/carbon/bids"
+	"github.com/johannww/phd-impl/chaincodes/carbon/payment"
 	"github.com/johannww/phd-impl/chaincodes/carbon/policies"
 	utils_test "github.com/johannww/phd-impl/chaincodes/carbon/tests/utils"
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
@@ -61,6 +63,8 @@ func TestOffChainIndependentAuction(t *testing.T) {
 	err = auction.ProcessOffChainAuctionResult(stub, resultPubBytes, resultPvtBytes)
 	require.NoError(t, err, "Failed to process off-chain auction result")
 	stub.MockTransactionEnd("process-auction-result-tx")
+
+	verifyUTXOsCreatedForAuction(t, stub, auctionResult.MatchedBids, auctionData.AuctionID)
 }
 
 func TestOffChainIndependentAuctionWithRandomBids(t *testing.T) {
@@ -184,6 +188,8 @@ func testOffChainCoupledAuction(t *testing.T) {
 	require.NotZero(t, len(matchedBids), "There should be matched bids in world state after processing auction result")
 	require.Equal(t, len(mergedMatchedBids), len(matchedBids), "Number of matched bids in world state should match number of merged matched bids")
 	stub.MockTransactionEnd("get-matched-bids-tx")
+
+	verifyUTXOsCreatedForAuction(t, stub, mergedMatchedBids, auctionData.AuctionID)
 }
 
 // verifyMultiplierMultiplyAsExpected tests the multiplying logic.
@@ -366,4 +372,103 @@ func verifyAdjustedBidsConsistency(
 		"adjusted sell bids should contain exactly the bids that were matched")
 	require.Equal(t, len(buyMatchedTotal), len(seenAdjustedBuy),
 		"adjusted buy bids should contain exactly the bids that were matched")
+}
+
+// verifyUTXOsCreatedForAuction verifies that payment and refund UTXOs are created correctly
+// after auction settlement. This ensures the UTXO model is working to eliminate MVCC conflicts.
+func verifyUTXOsCreatedForAuction(
+	t *testing.T,
+	stub *mocks.MockStub,
+	matchedBids []*bids.MatchedBid,
+	auctionID uint64,
+) {
+	// Calculate expected payments and refunds from matched bids
+	expectedPayments := make(map[string]int64) // sellerID -> total payment
+	expectedRefunds := make(map[string]int64)  // buyerID -> total refund
+
+	for _, mb := range matchedBids {
+		require.NotNil(t, mb.PrivatePrice, "Matched bid should have private price")
+		require.NotNil(t, mb.BuyBid.PrivatePrice, "Buy bid should have private price")
+
+		matchPrice := mb.PrivatePrice.Price
+		matchQuantity := mb.Quantity
+
+		// Calculate seller payment
+		expectedPayments[mb.SellBid.SellerID] += matchPrice * matchQuantity
+
+		// Calculate buyer refund
+		originalPrice := mb.BuyBid.PrivatePrice.Price
+		refund := (originalPrice - matchPrice) * matchQuantity
+		if refund > 0 {
+			expectedRefunds[mb.BuyBid.BuyerID] += refund
+		}
+	}
+
+	// Query all UTXOs from world state
+	stub.MockTransactionStart("verify-utxos-tx")
+	utxos, err := state.GetStatesByPartialCompositeKey[payment.VirtualTokenUTXO](
+		stub, payment.VIRTUAL_TOKEN_UTXO_PREFIX, []string{},
+	)
+	require.NoError(t, err, "Failed to get UTXOs from world state")
+	stub.MockTransactionEnd("verify-utxos-tx")
+
+	// Build maps of actual UTXOs by owner and type
+	actualPaymentUTXOs := make(map[string]*payment.VirtualTokenUTXO) // sellerID -> UTXO
+	actualRefundUTXOs := make(map[string]*payment.VirtualTokenUTXO)  // buyerID -> UTXO
+
+	auctionIDStr := fmt.Sprintf("%d", auctionID)
+	paymentTxID := fmt.Sprintf("%s-seller", auctionIDStr)
+	refundTxID := fmt.Sprintf("%s-buyer", auctionIDStr)
+
+	for _, utxo := range utxos {
+		if utxo.TxID == paymentTxID {
+			// Check for duplicates
+			_, exists := actualPaymentUTXOs[utxo.OwnerID]
+			require.False(t, exists,
+				"Found duplicate payment UTXO for seller %s (should be one per seller per auction)",
+				utxo.OwnerID)
+			actualPaymentUTXOs[utxo.OwnerID] = utxo
+		} else if utxo.TxID == refundTxID {
+			// Check for duplicates
+			_, exists := actualRefundUTXOs[utxo.OwnerID]
+			require.False(t, exists,
+				"Found duplicate refund UTXO for buyer %s (should be one per buyer per auction)",
+				utxo.OwnerID)
+			actualRefundUTXOs[utxo.OwnerID] = utxo
+		}
+	}
+
+	// Verify payment UTXOs for all sellers
+	for sellerID, expectedAmount := range expectedPayments {
+		utxo, exists := actualPaymentUTXOs[sellerID]
+		require.True(t, exists,
+			"Payment UTXO should exist for seller %s", sellerID)
+		require.Equal(t, sellerID, utxo.OwnerID,
+			"Payment UTXO owner should match seller ID")
+		require.Equal(t, expectedAmount, utxo.Amount,
+			"Payment UTXO amount for seller %s should match expected payment", sellerID)
+		require.Equal(t, paymentTxID, utxo.TxID,
+			"Payment UTXO txID should be %s", paymentTxID)
+	}
+
+	// Verify refund UTXOs for buyers with refunds
+	for buyerID, expectedAmount := range expectedRefunds {
+		utxo, exists := actualRefundUTXOs[buyerID]
+		require.True(t, exists,
+			"Refund UTXO should exist for buyer %s with refund", buyerID)
+		require.Equal(t, buyerID, utxo.OwnerID,
+			"Refund UTXO owner should match buyer ID")
+		require.Equal(t, expectedAmount, utxo.Amount,
+			"Refund UTXO amount for buyer %s should match expected refund", buyerID)
+		require.Equal(t, refundTxID, utxo.TxID,
+			"Refund UTXO txID should be %s", refundTxID)
+	}
+
+	// Verify no extra payment UTXOs
+	require.Equal(t, len(expectedPayments), len(actualPaymentUTXOs),
+		"Number of payment UTXOs should match number of sellers with payments")
+
+	// Verify no extra refund UTXOs
+	require.Equal(t, len(expectedRefunds), len(actualRefundUTXOs),
+		"Number of refund UTXOs should match number of buyers with refunds")
 }
