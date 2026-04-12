@@ -268,7 +268,7 @@ The project follows Go best practices:
 
 ### In Progress
 - [ ] Hyperledger Cacti integration for cross-chain interoperability
-- [ ] Performance benchmarking with Hyperledger Caliper
+- [ ] Performance benchmarking with `./experiments/exp-app`
 - [ ] Grafana + Prometheus metrics dashboard
 - [ ] Production-grade deployment scripts
 
