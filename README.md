@@ -1,76 +1,115 @@
 # A country-agnostic Blockchain ETS Model with Geographical and Time References inspired by the Brazilian Ecosystem using Hyperledger Fabric, Hyperledger Cacti and Microsoft Confidential Containers
 
-This repository is an ongoing implementation of a Blockchain-based Emission Trading System (ETS) model that incorporates **geographical** and **temporal** references. To ensure security and privacy during auctions, we utilize **Microsoft Confidential Containers** for Trusted Execution Environments (TEE).
+This repository implements a country-agnostic Blockchain-based Emission Trading System (BETS) model that incorporates **geographical** and **temporal** references, inspired by the Brazilian ecosystem. The system ensures security and privacy during auctions using **Microsoft Confidential Containers** for Trusted Execution Environments (TEE).
 
-# Techonologies used
+## Technologies Used
 
-- [Hyperledger Fabric](https://github.com/hyperledger/fabric) v3.1.4
-    - For the main blockchain network
-- [Hyperledger Cacti](https://github.com/hyperledger-cacti/cacti)
-    - For interoperability between different blockchains
-    - Supports Ethereum-based chains, Hyperledger Fabric, and Corda
-- [Microsoft Confidential Containers](https://github.com/microsoft/confidential-sidecar-containers/tree/4814b442cf71de2b1317f00846f16727e40a3088) (for TEE)
-    - Auction HTTPS service runs inside a confidential container attested by the hardware
-    - For secure auctioning of carbon credits
-    - Ensures data privacy and integrity during auctions
-    - Uses AMD SEV-SNP technology
+- **[Hyperledger Fabric](https://github.com/hyperledger/fabric) v3.1.4**
+  - Core blockchain network implementation
+  - Private data collections for sensitive auction data
+  - Chaincode-as-a-Service (CCAAS) deployment model
+  
+- **[Hyperledger Cacti](https://github.com/hyperledger-cacti/cacti)**
+  - Cross-chain interoperability framework
+  - Hash Time-Locked Contracts (HTLC) for atomic swaps
+  - Supports Ethereum-based chains, Hyperledger Fabric, and Corda
+  
+- **[Microsoft Confidential Containers](https://github.com/microsoft/confidential-sidecar-containers)**
+  - TEE-based auction service with hardware attestation
+  - Secure auctioning of carbon credits with data privacy guarantees
+  - Uses AMD SEV-SNP technology for confidential computing
+  - Azure Kubernetes Service (AKS) integration for cloud deployment
 
-# Model overview
+- **Go 1.26.1**
+  - Primary programming language for all components
+  - Go workspaces for multi-module project structure
 
-<img width="1168" height="673" alt="image" src="https://github.com/user-attachments/assets/fe673c8d-8380-4187-96a6-5384d9b58ee1" />
+## Project Structure
 
-# Auction types
+```
+.
+├── chaincodes/
+│   ├── carbon/          # Main carbon credit chaincode
+│   ├── interop/         # Interoperability chaincode (HTLC)
+│   └── common/          # Shared utilities and state management
+├── tee_auction/         # TEE auction service
+├── data_api/            # External data API service (SICAR mock)
+├── experiments/
+│   ├── deploy/          # Kubernetes deployment (Helm charts, CCAAS)
+│   └── exp-app/         # Performance benchmarking tool
+└── scripts/             # Build and deployment scripts
+```
 
-## Independent auction
+## Core Features
 
-Auction module with independent policies only. In this auction type, the credits are fungible, and the multiplier weight is applied before and after the auction.
+### 1. Spatial and Temporal Data Integration
 
-<img width="556" height="479" alt="image" src="https://github.com/user-attachments/assets/e4016650-280f-4550-b4d2-d670f2dc83bc" />
+Carbon offset effectiveness depends heavily on geographical and temporal factors:
 
-## Coupled auction
+- **Geographical Proximity**: Credits from nearby carbon sinks are more valuable to emitters
+- **Temporal Alignment**: Carbon sinking rate should match or exceed emission rate at the present moment
+- **Periodic Minting**: Credits are minted at regular intervals to maintain temporal control
 
-Auction module with coupled policies. In this auction type, the same carbon sink-credit \(w\) results in different burn-credit values (\(x\), \(y\), \(z\)) when sold to different burners. Because this auction might require the geolocation of the burners to apply the policies, it has access to the relevant private data that is not available to all participants in the network.
+### 2. Dynamic Offset Multiplier Based on Policies
 
-<img width="556" height="479" alt="image" src="https://github.com/user-attachments/assets/2792bc56-54f2-4f66-a169-81524e910c39" />
+Space-time metrics between emitter and sinker are transformed into multipliers that affect carbon credit value:
 
-# Description
+- **Non-Fungible Credits**: Credit value varies based on distance, time, and other factors
+- **Policy Modularity**: Pluggable policy system for custom multiplier calculations
+- **Coupled vs Independent Auctions**: Support for both auction types (see below)
 
-This is the implementation of our PhD thesis. It consists of a Blokchain Emission Trading Systems (BETS) coupled with a cross-chain framework to 
+### 3. Auction Mechanisms
 
-## Use case
+#### Independent Auction
+- Credits are fungible within the auction
+- Multiplier weights applied uniformly before and after auction
+- Traditional double auction mechanism
 
-Imagine a scenario where small farmers can be rewarded 
+#### Coupled Auction
+- Same carbon sink credit results in different burn-credit values for different buyers
+- Considers buyer geolocation and other private data
+- Implements privacy-preserving policies using private data collections
+- TEE-based computation ensures fairness and privacy
 
-# Architecture
+### 4. UTXO-Based Payment Model
 
-## Core functionalities
+To eliminate MVCC (Multi-Version Concurrency Control) conflicts during high-concurrency auction settlement, the system implements a **UTXO (Unspent Transaction Output) model** for virtual token payments:
 
-### Spatial and time data
+- **Parallel Settlement**: Each seller/buyer receives unique UTXO keys instead of updating centralized wallets
+- **Aggregation Function**: Users can aggregate multiple UTXOs into their wallet via separate transactions
+- **Backward Compatibility**: Traditional `VirtualTokenWallet` retained for bid publishing
+- **One UTXO per Owner per Auction**: Aggregated payments/refunds to minimize state bloat
 
-Spatial data and time data are important components for weighing carbon offset. Roughly, it does not make sense for a company in Brasil to buy carbon credits from a REDD iniciative in Japan. The distance is too long and the carbon will unlikely be settled by that project.
+### 5. Private Data Collections
 
-Also, for a sustainable environment, the carbon sinking rate should be higher or equal to the emission rate at the present moment. To ensure that, our model also considers the time window between the emission and the sinking. The credits for sinking are minted periodically to provide such a control.
+Sensitive auction data is protected using Hyperledger Fabric's private data collections:
 
-### Offset multiplier based on policies
+- **Bid Privacy**: Buy/sell bid prices and quantities kept private
+- **Auction Results**: Clearing prices and matched bids stored in private collections
+- **Organization-Specific Access**: Only authorized organizations can access private data
 
-Space-time metrics between emitter and sinker are transformed into a multiplier. This multiplier affects the sinking power of the carbon credits. In our market, carbon credits are non-fungible as they value are not fixed. Generally, credits recently minted and near the emission source will be more valuable to a emitter company. On the other hand, credits minted way back in the past from a distant location will not have as much value.
+### 6. TEE-Based Auction Settlement
 
-<!-- TODO: find articles, perhaps talk to environment engineer to subsidise the multiplier calculation --> 
+Auction clearing price computation happens inside a Trusted Execution Environment:
 
-### Policy modularity
+- **Hardware Attestation**: AMD SEV-SNP hardware reports verify execution integrity
+- **Cryptographic Signatures**: Auction results signed by TEE private key
+- **Verifiable Results**: On-chain verification of TEE attestation and signatures
 
-<!-- TODO: Ensure policy plugability --> 
-Our model provides plugability for other policy types
+### 7. Cross-Chain Interoperability
 
-### Auction
+Integration with Hyperledger Cacti enables:
 
+- **HTLC-Based Swaps**: Atomic token swaps across chains
+- **Credit Locking**: Lock credits on one chain while unlocking on another
+- **Multi-Chain Settlement**: Support for Ethereum and other blockchain networks
 
 ## Stakeholders
 
-Here are the stakholders considered. We aimed to conform to the Brazilian bill 2148/2015:
+The system supports the following stakeholders (conforming to Brazilian bill 2148/2015):
 
-- Project developers
-- Project methodologies
+- Project Developers
+- Project Methodologies
 - Governments
 - Farmers
 - REDD Project Developers
@@ -84,17 +123,173 @@ Here are the stakholders considered. We aimed to conform to the Brazilian bill 2
 - Cross-Chain Relayers
 - General Public
 
-## Interaction with external databases
+## Development
 
-## Interoperability
+### Prerequisites
 
-# TODOs
+- Go 1.26.1 or later
+- Docker and Docker Compose
+- Minikube (for local Kubernetes testing)
+- Helm 3
+- Hyperledger Fabric binaries v3.1.4
+- Azure CLI (for AKS deployment)
 
-<!-- TODO: project todos --> 
+### Build Commands
 
-- [X] Understand and fix hyperledger bevel
-- [ ] Finish chaincode
-- [] Integrate cacti for interoperability
-- [X] Enable TEE auction (microsoft confidential containers)
-- [ ] Understand hyperledger caliper for experiments
-- [ ] Understand grafana, prometheus for metrics
+#### Quick Start
+
+```bash
+# Build all chaincodes
+make test                          # Run all unit tests
+
+# Carbon chaincode specific
+cd chaincodes/carbon
+make cc                            # Build chaincode
+make unit-test                     # Run unit tests
+make test                          # Run integration tests
+make fmt                           # Format code
+
+# TEE auction service
+cd tee_auction
+make unit-test                     # Run tests
+make docker                        # Build Docker image
+
+# Data API
+cd data_api
+make build                         # Build server
+make test                          # Run tests
+```
+
+### Running Tests
+
+```bash
+# Run a single test
+cd chaincodes/carbon
+go test --tags=testing ./tests -run TestFunctionName
+
+# Run without cache
+make test-no-cache
+
+# Skip Azure CEE tests
+make test-no-amd-network-request
+```
+
+## Deployment
+
+### Local Deployment (Minikube)
+
+The project includes automated deployment scripts for Kubernetes experiments:
+
+```bash
+cd experiments/deploy/scripts
+./deploy.sh                        # Full deployment
+./shutdown.sh                      # Teardown
+```
+
+Deployment includes:
+1. Minikube cluster setup
+2. Fabric binaries installation
+3. Custom Docker images build and load
+4. Helm chart installation (orderers, peers, CAs)
+5. Channel creation and joining
+6. Chaincode deployment (CCAAS model)
+7. Data integration services
+
+### Cloud Deployment (Azure AKS)
+
+Deploy to Azure Kubernetes Service with confidential computing:
+
+```bash
+# Provision AKS cluster with SEV-SNP nodes
+make aks-provision LOCATION=centralindia RESOURCE_GROUP=carbon
+
+# Pause cluster (stops billing)
+make aks-stop
+
+# Resume cluster
+make aks-start
+
+# Teardown
+make aks-down RESOURCE_GROUP=carbon
+```
+
+## Performance Experiments
+
+The `experiments/exp-app/` module provides high-concurrency benchmarking:
+
+### Current Capabilities
+- **Automated Setup**: Registers trusted providers, companies, wallets, and properties
+- **Parallel Workloads**: Concurrent transaction execution using `SubmitAsync`
+- **Continuous Minting**: Property-wide credit minting with wallet transfers
+- **Metrics Collection**: Real-time latency, throughput (TPS), and success rate tracking
+
+### Roadmap
+- Continuous bidding simulation
+- Periodic TEE auction settlement benchmarks
+- Interoperability performance testing
+- Dynamic topology testing
+
+## Model Overview
+
+<img width="1168" height="673" alt="image" src="https://github.com/user-attachments/assets/fe673c8d-8380-4187-96a6-5384d9b58ee1" />
+
+### Independent Auction Flow
+
+<img width="556" height="479" alt="image" src="https://github.com/user-attachments/assets/e4016650-280f-4550-b4d2-d670f2dc83bc" />
+
+### Coupled Auction Flow
+
+<img width="556" height="479" alt="image" src="https://github.com/user-attachments/assets/2792bc56-54f2-4f66-a169-81524e910c39" />
+
+## Code Style
+
+The project follows Go best practices:
+
+- **Imports**: Grouped by standard library, external, and internal packages
+- **Formatting**: `gofmt` with tabs for indentation
+- **Naming**: PascalCase for exports, camelCase for private
+- **Error Handling**: Always check errors, use `fmt.Errorf` with `%v` or `%w`
+- **Testing**: Table-driven tests with `testify/require`
+- **Documentation**: Godoc comments for all exported types and functions
+
+## Project Status
+
+### Completed
+- [x] Hyperledger Fabric v3.1.4 network setup
+- [x] Carbon credit chaincode with auction mechanisms
+- [x] TEE auction service with Microsoft Confidential Containers
+- [x] UTXO-based payment model (eliminates MVCC conflicts)
+- [x] Private data collections for bid privacy
+- [x] Kubernetes deployment with Helm charts
+- [x] CCAAS (Chaincode-as-a-Service) deployment
+- [x] Azure AKS confidential computing integration
+- [x] Data API integration (SICAR mock service)
+- [x] Comprehensive test suite (unit + integration)
+
+### In Progress
+- [ ] Hyperledger Cacti integration for cross-chain interoperability
+- [ ] Performance benchmarking with Hyperledger Caliper
+- [ ] Grafana + Prometheus metrics dashboard
+- [ ] Production-grade deployment scripts
+
+### Planned
+- [ ] Additional policy modules (wind direction, vegetation indices)
+
+## Contributing
+
+This is a PhD research project. For collaboration inquiries, please open an issue.
+
+## License
+
+See LICENSE file for details.
+
+## References
+
+- Hyperledger Fabric Documentation: https://hyperledger-fabric.readthedocs.io/
+- Go Code Review Comments: https://go.dev/wiki/CodeReviewComments
+- Microsoft Confidential Containers: https://github.com/microsoft/confidential-sidecar-containers
+- Brazilian Bill 2148/2015: Carbon Credit Framework
+
+## Contact
+
+For questions or collaboration opportunities, please open an issue in this repository.
