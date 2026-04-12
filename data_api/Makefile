@@ -1,4 +1,4 @@
-REPO := johannww/phd-exp
+REPO := johannww/phd-impl
 TAG ?= latest
 
 .PHONY: docker test build

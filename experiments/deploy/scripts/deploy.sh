@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO=${REPO:-"johannww/phd-exp"}
+REPO=${REPO:-"johannww/phd-impl"}
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 KUBECONFIG_DIR="${SCRIPT_DIR}/../vars/kubeconfig"
 FABRIC_TAG="${FABRIC_TAG:-3.1.4}"

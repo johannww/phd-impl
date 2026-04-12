@@ -96,7 +96,7 @@ chaincodeService:
       sequence: 1
       packageLabel: ""
       image:
-        repository: "ghcr.io/johannww/phd-exp/carbon"
+        repository: "ghcr.io/johannww/phd-impl/carbon"
         tag: "latest"
         pullPolicy: IfNotPresent
       servicePort: 7055
@@ -107,7 +107,7 @@ chaincodeService:
       sequence: 1
       packageLabel: ""
       image:
-        repository: "ghcr.io/johannww/phd-exp/interop"
+        repository: "ghcr.io/johannww/phd-impl/interop"
         tag: "latest"
         pullPolicy: IfNotPresent
       servicePort: 7055
@@ -117,7 +117,7 @@ chaincodeService:
 sicar:
   enabled: true
   image:
-    repository: "ghcr.io/johannww/phd-exp/data-api"
+    repository: "ghcr.io/johannww/phd-impl/data-api"
     tag: "latest"
     pullPolicy: IfNotPresent
   mockgen:

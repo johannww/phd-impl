@@ -1,7 +1,7 @@
 # The order of commands follows the description in the README.md
 
 REGISTRY_NAME=carbonchain
-REGISTRY=ghcr.io/johannww/phd-exp
+REGISTRY=ghcr.io/johannww/phd-impl
 RESOURCE_GROUP=carbon
 AZ_QUIET=--only-show-errors --output none
 

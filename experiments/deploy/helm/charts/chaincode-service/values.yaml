@@ -23,7 +23,7 @@ chaincodes:
     packageLabel: ""
     packageIds: {}
     image:
-      repository: "ghcr.io/johannww/phd-exp/carbon"
+      repository: "ghcr.io/johannww/phd-impl/carbon"
       tag: "latest"
       pullPolicy: IfNotPresent
     servicePort: 7055
@@ -35,7 +35,7 @@ chaincodes:
     packageLabel: ""
     packageIds: {}
     image:
-      repository: "ghcr.io/johannww/phd-exp/interop"
+      repository: "ghcr.io/johannww/phd-impl/interop"
       tag: "latest"
       pullPolicy: IfNotPresent
     servicePort: 7055
