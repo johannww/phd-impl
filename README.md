@@ -262,7 +262,7 @@ The project follows Go best practices:
 - [x] Private data collections for bid privacy
 - [x] Kubernetes deployment with Helm charts
 - [x] CCAAS (Chaincode-as-a-Service) deployment
-- [x] Azure AKS confidential computing integration
+- [x] Azure AKS kubernetes deployment scripts
 - [x] Data API integration (SICAR mock service)
 - [x] Comprehensive test suite (unit + integration)
 
