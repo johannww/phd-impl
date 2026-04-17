@@ -18,9 +18,11 @@ const (
 
 // TODO: should this be private and deal with access tokens?
 type OffChainData struct {
-	Uri         string `json:"uri"`
-	Method      string `json:"method"`
-	ReflectType string `json:"relflectType"`
+	Uri    string `json:"uri"`
+	Method string `json:"method"`
+	// ReflectType indicates the type name used to deserialize the off-chain payload.
+	// The json tag must match the proto field `reflectType`.
+	ReflectType string `json:"reflectType"`
 	Hash        []byte `json:"hash"`
 	DataBytes   []byte `json:"-"` // this prevents the field from being serialized
 }
