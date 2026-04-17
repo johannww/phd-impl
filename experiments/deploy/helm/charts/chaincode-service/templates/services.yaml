@@ -3,8 +3,14 @@
 {{- range $cc := $chaincodes }}
 {{- $ccName := $cc.name | lower -}}
 {{- $ccPort := default 7055 $cc.servicePort -}}
-{{- range $org := $.Values.network.organizations }}
+{{- $metricsPort := default 9443 $cc.metricsPort -}}
+{{- $metricsNodePortBase := int (default 0 $cc.metricsNodePortBase) -}}
+{{- range $orgIdx, $org := $.Values.network.organizations }}
 {{- if gt (int (default 0 $org.peers)) 0 }}
+{{- $metricsNodePort := 0 -}}
+{{- if gt $metricsNodePortBase 0 }}
+{{- $metricsNodePort = add $metricsNodePortBase $orgIdx -}}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -17,6 +23,9 @@ metadata:
     app.kubernetes.io/org: {{ $org.name }}
     app.kubernetes.io/chaincode: {{ $ccName }}
 spec:
+  {{- if gt $metricsNodePort 0 }}
+  type: NodePort
+  {{- end }}
   selector:
     app.kubernetes.io/component: chaincode-runtime
     app.kubernetes.io/org: {{ $org.name }}
@@ -26,8 +35,11 @@ spec:
       port: {{ $ccPort }}
       targetPort: {{ $ccPort }}
     - name: metrics
-      port: 9443
-      targetPort: 9443
+      port: {{ $metricsPort }}
+      targetPort: {{ $metricsPort }}
+      {{- if gt $metricsNodePort 0 }}
+      nodePort: {{ $metricsNodePort }}
+      {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

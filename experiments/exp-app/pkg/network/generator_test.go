@@ -24,10 +24,6 @@ func TestGeneratorWithDeploymentArtifacts(t *testing.T) {
 		t.Errorf("expected channel name 'carbon', got %q", profile.Network.ChannelName)
 	}
 
-	if profile.Chaincode.Name != "carbon" {
-		t.Errorf("expected chaincode name 'carbon', got %q", profile.Chaincode.Name)
-	}
-
 	// Verify organizations were loaded
 	if _, ok := profile.Peers["mma"]; !ok {
 		t.Error("expected 'mma' organization in peers")
@@ -81,6 +77,64 @@ func TestGeneratorWithDeploymentArtifacts(t *testing.T) {
 
 	t.Logf("successfully generated profile with %d peer orgs and %d orderers",
 		len(profile.Peers), len(profile.Orderers))
+
+	// Verify chaincodes were generated
+	if len(profile.Chaincodes) == 0 {
+		t.Error("expected at least one chaincode configuration")
+	}
+
+	// Verify carbon chaincode configuration
+	carbonCC, ok := profile.Chaincodes["carbon"]
+	if !ok {
+		t.Error("expected carbon chaincode configuration")
+	} else {
+		if carbonCC.Name != "carbon" {
+			t.Errorf("expected carbon chaincode name 'carbon', got %q", carbonCC.Name)
+		}
+		if carbonCC.Channel != "carbon" {
+			t.Errorf("expected carbon chaincode channel 'carbon', got %q", carbonCC.Channel)
+		}
+		if !carbonCC.MetricsEnabled {
+			t.Error("expected carbon chaincode metrics to be enabled")
+		}
+
+		// Verify carbon metrics
+		if carbonCC.Metrics.Name != "carbon" {
+			t.Errorf("expected carbon metrics name 'carbon', got %q", carbonCC.Metrics.Name)
+		}
+		if carbonCC.Metrics.Port != 9443 {
+			t.Errorf("expected carbon metrics port 9443, got %d", carbonCC.Metrics.Port)
+		}
+		if carbonCC.Metrics.NodePortBase != 30100 {
+			t.Errorf("expected carbon metrics NodePortBase 30100, got %d", carbonCC.Metrics.NodePortBase)
+		}
+
+		// Verify endpoints for each organization
+		for _, orgName := range []string{"mma", "farmers", "companies"} {
+			if _, ok := carbonCC.Metrics.Endpoints[orgName]; !ok {
+				t.Errorf("expected external endpoint for %s organization in carbon metrics", orgName)
+			}
+			if _, ok := carbonCC.Metrics.InternalEndpoints[orgName]; !ok {
+				t.Errorf("expected internal endpoint for %s organization in carbon metrics", orgName)
+			}
+		}
+
+		t.Logf("carbon metrics endpoints: %v", carbonCC.Metrics.Endpoints)
+		t.Logf("carbon metrics internal endpoints: %v", carbonCC.Metrics.InternalEndpoints)
+	}
+
+	// Verify interop chaincode configuration
+	interopCC, ok := profile.Chaincodes["interop"]
+	if !ok {
+		t.Error("expected interop chaincode configuration")
+	} else {
+		if interopCC.Name != "interop" {
+			t.Errorf("expected interop chaincode name 'interop', got %q", interopCC.Name)
+		}
+		if interopCC.Metrics.NodePortBase != 30200 {
+			t.Errorf("expected interop metrics NodePortBase 30200, got %d", interopCC.Metrics.NodePortBase)
+		}
+	}
 }
 
 func TestGeneratorSaveLoadJSON(t *testing.T) {
@@ -112,8 +166,8 @@ func TestGeneratorSaveLoadJSON(t *testing.T) {
 	if loaded.Network.ChannelName != profile.Network.ChannelName {
 		t.Error("loaded profile channel name mismatch")
 	}
-	if loaded.Chaincode.Name != profile.Chaincode.Name {
-		t.Error("loaded profile chaincode name mismatch")
+	if len(loaded.Chaincodes) != len(profile.Chaincodes) {
+		t.Error("loaded profile chaincodes count mismatch")
 	}
 	if len(loaded.Peers) != len(profile.Peers) {
 		t.Error("loaded profile peers count mismatch")

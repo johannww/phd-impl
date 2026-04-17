@@ -7,6 +7,7 @@
 {{- $ccImageTag := default "latest" (get $ccImage "tag") -}}
 {{- $ccImagePullPolicy := default "IfNotPresent" (get $ccImage "pullPolicy") -}}
 {{- $ccPort := default 7055 $cc.servicePort -}}
+{{- $metricsPort := default 9443 $cc.metricsPort -}}
 {{- range $org := $.Values.network.organizations }}
 {{- if gt (int (default 0 $org.peers)) 0 }}
 {{- $pkgIDs := default (dict) $cc.packageIds -}}
@@ -54,9 +55,13 @@ spec:
               value: "{{ $org.name | title }}MSP"
             - name: CHAINCODE_SERVER_ADDRESS
               value: 0.0.0.0:{{ $ccPort }}
+            - name: METRICS_ADDR
+              value: ":{{ $metricsPort }}"
           ports:
             - containerPort: {{ $ccPort }}
               name: chaincode
+            - containerPort: {{ $metricsPort }}
+              name: metrics
 {{ end }}
 {{ end }}
 {{ end }}

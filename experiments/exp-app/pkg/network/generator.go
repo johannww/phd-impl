@@ -43,6 +43,14 @@ type HelmValuesYAML struct {
 			Collections  []string `yaml:"collections"`
 		} `yaml:"organizations"`
 	} `yaml:"network"`
+	ChaincodeService struct {
+		Enabled    bool `yaml:"enabled"`
+		Chaincodes []struct {
+			Name                string `yaml:"name"`
+			MetricsPort         int    `yaml:"metricsPort"`
+			MetricsNodePortBase int    `yaml:"metricsNodePortBase"`
+		} `yaml:"chaincodes"`
+	} `yaml:"chaincodeService"`
 }
 
 // Generate creates a network profile from deployment artifacts
@@ -59,9 +67,6 @@ func (g *Generator) Generate() (*NetworkProfile, error) {
 	profile.Network.ChannelName = values.Network.ChannelName
 	profile.Network.Version = "1.0"
 	profile.Network.CreatedAt = time.Now().Format(time.RFC3339)
-	profile.Chaincode.Channel = values.Network.ChannelName
-	profile.Chaincode.Name = "carbon"
-	profile.Chaincode.Version = "1.0"
 
 	// Process organizations
 	userCount := values.Network.UserCount
@@ -95,6 +100,11 @@ func (g *Generator) Generate() (*NetworkProfile, error) {
 
 	// Configure TEE Auction container
 	profile.TEEAuction = g.generateTEEAuctionConfig()
+
+	// Configure Chaincode Metrics
+	if err := g.generateChaincodeMetrics(profile, values); err != nil {
+		return nil, fmt.Errorf("generate chaincode metrics: %w", err)
+	}
 
 	return profile, nil
 }
@@ -242,6 +252,69 @@ func (g *Generator) verifyCertificates(certs *PeerCerts) error {
 		if _, err := os.Stat(path); err != nil {
 			return fmt.Errorf("certificate not found: %s", path)
 		}
+	}
+
+	return nil
+}
+
+// generateChaincodeMetrics configures Prometheus metrics endpoints for chaincodes
+func (g *Generator) generateChaincodeMetrics(profile *NetworkProfile, values *HelmValuesYAML) error {
+	// Check if chaincode configurations exist
+	if len(values.ChaincodeService.Chaincodes) == 0 {
+		return nil
+	}
+
+	// Get peer organizations (organizations with peers > 0)
+	peerOrgs := make([]string, 0)
+	orgIndexMap := make(map[string]int) // map org name to index for NodePort calculation
+	for idx, org := range values.Network.Organizations {
+		if org.Peers > 0 {
+			peerOrgs = append(peerOrgs, org.Name)
+			orgIndexMap[org.Name] = idx
+		}
+	}
+
+	// Generate configuration for each chaincode
+	for _, cc := range values.ChaincodeService.Chaincodes {
+		if cc.MetricsPort == 0 {
+			cc.MetricsPort = 9443 // Default metrics port
+		}
+
+		metricsConfig := MetricsConfig{
+			Name:              cc.Name,
+			Port:              cc.MetricsPort,
+			NodePortBase:      cc.MetricsNodePortBase,
+			Endpoints:         make(map[string]string),
+			InternalEndpoints: make(map[string]string),
+		}
+
+		// Generate endpoints for each peer organization
+		for _, orgName := range peerOrgs {
+			orgIdx := orgIndexMap[orgName]
+
+			// Internal cluster endpoint
+			serviceName := fmt.Sprintf("%s-%s", cc.Name, orgName)
+			internalEndpoint := fmt.Sprintf("http://%s:%d/metrics", serviceName, cc.MetricsPort)
+			metricsConfig.InternalEndpoints[orgName] = internalEndpoint
+
+			// External NodePort endpoint (if NodePortBase is configured)
+			if cc.MetricsNodePortBase > 0 {
+				nodePort := cc.MetricsNodePortBase + orgIdx
+				externalEndpoint := fmt.Sprintf("http://%s:%d/metrics", g.minikubeIP, nodePort)
+				metricsConfig.Endpoints[orgName] = externalEndpoint
+			}
+		}
+
+		// Create chaincode config
+		chaincodeConfig := ChaincodeConfig{
+			Channel:        values.Network.ChannelName,
+			Name:           cc.Name,
+			Version:        "1.0", // TODO: Get version from values if available
+			MetricsEnabled: cc.MetricsNodePortBase > 0 || len(metricsConfig.InternalEndpoints) > 0,
+			Metrics:        metricsConfig,
+		}
+
+		profile.Chaincodes[cc.Name] = chaincodeConfig
 	}
 
 	return nil

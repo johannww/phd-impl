@@ -27,6 +27,8 @@ chaincodes:
       tag: "latest"
       pullPolicy: IfNotPresent
     servicePort: 7055
+    metricsPort: 9443
+    metricsNodePortBase: 30100
     command: []
     args: []
   - name: "interop"
@@ -39,5 +41,7 @@ chaincodes:
       tag: "latest"
       pullPolicy: IfNotPresent
     servicePort: 7055
+    metricsPort: 9443
+    metricsNodePortBase: 30200
     command: []
     args: []

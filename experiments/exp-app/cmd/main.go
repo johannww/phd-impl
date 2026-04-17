@@ -88,7 +88,13 @@ func main() {
 	userCertPath := certs.Users[0].Cert
 	userKeyPath := certs.Users[0].Key
 	channelName := profile.Network.ChannelName
-	chaincodeName := profile.Chaincode.Name
+
+	// Get carbon chaincode config (primary chaincode for exp-app)
+	carbonCC, ok := profile.Chaincodes["carbon"]
+	if !ok {
+		log.Fatal("Carbon chaincode not found in network profile")
+	}
+	chaincodeName := carbonCC.Name
 
 	// Validate certificates exist
 	for _, path := range []string{tlsCertPath, userCertPath, userKeyPath} {

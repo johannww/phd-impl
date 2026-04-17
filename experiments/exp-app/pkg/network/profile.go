@@ -2,13 +2,13 @@ package network
 
 // NetworkProfile contains all network configuration for exp-app
 type NetworkProfile struct {
-	Network    NetworkConfig         `json:"network"`
-	Peers      map[string]PeerConfig `json:"peers"` // key: org_name, value: peer config
-	Orderers   []OrdererConfig       `json:"orderers"`
-	DataAPI    DataAPIConfig         `json:"data_api"`
-	SICAR      SICARConfig           `json:"sicar"`
-	Chaincode  ChaincodeConfig       `json:"chaincode"`
-	TEEAuction TEEAuctionConfig      `json:"tee_auction"`
+	Network    NetworkConfig              `json:"network"`
+	Peers      map[string]PeerConfig      `json:"peers"` // key: org_name, value: peer config
+	Orderers   []OrdererConfig            `json:"orderers"`
+	DataAPI    DataAPIConfig              `json:"data_api"`
+	SICAR      SICARConfig                `json:"sicar"`
+	Chaincodes map[string]ChaincodeConfig `json:"chaincodes"` // key: chaincode name (carbon, interop)
+	TEEAuction TEEAuctionConfig           `json:"tee_auction"`
 }
 
 // NetworkConfig basic network information
@@ -83,9 +83,20 @@ type SICARConfig struct {
 
 // ChaincodeConfig contains chaincode information
 type ChaincodeConfig struct {
-	Channel string `json:"channel"`
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	Channel        string        `json:"channel"`
+	Name           string        `json:"name"`
+	Version        string        `json:"version"`
+	MetricsEnabled bool          `json:"metrics_enabled"`
+	Metrics        MetricsConfig `json:"metrics"` // Metrics configuration for this chaincode
+}
+
+// MetricsConfig contains Prometheus metrics endpoint configuration for a chaincode
+type MetricsConfig struct {
+	Name              string            `json:"name"`               // Chaincode name (carbon, interop)
+	Port              int               `json:"port"`               // Metrics port (default 9443)
+	NodePortBase      int               `json:"node_port_base"`     // Base NodePort for external access
+	Endpoints         map[string]string `json:"endpoints"`          // key: org_name, value: full metrics URL
+	InternalEndpoints map[string]string `json:"internal_endpoints"` // key: org_name, value: cluster-internal URL
 }
 
 // TEEAuctionConfig holds the address of the confidential container running the TEE auction service
@@ -104,7 +115,7 @@ func NewNetworkProfile() *NetworkProfile {
 		Orderers:   make([]OrdererConfig, 0),
 		DataAPI:    DataAPIConfig{},
 		SICAR:      SICARConfig{},
-		Chaincode:  ChaincodeConfig{},
+		Chaincodes: make(map[string]ChaincodeConfig),
 		TEEAuction: TEEAuctionConfig{},
 	}
 }
