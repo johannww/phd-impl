@@ -54,6 +54,58 @@ func TestCalculateClearingPrice(t *testing.T) {
 	t.Log("Clearing Price:", priceFloat, "Clearing Quantity:", quantityFloat, "Has Clearing Price:", hasClearing)
 }
 
+// TestCalculateClearingPriceAtMinimumQuantity tests the truncation fix at the quantity floor
+func TestCalculateClearingPriceAtMinimumQuantity(t *testing.T) {
+	// Test at the minimum quantity boundary (1 credit = QUANTITY_SCALE)
+	minQuantity := int64(common.QUANTITY_SCALE)
+	price := int64(1000) * bids.PRICE_SCALE // $1000 per credit
+	mult := int64(10)                       // 1% multiplier (small to test truncation)
+
+	sellBid := &bids.SellBid{
+		PrivatePrice: &bids.PrivatePrice{Price: price},
+		Quantity:     minQuantity,
+	}
+	buyBid := &bids.BuyBid{
+		PrivatePrice: &bids.PrivatePrice{Price: price},
+		PrivateQuantity: &bids.PrivateQuantity{
+			AskQuantity: minQuantity * 2, // Ensure buyer isn't the limiting factor
+		},
+	}
+
+	// Run all three implementations
+	priceInt, quantityInt, hasClearingInt := calculateClearingPriceAndQuantity(sellBid, buyBid, mult)
+	priceUdec, quantityUdec, hasClearingUdec := calculateClearingPriceAndQuantityUdecimal(sellBid, buyBid, mult)
+
+	// For float comparison, use the unscaled price and real multiplier
+	sellBid.PrivatePrice.Price = price / bids.PRICE_SCALE
+	buyBid.PrivatePrice.Price = price / bids.PRICE_SCALE
+	priceFloat, quantityFloat, hasClearingFloat := calculateClearingPriceAndQuantityFloat(
+		sellBid, buyBid,
+		float64(mult)/float64(policies.MULTIPLIER_SCALE),
+	)
+
+	// All should find a clearing price
+	require.True(t, hasClearingInt, "Integer implementation should find clearing price")
+	require.True(t, hasClearingUdec, "Udecimal implementation should find clearing price")
+	require.True(t, hasClearingFloat, "Float implementation should find clearing price")
+
+	// Integer and udecimal results should match exactly (this would fail with the old truncation bug)
+	require.Equal(t, priceUdec, priceInt, "Prices should match at minimum quantity")
+	require.Equal(t, quantityUdec, quantityInt, "Quantities should match at minimum quantity")
+
+	// Float should be close (within rounding error)
+	// Convert integer price back to float for comparison
+	priceIntAsFloat := float64(priceInt) / float64(bids.PRICE_SCALE)
+	require.InDelta(t, priceFloat, priceIntAsFloat, 0.01, "Float price should be close to integer price")
+	require.InDelta(t, quantityFloat, float64(quantityInt), 1.0, "Float quantity should be close to integer quantity")
+
+	// Quantity should be exactly at the floor
+	require.Equal(t, minQuantity, quantityInt, "Quantity should be at minimum")
+
+	t.Logf("At min quantity (%d), mult=%d: Cp=%d, Cq=%d (float: Cp=%.2f, Cq=%.2f)",
+		minQuantity, mult, priceInt, quantityInt, priceFloat, quantityFloat)
+}
+
 // calculateClearingPriceAndQuantityFloat serves to compare the float64 version of the clearing price calculation
 func calculateClearingPriceAndQuantityFloat(
 	sellBid *bids.SellBid,
