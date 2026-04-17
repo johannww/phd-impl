@@ -51,7 +51,10 @@ func main() {
 	if *verbose {
 		log.Printf("Generated profile:")
 		log.Printf("  Channel: %s", profile.Network.ChannelName)
-		log.Printf("  Chaincode: %s@%s", profile.Chaincode.Name, profile.Chaincode.Version)
+		log.Printf("  Chaincodes: %d", len(profile.Chaincodes))
+		for name, cc := range profile.Chaincodes {
+			log.Printf("    - %s@%s (channel: %s, metrics: %v)", name, cc.Version, cc.Channel, cc.MetricsEnabled)
+		}
 		log.Printf("  Organizations: %d", len(profile.Peers))
 		log.Printf("  Orderers: %d", len(profile.Orderers))
 		log.Printf("  SICAR: %v", profile.SICAR.Enabled)
