@@ -25,6 +25,7 @@ func main() {
 	// Parse flags
 	profilePath := flag.String("profile", "", "Path to network profile JSON (required)")
 	armTemplatePath := flag.String("arm-template", "../../tee_auction/azure/arm_template.json", "Path to ARM template JSON for CCE policy")
+	duration := flag.Duration("duration", 120*time.Second, "Test duration")
 	concurrency := flag.Int("concurrency", 5, "Number of concurrent transactions")
 	tps := flag.Float64("tps", 0, "Target throughput in transactions per second (0 = unlimited)")
 	burst := flag.Int("burst", 1, "Token bucket burst size for rate limiting")
