@@ -153,15 +153,26 @@ func ApplyBurnMultipliers(stub shim.ChaincodeStubInterface, burnCreditID []strin
 		return fmt.Errorf("multipliers already applied to this burn credit")
 	}
 
-	// Load company private data
-	companyId := bc.MintCredit.OwnerID
-	company := &companies.Company{
-		ID: companyId,
+	if identities.GetID(stub) != bc.MintCredit.OwnerID {
+		return fmt.Errorf("only the owner of the credit can apply burn multipliers: %s != %s", identities.GetID(stub), bc.MintCredit.OwnerID)
 	}
-	// Note: This requires the peer to have access to the private data collection
-	err := company.FromWorldState(stub, (*company.GetID())[0])
+
+	// Load pseudonym to company ID mapping (private data)
+	pseudonymToCompanyID := companies.PseudonymToCompanyID{
+		Pseudonym: bc.MintCredit.OwnerID,
+	}
+	err := pseudonymToCompanyID.FromWorldState(stub, (*pseudonymToCompanyID.GetID())[0])
 	if err != nil {
-		return fmt.Errorf("could not get company from private world state: %v", err)
+		return fmt.Errorf("could not get pseudonym to company ID mapping: %v", err)
+	}
+
+	company := &companies.Company{
+		ID: pseudonymToCompanyID.CompanyID,
+	}
+	// Load company public data
+	err = company.FromWorldState(stub, (*company.GetID())[0])
+	if err != nil {
+		return fmt.Errorf("could not get company from world state: %v", err)
 	}
 
 	pApplier := policies.NewPolicyApplier()

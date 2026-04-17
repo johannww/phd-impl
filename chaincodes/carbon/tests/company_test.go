@@ -18,6 +18,8 @@ func TestCompanyRegister(t *testing.T) {
 	possibleIds := setup.SetupIdentities(stub)
 
 	stub.Creator = possibleIds[setup.IDEMIX_ID]
+	stub.MockTransactionStart("tx1")
+
 	company := &companies.Company{
 		ID: "12345678901234", // Example CNPJ
 		Coordinate: &utils.Coordinate{
@@ -31,6 +33,8 @@ func TestCompanyRegister(t *testing.T) {
 
 	err := companies.RegisterCompany(stub, company)
 	require.NoError(t, err, "Failed to register company")
+
+	stub.MockTransactionEnd("tx1")
 }
 
 func TestCreatePseudonymToCompanyID(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 
 const COMPANY_PREFIX = "company"
 
-// Company represent a company stored as private data in the world state.
+// Company represent a company stored as public data in the world state.
 type Company struct {
 	ID         string                // ID might be the CNPJ (brazilian company national ID)
 	Coordinate *utils.Coordinate     // Geographical coordinate in floating point format
@@ -24,7 +24,7 @@ var _ state.WorldStateManager = (*Company)(nil)
 
 // FromWorldState implements state.WorldStateManager.
 func (c *Company) FromWorldState(stub shim.ChaincodeStubInterface, keyAttributes []string) error {
-	return state.GetPvtDataWithCompositeKey(stub, COMPANY_PREFIX, keyAttributes, state.COMPANIES_PVT_DATA_COLLECTION, c)
+	return state.GetStateWithCompositeKey(stub, COMPANY_PREFIX, keyAttributes, c)
 }
 
 // GetID implements state.WorldStateManager.
@@ -34,8 +34,8 @@ func (c *Company) GetID() *[][]string {
 
 // ToWorldState implements state.WorldStateManager.
 func (c *Company) ToWorldState(stub shim.ChaincodeStubInterface) error {
-	firstID := (*c.GetID())[0]
-	return state.PutPvtDataWithCompositeKey(stub, COMPANY_PREFIX, firstID, state.COMPANIES_PVT_DATA_COLLECTION, c)
+	id := c.GetID()
+	return state.PutStateWithCompositeKey(stub, COMPANY_PREFIX, id, c)
 }
 
 func RegisterCompany(stub shim.ChaincodeStubInterface, company *Company) error {

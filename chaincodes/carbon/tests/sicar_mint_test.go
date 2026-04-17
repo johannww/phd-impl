@@ -185,9 +185,9 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	mintCreditID := mcQty.GetID() // This returns &[][]string{{ownerID, "1", "0.000000", "0.000000", intervalEnd}}
 	mintCreditIDAttr := (*mintCreditID)[0]
 
-	// Setup company private data for multipliers
+	// Setup company data for multipliers
 	company := &companies.Company{
-		ID: ownerID,
+		ID: "12345678901234", // Example CNPJ
 		Coordinate: &utils.Coordinate{
 			Latitude:  -23.550520,
 			Longitude: -46.633308,
@@ -200,6 +200,16 @@ func TestMintCreditWithSicarValidation(t *testing.T) {
 	err = company.ToWorldState(stub)
 	require.NoError(t, err)
 	stub.MockTransactionEnd("tx_company")
+
+	// Create pseudonym to company ID mapping (private data)
+	pseudonymMapping := &companies.PseudonymToCompanyID{
+		Pseudonym: ownerID,
+		CompanyID: company.ID,
+	}
+	stub.MockTransactionStart("tx_pseudonym")
+	err = pseudonymMapping.ToWorldState(stub)
+	require.NoError(t, err)
+	stub.MockTransactionEnd("tx_pseudonym")
 
 	// Case D: Valid Nominal Burning
 	stub.MockTransactionStart("tx_burn_ok")
