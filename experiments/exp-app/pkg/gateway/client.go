@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
@@ -76,6 +77,8 @@ func NewClientWrapper(cfg *GatewayConfig) (*ClientWrapper, error) {
 		client.WithSign(signFunc),
 		client.WithHash(hash.SHA256),
 		client.WithClientConnection(conn),
+		client.WithCommitStatusTimeout(60*time.Second),
+		client.WithEndorseTimeout(60*time.Second),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("connect gateway: %w", err)
