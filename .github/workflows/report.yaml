@@ -1,6 +1,6 @@
 on:
-  schedule:
-  - cron: '0 0 * * *' # Runs every day at 21:00 Sao Paulo time (00:00 UTC)
+  # schedule:
+  # - cron: '0 0 * * *' # Runs every day at 21:00 Sao Paulo time (00:00 UTC)
   workflow_dispatch: 
 
 jobs:
