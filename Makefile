@@ -26,6 +26,14 @@ docker:
 	$(MAKE) -C ./chaincodes/interop cc-docker
 	$(MAKE) -C tee_auction docker
 	$(MAKE) -C ./data_api docker
+	$(MAKE) -C ./experiments/deploy/images/fabric-tools docker
+
+docker-push:
+	$(MAKE) -C ./chaincodes/carbon docker-push
+	$(MAKE) -C ./chaincodes/interop docker-push
+	$(MAKE) -C tee_auction docker-push
+	$(MAKE) -C ./data_api docker-push
+	$(MAKE) -C ./experiments/deploy/images/fabric-tools docker-push
 
 .PHONY: experiments
 experiments:

@@ -15,6 +15,8 @@ registry:
 docker:
 	go work vendor
 	docker build -t $(REGISTRY)/carbon_auction:latest -f Dockerfile ..
+
+docker-push: docker
 	docker push $(REGISTRY)/carbon_auction:latest
 
 policy:

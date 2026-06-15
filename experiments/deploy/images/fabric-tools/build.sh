@@ -3,7 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 FABRIC_TAG="${FABRIC_TAG:-3.1.4}"
-IMAGE_TAG="${IMAGE_TAG:-ghcr.io/hyperledger/fabric-tools:${FABRIC_TAG}}"
+REPO="${REPO:-johannww/phd-impl}"
+IMAGE_TAG="${IMAGE_TAG:-ghcr.io/${REPO}/fabric-tools:${FABRIC_TAG}}"
 
 DOCKER_BUILDKIT=1 docker build \
   --pull \

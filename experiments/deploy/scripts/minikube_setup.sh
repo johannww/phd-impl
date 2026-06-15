@@ -5,10 +5,10 @@ REPO=${REPO:-"johannww/phd-impl"}
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 KUBECONFIG_DIR="${SCRIPT_DIR}/../vars/kubeconfig"
 FABRIC_TAG="${FABRIC_TAG:-3.1.4}"
-TOOLS_IMAGE="${TOOLS_IMAGE:-ghcr.io/hyperledger/fabric-tools:${FABRIC_TAG}}"
-CARBON_CC_IMAGE="${CARBON_CC_IMAGE:-ghcr.io/$REPO/carbon:latest}"
-INTEROP_CC_IMAGE="${INTEROP_CC_IMAGE:-ghcr.io/$REPO/interop:latest}"
-SICAR_IMAGE="${SICAR_IMAGE:-ghcr.io/$REPO/data-api:latest}"
+TOOLS_IMAGE="ghcr.io/${REPO}/fabric-tools:${FABRIC_TAG}"
+CARBON_CC_IMAGE="ghcr.io/${REPO}/carbon:latest"
+INTEROP_CC_IMAGE="ghcr.io/${REPO}/interop:latest"
+SICAR_IMAGE="ghcr.io/${REPO}/data-api:latest"
 CPUS="${CPUS:-6}"
 MEMORY="${MEMORY:-12000}"
 MINIKUBE_RELOAD_IMAGES="${MINIKUBE_RELOAD_IMAGES:-false}"
@@ -25,8 +25,8 @@ else
 fi
 
 if ! docker image inspect "${TOOLS_IMAGE}" > /dev/null 2>&1; then
-    echo "Building custom ${TOOLS_IMAGE}"
-    ${SCRIPT_DIR}/../images/fabric-tools/build.sh
+    echo "Building custom fabric-tools image..."
+    make -C "${SCRIPT_DIR}/../images/fabric-tools" docker
 fi
 
 for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}" "${SICAR_IMAGE}"; do

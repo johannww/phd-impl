@@ -1,4 +1,4 @@
-.PHONY: cc cc-docker app test test-no-cache docs
+.PHONY: cc cc-docker docker-push app test test-no-cache docs
 REPO := "johannww/phd-impl"
 
 cc:
@@ -7,6 +7,9 @@ cc:
 cc-docker:
 	go work vendor
 	docker build -t ghcr.io/$(REPO)/carbon:latest -f Dockerfile ../..
+
+docker-push: cc-docker
+	docker push ghcr.io/$(REPO)/carbon:latest
 
 run:
 	CORE_CHAINCODE_ID_NAME=carbon:0.1 CORE_PEER_LOCAL_MSPID=test CHAINCODE_SERVER_ADDRESS=0.0.0.0:7055 go run ./cmd/carbon/main.go
