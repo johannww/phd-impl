@@ -3,14 +3,13 @@
 # Build the performance test binary
 build:
 	@echo "Building exp-app..."
-	go build -o bin/exp-app ./cmd
+	go build -o bin/exp-app ./cmd/exp-app
 	@echo "Built: bin/exp-app"
 
 # Build all binaries (exp-app and generate-profile)
 build-all: build
 	@echo "Building generate-profile..."
 	go build -o bin/generate-profile ./cmd/generate-profile
-	go build -o bin/exp-app ./cmd
 	@echo "Built: bin/generate-profile"
 
 # Clean build artifacts
