@@ -12,7 +12,7 @@ images:
     tag: "3.1.4"
     pullPolicy: IfNotPresent
   tools:
-    repository: "ghcr.io/hyperledger/fabric-tools"
+    repository: "ghcr.io/johannww/phd-impl/fabric-tools"
     tag: "3.1.4"
     pullPolicy: IfNotPresent
 
