@@ -40,6 +40,12 @@ experiments:
 	cd ./experiments/deploy; \
 	./scripts/deploy.sh; \
 	./scripts/shutdown.sh
+experiments-aks:
+	@printf "$(BLUE)Pushing images to ghcr.io/johannww/phd-impl...$(NC)\n"
+	#$(MAKE) docker-push
+	@printf "$(BLUE)Deploying to AKS...$(NC)\n"
+	cd ./experiments/deploy/scripts; \
+	./deploy-aks.sh --skip-push
 	
 aks-provision:
 	./experiments/deploy/azure/provision_aks.sh

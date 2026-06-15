@@ -5,10 +5,12 @@ REGISTRY=ghcr.io/johannww/phd-impl
 RESOURCE_GROUP=carbon
 AZ_QUIET=--only-show-errors --output none
 
-all: registry docker policy deploy verify-policy-image-layers
+all: resource-group registry docker policy deploy verify-policy-image-layers
+
+resource-group:
+	az group create --name $(RESOURCE_GROUP) --location centralindia
 
 registry:
-	az group create --name $(RESOURCE_GROUP) --location centralindia
 	az acr create --resource-group carbon --name $(REGISTRY_NAME) --sku Basic --admin-enabled true
 	az acr login --name $(REGISTRY_NAME)
 

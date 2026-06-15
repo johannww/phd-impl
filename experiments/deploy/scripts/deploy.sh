@@ -22,7 +22,7 @@ NC='\033[0m' # No Color
 
 (
     echo "Deploying confidential container (tee_auction): docker, policy, deploy..."
-    make -C "${TEE_AUCTION_DIR}" docker policy deploy > /dev/null 2>&1
+    make -C "${TEE_AUCTION_DIR}" resource-group docker policy deploy > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "${COLOR_RED}Error deploying tee_auction confidential container. Please check the output above for details.${NC}"
     fi
