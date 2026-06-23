@@ -1,4 +1,7 @@
-.PHONY: build build-all clean run help test fmt
+.PHONY: build build-all clean run help test fmt docker docker-push
+
+IMAGE_REPO ?= ghcr.io/johannww/phd-impl/exp-app
+IMAGE_TAG ?= latest
 
 # Build the performance test binary
 build:
@@ -26,6 +29,19 @@ test:
 fmt:
 	go fmt ./...
 
+# Build Docker image
+docker:
+	@echo "Building Docker image: $(IMAGE_REPO):$(IMAGE_TAG)"
+	go work vendor
+	docker build -t $(IMAGE_REPO):$(IMAGE_TAG) -f Dockerfile ../..
+	@echo "Docker image built successfully"
+
+# Build and push Docker image
+docker-push: docker
+	@echo "Pushing Docker image: $(IMAGE_REPO):$(IMAGE_TAG)"
+	docker push $(IMAGE_REPO):$(IMAGE_TAG)
+	@echo "Docker image pushed successfully"
+
 # Display help
 help:
 	@echo "Performance Test Framework Commands:"
@@ -35,6 +51,8 @@ help:
 	@echo "  make clean              Clean build artifacts"
 	@echo "  make test               Run tests"
 	@echo "  make fmt                Format code"
+	@echo "  make docker             Build Docker image"
+	@echo "  make docker-push        Build and push Docker image"
 	@echo ""
 	@echo "Example usage:"
 	@echo "  ./bin/generate-profile --deploy-dir=experiments/deploy --output=network.json"

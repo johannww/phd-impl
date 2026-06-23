@@ -27,6 +27,7 @@ docker:
 	$(MAKE) -C tee_auction docker
 	$(MAKE) -C ./data_api docker
 	$(MAKE) -C ./experiments/deploy/images/fabric-tools docker
+	$(MAKE) -C ./experiments/exp-app docker
 
 docker-push:
 	$(MAKE) -C ./chaincodes/carbon docker-push
@@ -34,6 +35,7 @@ docker-push:
 	$(MAKE) -C tee_auction docker-push
 	$(MAKE) -C ./data_api docker-push
 	$(MAKE) -C ./experiments/deploy/images/fabric-tools docker-push
+	$(MAKE) -C ./experiments/exp-app docker-push
 
 .PHONY: experiments
 experiments:
