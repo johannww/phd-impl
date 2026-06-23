@@ -19,6 +19,7 @@ images:
 # collections are defined in ../../../chaincodes/common/state/collections.go
 network: &defaultNetwork
   channelName: "carbon"
+  serviceType: "NodePort"  # NodePort for Minikube, LoadBalancer for AKS if wished
   externalIPs: []
   userCount: 1
   peerLedgerStateTotalQueryLimit: 150000
