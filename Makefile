@@ -50,6 +50,9 @@ experiments-aks:
 aks-provision:
 	./experiments/deploy/azure/provision_aks.sh
 
+aks-clean:
+	./experiments/deploy/scripts/shutdown-aks.sh
+
 aks-stop:
 	./experiments/deploy/azure/shutdown_aks.sh
 
