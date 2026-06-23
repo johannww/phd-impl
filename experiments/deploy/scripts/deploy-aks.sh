@@ -71,7 +71,7 @@ echo -e "${COLOR_GREEN}✓ Prerequisites check passed${NC}\n"
 
 # Step 1: Provision AKS cluster
 if [ "${SKIP_PROVISION:-false}" != "true" ]; then
-    echo -e "${COLOR_YELLOW}[1/7] Provisioning AKS cluster...${NC}"
+    echo -e "${COLOR_YELLOW}[1/8] Provisioning AKS cluster...${NC}"
     
     # Create resource group
     if ! az group show --name "$RESOURCE_GROUP" &>/dev/null; then
@@ -102,15 +102,37 @@ if [ "${SKIP_PROVISION:-false}" != "true" ]; then
     
     echo -e "${COLOR_GREEN}✓ AKS cluster ready${NC}\n"
 else
-    echo -e "${COLOR_YELLOW}[1/7] Skipping provisioning${NC}\n"
+    echo -e "${COLOR_YELLOW}[1/8] Skipping provisioning${NC}\n"
 fi
 
 # Get credentials
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --overwrite-existing
 
-# Step 2: Build and push images to ghcr.io
+# Step 2: Create namespace first
+echo -e "${COLOR_YELLOW}[2/8] Creating namespace...${NC}"
+kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+echo -e "${COLOR_GREEN}✓ Namespace created${NC}\n"
+
+# Step 3: Create Azure Storage Account for Azure Files (ReadWriteMany PVCs)
+echo -e "${COLOR_YELLOW}[3/8] Setting up Azure Files storage...${NC}"
+
+# Ensure Microsoft.Storage provider is registered
+STORAGE_PROVIDER_STATE=$(az provider show --namespace Microsoft.Storage --query "registrationState" -o tsv 2>/dev/null || echo "NotRegistered")
+if [ "$STORAGE_PROVIDER_STATE" != "Registered" ]; then
+    echo "Registering Microsoft.Storage provider..."
+    az provider register --namespace Microsoft.Storage
+    echo "Waiting for provider registration..."
+    while [ "$(az provider show --namespace Microsoft.Storage --query 'registrationState' -o tsv)" != "Registered" ]; do
+        sleep 5
+    done
+    echo "Microsoft.Storage provider registered"
+fi
+
+echo -e "${COLOR_GREEN}✓ Azure Files storage configured${NC}\n"
+
+# Step 4: Build and push images to ghcr.io
 if [ "${SKIP_PUSH:-false}" != "true" ]; then
-    echo -e "${COLOR_YELLOW}[2/7] Building and pushing images to ghcr.io...${NC}"
+    echo -e "${COLOR_YELLOW}[4/8] Building and pushing images to ghcr.io...${NC}"
     echo "Images will be pushed to ghcr.io/${REPO} (public repository)"
 
     PROJECT_ROOT="${SCRIPT_DIR}/../../.."
@@ -119,21 +141,16 @@ if [ "${SKIP_PUSH:-false}" != "true" ]; then
 
     echo -e "${COLOR_GREEN}✓ Images pushed to ghcr.io/${REPO}${NC}\n"
 else
-    echo -e "${COLOR_YELLOW}[2/7] Skipping image build and push${NC}\n"
+    echo -e "${COLOR_YELLOW}[4/8] Skipping image build and push${NC}\n"
 fi
 
-# Step 3: Create namespace (no pull secret needed for public images)
-echo -e "${COLOR_YELLOW}[3/7] Creating namespace...${NC}"
-kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
-echo -e "${COLOR_GREEN}✓ Namespace created${NC}\n"
-
-# Step 4: Install Fabric binaries
-echo -e "${COLOR_YELLOW}[4/7] Installing Fabric binaries...${NC}"
+# Step 5: Install Fabric binaries
+echo -e "${COLOR_YELLOW}[5/8] Installing Fabric binaries...${NC}"
 . "${SCRIPT_DIR}/install_fabric_binaries.bash"
 echo -e "${COLOR_GREEN}✓ Fabric binaries installed${NC}\n"
 
-# Step 5: Deploy TEE auction service (in background)
-echo -e "${COLOR_YELLOW}[5/7] Deploying TEE auction service...${NC}"
+# Step 6: Deploy TEE auction service (in background)
+echo -e "${COLOR_YELLOW}[6/8] Deploying TEE auction service...${NC}"
 (
     make -C "${TEE_AUCTION_DIR}" resource-group docker policy deploy > /dev/null 2>&1
     if [ $? -eq 0 ]; then
@@ -148,8 +165,8 @@ TEE_PID=$!
 . "${SCRIPT_DIR}/generate_sicar_cert.bash"
 echo -e "${COLOR_GREEN}✓ Certificates ready${NC}\n"
 
-# Step 6: Deploy Fabric network with ghcr.io images
-echo -e "${COLOR_YELLOW}[6/7] Deploying Fabric network...${NC}"
+# Step 7: Deploy Fabric network with ghcr.io images
+echo -e "${COLOR_YELLOW}[7/8] Deploying Fabric network...${NC}"
 
 helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
   --namespace "${NAMESPACE}" \
@@ -168,8 +185,8 @@ for i in {1..30}; do
 done
 echo -e "${COLOR_GREEN}✓ Fabric network deployed${NC}\n"
 
-# Step 7: Deploy chaincodes with ghcr.io images
-echo -e "${COLOR_YELLOW}[7/7] Deploying chaincodes...${NC}"
+# Step 8: Deploy chaincodes with ghcr.io images
+echo -e "${COLOR_YELLOW}[8/8] Deploying chaincodes...${NC}"
 . "${SCRIPT_DIR}/package_chaincodes.bash"
 
 helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
