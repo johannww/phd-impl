@@ -38,8 +38,12 @@ docker-push:
 .PHONY: experiments
 experiments:
 	cd ./experiments/deploy; \
-	./scripts/deploy.sh; \
+	./scripts/deploy.sh
+
+experiments-clean:
+	cd ./experiments/deploy; \
 	./scripts/shutdown.sh
+
 experiments-aks:
 	@printf "$(BLUE)Pushing images to ghcr.io/johannww/phd-impl...$(NC)\n"
 	#$(MAKE) docker-push
