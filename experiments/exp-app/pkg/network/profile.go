@@ -29,10 +29,13 @@ type PeerConfig struct {
 
 // PeerNode represents a single peer
 type PeerNode struct {
-	Name         string `json:"name"`          // e.g., "peer0.mma"
-	Address      string `json:"address"`       // e.g., "localhost:7051"
-	PortInternal int    `json:"port_internal"` // Internal port
-	PortExternal int    `json:"port_external"` // NodePort
+	Name            string `json:"name"`              // e.g., "peer0.mma"
+	Address         string `json:"address"`           // e.g., "localhost:7051"
+	PortInternal    int    `json:"port_internal"`     // Internal port
+	PortExternal    int    `json:"port_external"`     // NodePort
+	MetricsPort     int    `json:"metrics_port"`      // Metrics port (default 9443)
+	MetricsNodePort int    `json:"metrics_node_port"` // Metrics external NodePort
+	MetricsEndpoint string `json:"metrics_endpoint"`  // Full metrics URL (e.g., "http://localhost:31060/metrics")
 }
 
 // UserCert contains certificate and key paths for a single user
@@ -53,13 +56,16 @@ type PeerCerts struct {
 
 // OrdererConfig represents an orderer
 type OrdererConfig struct {
-	Organization string `json:"organization"`
-	MspID        string `json:"msp_id"`
-	Name         string `json:"name"` // e.g., "orderer0.orderer"
-	Address      string `json:"address"`
-	PortInternal int    `json:"port_internal"`
-	PortExternal int    `json:"port_external"`
-	TLSCACert    string `json:"tls_ca_cert"`
+	Organization    string `json:"organization"`
+	MspID           string `json:"msp_id"`
+	Name            string `json:"name"` // e.g., "orderer0.orderer"
+	Address         string `json:"address"`
+	PortInternal    int    `json:"port_internal"`
+	PortExternal    int    `json:"port_external"`
+	TLSCACert       string `json:"tls_ca_cert"`
+	MetricsPort     int    `json:"metrics_port"`      // Metrics port (default 8443)
+	MetricsNodePort int    `json:"metrics_node_port"` // Metrics external NodePort
+	MetricsEndpoint string `json:"metrics_endpoint"`  // Full metrics URL (e.g., "http://localhost:31090/metrics")
 }
 
 // DataAPIConfig represents the SICAR data API

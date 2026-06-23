@@ -13,7 +13,7 @@ func TestGeneratorWithDeploymentArtifacts(t *testing.T) {
 		t.Skipf("deployment directory not found: %s", deployDir)
 	}
 
-	gen := NewGenerator(deployDir, "127.0.0.1", "")
+	gen := NewGenerator(deployDir, "127.0.0.1", "", false, "fabric-experiments")
 	profile, err := gen.Generate()
 	if err != nil {
 		t.Fatalf("failed to generate profile: %v", err)
@@ -144,7 +144,7 @@ func TestGeneratorSaveLoadJSON(t *testing.T) {
 	}
 
 	// Generate profile
-	gen := NewGenerator(deployDir, "127.0.0.1", "")
+	gen := NewGenerator(deployDir, "127.0.0.1", "", false, "fabric-experiments")
 	profile, err := gen.Generate()
 	if err != nil {
 		t.Fatalf("failed to generate profile: %v", err)
@@ -175,4 +175,71 @@ func TestGeneratorSaveLoadJSON(t *testing.T) {
 	if len(loaded.Orderers) != len(profile.Orderers) {
 		t.Error("loaded profile orderers count mismatch")
 	}
+}
+
+func TestGeneratorInClusterMode(t *testing.T) {
+	deployDir := filepath.Join(os.Getenv("HOME"), "prj", "dtr", "impl", "experiments", "deploy")
+	if _, err := os.Stat(deployDir); os.IsNotExist(err) {
+		t.Skipf("deployment directory not found: %s", deployDir)
+	}
+
+	// Generate profile in in-cluster mode
+	gen := NewGenerator(deployDir, "127.0.0.1", "", true, "fabric-experiments")
+	profile, err := gen.Generate()
+	if err != nil {
+		t.Fatalf("failed to generate profile: %v", err)
+	}
+
+	// Verify peers use Kubernetes DNS addresses
+	for orgName, peerCfg := range profile.Peers {
+		for i, peer := range peerCfg.Peers {
+			expectedServiceName := orgName + "-peer-" + string(rune('0'+i))
+			expectedAddress := expectedServiceName + ".fabric-experiments.svc.cluster.local:7051"
+			if peer.Address != expectedAddress {
+				t.Errorf("expected peer address %q, got %q", expectedAddress, peer.Address)
+			}
+
+			// Verify metrics endpoint uses Kubernetes DNS
+			expectedMetricsEndpoint := "http://" + expectedServiceName + ".fabric-experiments.svc.cluster.local:9443/metrics"
+			if peer.MetricsEndpoint != expectedMetricsEndpoint {
+				t.Errorf("expected metrics endpoint %q, got %q", expectedMetricsEndpoint, peer.MetricsEndpoint)
+			}
+		}
+
+		// Verify certificate paths use /workspace
+		if peerCfg.Certificates.TLSCACert[:10] != "/workspace" {
+			t.Errorf("expected certificate path to start with /workspace, got %q", peerCfg.Certificates.TLSCACert)
+		}
+	}
+
+	// Verify orderers use Kubernetes DNS addresses
+	for _, orderer := range profile.Orderers {
+		if orderer.Address[:len(orderer.Organization)] != orderer.Organization {
+			t.Errorf("expected orderer address to start with org name, got %q", orderer.Address)
+		}
+		if !contains(orderer.Address, ".fabric-experiments.svc.cluster.local:") {
+			t.Errorf("expected orderer address to use Kubernetes DNS, got %q", orderer.Address)
+		}
+	}
+
+	// Verify data-api uses Kubernetes DNS
+	expectedDataAPIAddress := "data-api.fabric-experiments.svc.cluster.local:8443"
+	if profile.DataAPI.Address != expectedDataAPIAddress {
+		t.Errorf("expected data-api address %q, got %q", expectedDataAPIAddress, profile.DataAPI.Address)
+	}
+
+	t.Logf("successfully generated in-cluster profile with Kubernetes DNS addresses")
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || containsMiddle(s, substr)))
+}
+
+func containsMiddle(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

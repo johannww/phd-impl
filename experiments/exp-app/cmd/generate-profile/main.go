@@ -13,10 +13,12 @@ import (
 func main() {
 	// Parse flags
 	deployDir := flag.String("deploy-dir", "", "Path to deployment directory (experiments/deploy)")
-	minikubeIP := flag.String("minikube-ip", "127.0.0.1", "Minikube IP address")
+	minikubeIP := flag.String("minikube-ip", "127.0.0.1", "Minikube IP address (ignored if --in-cluster is set)")
 	teeIP := flag.String("tee-ip", "", "Public IP of the TEE auction confidential container (empty = disabled)")
 	outputFile := flag.String("output", "network-profile.json", "Output profile file")
 	verbose := flag.Bool("verbose", false, "Verbose output")
+	inCluster := flag.Bool("in-cluster", false, "Generate profile for in-cluster deployment (uses Kubernetes DNS)")
+	namespace := flag.String("namespace", "fabric-experiments", "Kubernetes namespace for DNS resolution (used with --in-cluster)")
 
 	flag.Parse()
 
@@ -33,14 +35,20 @@ func main() {
 
 	if *verbose {
 		log.Printf("Generating network profile from: %s", *deployDir)
-		log.Printf("Using Minikube IP: %s", *minikubeIP)
+		if *inCluster {
+			log.Printf("Mode: In-cluster (Kubernetes DNS)")
+			log.Printf("Namespace: %s", *namespace)
+		} else {
+			log.Printf("Mode: External access (NodePort)")
+			log.Printf("Using external IP: %s", *minikubeIP)
+		}
 		if *teeIP != "" {
 			log.Printf("TEE auction IP: %s", *teeIP)
 		}
 	}
 
 	// Create generator
-	gen := network.NewGenerator(*deployDir, *minikubeIP, *teeIP)
+	gen := network.NewGenerator(*deployDir, *minikubeIP, *teeIP, *inCluster, *namespace)
 
 	// Generate profile
 	profile, err := gen.Generate()

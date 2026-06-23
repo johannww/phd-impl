@@ -17,16 +17,20 @@ type Generator struct {
 	valuesFile string
 	minikubeIP string
 	teeIP      string
+	inCluster  bool
+	namespace  string
 }
 
 // NewGenerator creates a new network profile generator
-func NewGenerator(deployDir, minikubeIP, teeIP string) *Generator {
+func NewGenerator(deployDir, minikubeIP, teeIP string, inCluster bool, namespace string) *Generator {
 	return &Generator{
 		deployDir:  deployDir,
 		varsDir:    filepath.Join(deployDir, "vars"),
 		valuesFile: filepath.Join(deployDir, "helm", "values.yaml"),
 		minikubeIP: minikubeIP,
 		teeIP:      teeIP,
+		inCluster:  inCluster,
+		namespace:  namespace,
 	}
 }
 
@@ -136,17 +140,24 @@ func (g *Generator) generatePeerConfig(name string, peerCount, nodePortBase int,
 	// Generate peer nodes
 	for i := 0; i < peerCount; i++ {
 		peerName := fmt.Sprintf("peer%d.%s", i, name)
+		serviceName := fmt.Sprintf("%s-peer-%d", name, i)
 		externalPort := nodePortBase + i
+		metricsNodePort := nodePortBase + i + 1000 // Metrics NodePort = base + peer index + 1000
+
 		cfg.Peers[i] = PeerNode{
-			Name:         peerName,
-			Address:      fmt.Sprintf("%s:%d", g.minikubeIP, externalPort),
-			PortInternal: 7051,
-			PortExternal: externalPort,
+			Name:            peerName,
+			Address:         g.buildServiceAddress(serviceName, 7051, externalPort),
+			PortInternal:    7051,
+			PortExternal:    externalPort,
+			MetricsPort:     9443, // Standard Fabric peer metrics port
+			MetricsNodePort: metricsNodePort,
+			MetricsEndpoint: g.buildMetricsEndpoint(serviceName, 9443, metricsNodePort),
 		}
 	}
 
 	// Load certificates
-	orgPath := filepath.Join(g.varsDir, "organizations", "peerOrganizations", name)
+	certBasePath := g.getCertBasePath()
+	orgPath := filepath.Join(certBasePath, "organizations", "peerOrganizations", name)
 
 	// Generate user certificates (User1, User2, ..., UserN)
 	users := make([]UserCert, userCount)
@@ -166,9 +177,11 @@ func (g *Generator) generatePeerConfig(name string, peerCount, nodePortBase int,
 		Users:     users,
 	}
 
-	// Verify certificates exist
-	if err := g.verifyCertificates(&certs); err != nil {
-		return nil, fmt.Errorf("verify certificates: %w", err)
+	// Verify certificates exist (skip in-cluster mode as certs are in PVC)
+	if !g.inCluster {
+		if err := g.verifyCertificates(&certs); err != nil {
+			return nil, fmt.Errorf("verify certificates: %w", err)
+		}
 	}
 
 	cfg.Certificates = certs
@@ -178,19 +191,25 @@ func (g *Generator) generatePeerConfig(name string, peerCount, nodePortBase int,
 // generateOrdererConfigs generates configuration for orderers
 func (g *Generator) generateOrdererConfigs(orgName string, ordererCount, nodePortBase int) ([]OrdererConfig, error) {
 	orderers := make([]OrdererConfig, ordererCount)
+	certBasePath := g.getCertBasePath()
 
 	for i := 0; i < ordererCount; i++ {
 		ordererName := fmt.Sprintf("orderer%d.%s", i, orgName)
+		serviceName := fmt.Sprintf("%s-orderer-%d", orgName, i)
 		externalPort := nodePortBase + i
+		metricsNodePort := nodePortBase + i + 1000 // Metrics NodePort = base + orderer index + 1000
 
 		orderers[i] = OrdererConfig{
-			Organization: orgName,
-			MspID:        "OrdererMSP",
-			Name:         ordererName,
-			Address:      fmt.Sprintf("%s:%d", g.minikubeIP, externalPort),
-			PortInternal: 7050,
-			PortExternal: externalPort,
-			TLSCACert:    filepath.Join(g.varsDir, "organizations", "ordererOrganizations", orgName, "orderers", ordererName, "tls", "ca.crt"),
+			Organization:    orgName,
+			MspID:           "OrdererMSP",
+			Name:            ordererName,
+			Address:         g.buildServiceAddress(serviceName, 7050, externalPort),
+			PortInternal:    7050,
+			PortExternal:    externalPort,
+			TLSCACert:       filepath.Join(certBasePath, "organizations", "ordererOrganizations", orgName, "orderers", ordererName, "tls", "ca.crt"),
+			MetricsPort:     8443, // Standard Fabric orderer metrics port
+			MetricsNodePort: metricsNodePort,
+			MetricsEndpoint: g.buildMetricsEndpoint(serviceName, 8443, metricsNodePort),
 		}
 	}
 
@@ -199,24 +218,32 @@ func (g *Generator) generateOrdererConfigs(orgName string, ordererCount, nodePor
 
 // generateDataAPIConfig generates Data API (SICAR) configuration
 func (g *Generator) generateDataAPIConfig() DataAPIConfig {
+	certBasePath := g.getCertBasePath()
+	serviceName := "data-api"
+	nodePort := 30443
+
 	return DataAPIConfig{
 		Enabled:  true,
 		Hostname: g.minikubeIP,
-		Port:     30443,
-		Address:  fmt.Sprintf("%s:30443", g.minikubeIP),
-		TLSCert:  filepath.Join(g.varsDir, "sicar", "server.crt"),
-		TLSKey:   filepath.Join(g.varsDir, "sicar", "server.key"),
+		Port:     nodePort,
+		Address:  g.buildServiceAddress(serviceName, 8443, nodePort),
+		TLSCert:  filepath.Join(certBasePath, "sicar", "server.crt"),
+		TLSKey:   filepath.Join(certBasePath, "sicar", "server.key"),
 	}
 }
 
 // generateSICARConfig generates SICAR configuration
 func (g *Generator) generateSICARConfig() SICARConfig {
+	certBasePath := g.getCertBasePath()
+	serviceName := "data-api"
+	nodePort := 30443
+
 	return SICARConfig{
 		Enabled:     true,
-		Certificate: filepath.Join(g.varsDir, "sicar", "server.crt"),
-		PrivateKey:  filepath.Join(g.varsDir, "sicar", "server.key"),
-		Endpoint:    fmt.Sprintf("%s:30443", g.minikubeIP),
-		DataPath:    filepath.Join(g.varsDir, "organizations", "sicar", "sicar.json"),
+		Certificate: filepath.Join(certBasePath, "sicar", "server.crt"),
+		PrivateKey:  filepath.Join(certBasePath, "sicar", "server.key"),
+		Endpoint:    g.buildServiceAddress(serviceName, 8443, nodePort),
+		DataPath:    filepath.Join(certBasePath, "organizations", "sicar", "sicar.json"),
 	}
 }
 
@@ -291,16 +318,16 @@ func (g *Generator) generateChaincodeMetrics(profile *NetworkProfile, values *He
 		// Generate endpoints for each peer organization
 		for _, orgName := range peerOrgs {
 			orgIdx := orgIndexMap[orgName]
-
-			// Internal cluster endpoint
 			serviceName := fmt.Sprintf("%s-%s", cc.Name, orgName)
+
+			// Internal cluster endpoint (always populated)
 			internalEndpoint := fmt.Sprintf("http://%s:%d/metrics", serviceName, cc.MetricsPort)
 			metricsConfig.InternalEndpoints[orgName] = internalEndpoint
 
-			// External NodePort endpoint (if NodePortBase is configured)
+			// External endpoint - use helper for deployment mode awareness
 			if cc.MetricsNodePortBase > 0 {
 				nodePort := cc.MetricsNodePortBase + orgIdx
-				externalEndpoint := fmt.Sprintf("http://%s:%d/metrics", g.minikubeIP, nodePort)
+				externalEndpoint := g.buildMetricsEndpoint(serviceName, cc.MetricsPort, nodePort)
 				metricsConfig.Endpoints[orgName] = externalEndpoint
 			}
 		}
@@ -355,4 +382,32 @@ func capitalizeFirst(s string) string {
 		return s
 	}
 	return string(s[0]-32) + s[1:]
+}
+
+// buildServiceAddress builds the appropriate service address based on deployment mode
+// For in-cluster: {service}.{namespace}.svc.cluster.local:{port}
+// For external: {minikubeIP}:{nodePort}
+func (g *Generator) buildServiceAddress(serviceName string, internalPort, nodePort int) string {
+	if g.inCluster {
+		return fmt.Sprintf("%s.%s.svc.cluster.local:%d", serviceName, g.namespace, internalPort)
+	}
+	return fmt.Sprintf("%s:%d", g.minikubeIP, nodePort)
+}
+
+// buildMetricsEndpoint builds the Prometheus metrics endpoint based on deployment mode
+func (g *Generator) buildMetricsEndpoint(serviceName string, metricsPort, metricsNodePort int) string {
+	if g.inCluster {
+		return fmt.Sprintf("http://%s.%s.svc.cluster.local:%d/metrics", serviceName, g.namespace, metricsPort)
+	}
+	return fmt.Sprintf("http://%s:%d/metrics", g.minikubeIP, metricsNodePort)
+}
+
+// getCertBasePath returns the base path for certificates
+// For in-cluster: /workspace (mounted from organizations PVC)
+// For external: local vars directory
+func (g *Generator) getCertBasePath() string {
+	if g.inCluster {
+		return "/workspace"
+	}
+	return g.varsDir
 }
