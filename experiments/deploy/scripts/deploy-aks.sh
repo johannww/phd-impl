@@ -154,6 +154,7 @@ echo -e "${COLOR_YELLOW}[6/7] Deploying Fabric network...${NC}"
 helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
   --namespace "${NAMESPACE}" \
   --set "network.serviceType=LoadBalancer" \
+  --set "storage.organizations.storageClassName=azurefile" \
   --set "images.tools.repository=ghcr.io/${REPO}/fabric-tools" \
   --set "images.tools.tag=${FABRIC_TAG}" \
   --wait --timeout 15m --create-namespace

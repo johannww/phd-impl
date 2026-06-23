@@ -59,7 +59,10 @@ storage:
     size: "1Gi"
     accessModes:
       - ReadWriteMany
-    storageClassName: ""
+    # For Minikube: use "standard" (hostpath)
+    # For AKS: use "azurefile" or "azurefile-csi" (supports ReadWriteMany)
+    # Azure Disk does NOT support ReadWriteMany (multi-pod access)
+    storageClassName: "standard"
 
 operations:
   workspace: "/workspace"

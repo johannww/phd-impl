@@ -18,4 +18,7 @@ spec:
       storage: {{ .Values.storage.organizations.size }}
 {{- if .Values.storage.organizations.storageClassName }}
   storageClassName: {{ .Values.storage.organizations.storageClassName | quote }}
+{{- else }}
+  {{- /* Default to hostpath for Minikube if not specified */}}
+  storageClassName: "standard"
 {{- end }}
