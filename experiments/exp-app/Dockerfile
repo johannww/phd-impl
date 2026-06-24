@@ -39,5 +39,7 @@ WORKDIR /app
 COPY --from=builder /exp-app .
 COPY --from=builder /generate-profile .
 
-# Default command (can be overridden)
-ENTRYPOINT ["/app/exp-app"]
+# No default command - let Kubernetes control execution
+# To run manually: docker run <image> /app/exp-app [args]
+# Or: docker run <image> /bin/sh
+

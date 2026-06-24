@@ -1,0 +1,68 @@
+# Default values for exp-app chart
+
+# Number of exp-app pods to deploy (for multi-user simulation)
+replicaCount: 1
+
+image:
+  repository: ghcr.io/johannww/phd-impl/exp-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Pod resources
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "2Gi"
+    cpu: "2000m"
+
+# Storage configuration
+storage:
+  # Results PVC configuration
+  results:
+    enabled: true
+    storageClassName: azurefile-csi  # Use azurefile for AKS, standard for Minikube
+    accessMode: ReadWriteMany
+    size: 2Gi
+  
+  # Reference to organizations PVC (created by main fabric chart)
+  organizationsClaimName: organizations
+  
+  # Mount paths
+  workspacePath: /workspace
+  resultsPath: /results
+  configPath: /config
+
+# Network profile configuration
+networkProfile:
+  # ConfigMap name containing network-profile.json
+  configMapName: network-profile
+
+# Pod behavior
+pod:
+  # Keep pod running (don't execute exp-app automatically)
+  keepAlive: true
+  
+  # Restart policy
+  restartPolicy: Always
+  
+  # Custom command (used when keepAlive is false)
+  # If not specified, defaults to ["/app/exp-app"]
+  command: []
+    # - /app/exp-app
+  
+  # Custom args (used when keepAlive is false)
+  args: []
+    # - --profile=/config/network-profile.json
+    # - --duration=5m
+  
+  # Environment variables
+  env: []
+    # - name: CUSTOM_VAR
+    #   value: "value"
+
+# Service account (optional, for future RBAC)
+serviceAccount:
+  create: false
+  name: ""

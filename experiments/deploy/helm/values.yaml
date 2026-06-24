@@ -133,3 +133,40 @@ sicar:
     seed: "sicar-dev"
   servicePort: 8443
   nodePort: 30443
+
+expApp:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: ghcr.io/johannww/phd-impl/exp-app
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+  storage:
+    results:
+      enabled: true
+      storageClassName: azurefile-csi  # Use azurefile for AKS, standard for Minikube
+      accessMode: ReadWriteMany
+      size: 2Gi
+    organizationsClaimName: organizations
+    workspacePath: /workspace
+    resultsPath: /results
+    configPath: /config
+  networkProfile:
+    configMapName: network-profile
+  pod:
+    keepAlive: true
+    restartPolicy: Always
+    command: []
+    args: []
+    env: []
+  serviceAccount:
+    create: false
+    name: ""
+

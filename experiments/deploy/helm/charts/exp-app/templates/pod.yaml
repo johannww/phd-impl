@@ -1,0 +1,63 @@
+# TODO: adapt chart to run multiple exp-app instances with different configurations (e.g., users, etc.)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "exp-app.fullname" . }}
+  namespace: {{ include "exp-app.namespace" . }}
+  labels:
+    {{- include "exp-app.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.serviceAccount.create }}
+  serviceAccountName: {{ default (include "exp-app.fullname" .) .Values.serviceAccount.name }}
+  {{- end }}
+  restartPolicy: {{ .Values.pod.restartPolicy }}
+  containers:
+  - name: exp-app
+    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+    imagePullPolicy: {{ .Values.image.pullPolicy }}
+    {{- if .Values.pod.keepAlive }}
+    # Keep pod alive without running exp-app automatically
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do sleep 3600; done"]
+    {{- else }}
+    # Run exp-app with custom command/args if provided
+    {{- if .Values.pod.command }}
+    command: {{ toYaml .Values.pod.command | nindent 6 }}
+    {{- else }}
+    command: ["/app/exp-app"]
+    {{- end }}
+    {{- if .Values.pod.args }}
+    args: {{ toYaml .Values.pod.args | nindent 6 }}
+    {{- end }}
+    {{- end }}
+    volumeMounts:
+    - name: organizations
+      mountPath: {{ .Values.storage.workspacePath }}
+      readOnly: true
+    - name: results
+      mountPath: {{ .Values.storage.resultsPath }}
+    - name: network-profile
+      mountPath: {{ .Values.storage.configPath }}
+      readOnly: true
+    env:
+    - name: NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    {{- with .Values.pod.env }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.resources }}
+    resources:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  volumes:
+  - name: organizations
+    persistentVolumeClaim:
+      claimName: {{ .Values.storage.organizationsClaimName }}
+  - name: results
+    persistentVolumeClaim:
+      claimName: {{ include "exp-app.fullname" . }}-results
+  - name: network-profile
+    configMap:
+      name: {{ .Values.networkProfile.configMapName }}

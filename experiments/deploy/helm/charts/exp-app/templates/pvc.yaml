@@ -1,0 +1,18 @@
+{{- if .Values.storage.results.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "exp-app.fullname" . }}-results
+  namespace: {{ include "exp-app.namespace" . }}
+  labels:
+    {{- include "exp-app.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.storage.results.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.storage.results.size }}
+  {{- if .Values.storage.results.storageClassName }}
+  storageClassName: {{ .Values.storage.results.storageClassName }}
+  {{- end }}
+{{- end }}
