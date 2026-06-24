@@ -71,7 +71,7 @@ echo -e "${COLOR_GREEN}✓ Prerequisites check passed${NC}\n"
 
 # Step 1: Provision AKS cluster
 if [ "${SKIP_PROVISION:-false}" != "true" ]; then
-    echo -e "${COLOR_YELLOW}[1/8] Provisioning AKS cluster...${NC}"
+    echo -e "${COLOR_YELLOW}[1/9] Provisioning AKS cluster...${NC}"
     
     # Create resource group
     if ! az group show --name "$RESOURCE_GROUP" &>/dev/null; then
@@ -102,19 +102,19 @@ if [ "${SKIP_PROVISION:-false}" != "true" ]; then
     
     echo -e "${COLOR_GREEN}✓ AKS cluster ready${NC}\n"
 else
-    echo -e "${COLOR_YELLOW}[1/8] Skipping provisioning${NC}\n"
+    echo -e "${COLOR_YELLOW}[1/9] Skipping provisioning${NC}\n"
 fi
 
 # Get credentials
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --overwrite-existing
 
 # Step 2: Create namespace first
-echo -e "${COLOR_YELLOW}[2/8] Creating namespace...${NC}"
+echo -e "${COLOR_YELLOW}[2/9] Creating namespace...${NC}"
 kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
 echo -e "${COLOR_GREEN}✓ Namespace created${NC}\n"
 
 # Step 3: Create Azure Storage Account for Azure Files (ReadWriteMany PVCs)
-echo -e "${COLOR_YELLOW}[3/8] Setting up Azure Files storage...${NC}"
+echo -e "${COLOR_YELLOW}[3/9] Setting up Azure Files storage...${NC}"
 
 # Ensure Microsoft.Storage provider is registered
 STORAGE_PROVIDER_STATE=$(az provider show --namespace Microsoft.Storage --query "registrationState" -o tsv 2>/dev/null || echo "NotRegistered")
@@ -132,25 +132,25 @@ echo -e "${COLOR_GREEN}✓ Azure Files storage configured${NC}\n"
 
 # Step 4: Build and push images to ghcr.io
 if [ "${SKIP_PUSH:-false}" != "true" ]; then
-    echo -e "${COLOR_YELLOW}[4/8] Building and pushing images to ghcr.io...${NC}"
+    echo -e "${COLOR_YELLOW}[4/9] Building and pushing images to ghcr.io...${NC}"
     echo "Images will be pushed to ghcr.io/${REPO} (public repository)"
 
     PROJECT_ROOT="${SCRIPT_DIR}/../../.."
-    echo "Running 'make docker-push' from project root..."
+    echo "Running 'make docker-rush' from project root..."
     make -C "${PROJECT_ROOT}" docker-push
 
     echo -e "${COLOR_GREEN}✓ Images pushed to ghcr.io/${REPO}${NC}\n"
 else
-    echo -e "${COLOR_YELLOW}[4/8] Skipping image build and push${NC}\n"
+    echo -e "${COLOR_YELLOW}[4/9] Skipping image build and push${NC}\n"
 fi
 
 # Step 5: Install Fabric binaries
-echo -e "${COLOR_YELLOW}[5/8] Installing Fabric binaries...${NC}"
+echo -e "${COLOR_YELLOW}[5/9] Installing Fabric binaries...${NC}"
 . "${SCRIPT_DIR}/install_fabric_binaries.bash"
 echo -e "${COLOR_GREEN}✓ Fabric binaries installed${NC}\n"
 
 # Step 6: Deploy TEE auction service (in background)
-echo -e "${COLOR_YELLOW}[6/8] Deploying TEE auction service...${NC}"
+echo -e "${COLOR_YELLOW}[6/9] Deploying TEE auction service...${NC}"
 (
     make -C "${TEE_AUCTION_DIR}" resource-group docker policy deploy > /dev/null 2>&1
     if [ $? -eq 0 ]; then
@@ -161,32 +161,33 @@ echo -e "${COLOR_YELLOW}[6/8] Deploying TEE auction service...${NC}"
 ) &
 TEE_PID=$!
 
-# Setup SICAR certificates
+# Step 7: Setup SICAR certificates
+echo -e "${COLOR_YELLOW}[7/9] Setting up SICAR certificates...${NC}"
 . "${SCRIPT_DIR}/generate_sicar_cert.bash"
 echo -e "${COLOR_GREEN}✓ Certificates ready${NC}\n"
 
-# Step 7: Deploy Fabric network with ghcr.io images
-echo -e "${COLOR_YELLOW}[7/8] Deploying Fabric network...${NC}"
+# Step 8: Deploy Fabric network with ghcr.io images
+echo -e "${COLOR_YELLOW}[8/9] Deploying Fabric network...${NC}"
 
 helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
   --namespace "${NAMESPACE}" \
-  --set "network.serviceType=LoadBalancer" \
+  --set "network.serviceType=NodePort" \
   --set "storage.organizations.storageClassName=azurefile" \
   --set "images.tools.repository=ghcr.io/${REPO}/fabric-tools" \
   --set "images.tools.tag=${FABRIC_TAG}" \
   --wait --timeout 15m --create-namespace
 
-# Wait for LoadBalancer IPs
-echo "Waiting for LoadBalancer external IPs..."
-for i in {1..30}; do
-    PENDING=$(kubectl get svc -n "${NAMESPACE}" -o json | jq -r '.items[] | select(.spec.type=="LoadBalancer") | select(.status.loadBalancer.ingress == null) | .metadata.name' | wc -l)
-    [ "$PENDING" -eq 0 ] && break
-    sleep 10
-done
+# # Wait for LoadBalancer IPs
+# echo "Waiting for LoadBalancer external IPs..."
+# for i in {1..30}; do
+#     PENDING=$(kubectl get svc -n "${NAMESPACE}" -o json | jq -r '.items[] | select(.spec.type=="LoadBalancer") | select(.status.loadBalancer.ingress == null) | .metadata.name' | wc -l)
+#     [ "$PENDING" -eq 0 ] && break
+#     sleep 10
+# done
 echo -e "${COLOR_GREEN}✓ Fabric network deployed${NC}\n"
 
-# Step 8: Deploy chaincodes with ghcr.io images
-echo -e "${COLOR_YELLOW}[8/8] Deploying chaincodes...${NC}"
+# Step 9: Deploy chaincodes with ghcr.io images
+echo -e "${COLOR_YELLOW}[9/9] Deploying chaincodes...${NC}"
 . "${SCRIPT_DIR}/package_chaincodes.bash"
 
 helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
@@ -201,12 +202,17 @@ helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
 
 echo -e "${COLOR_GREEN}✓ Chaincodes deployed${NC}\n"
 
-# Step 8: Generate network profile
+# Fetch organization and collection data
+echo "Fetching organization data and collection configs..."
 . "${SCRIPT_DIR}/fetch_organizations.bash"
 . "${SCRIPT_DIR}/fetch_collections_config.bash"
-wait $TEE_PID 2>/dev/null || true
-. "${SCRIPT_DIR}/generate_network_profile_aks.bash"
-echo -e "${COLOR_GREEN}✓ Network profile generated${NC}\n"
+echo -e "${COLOR_GREEN}✓ Organization data fetched${NC}\n"
+
+# Deploy exp-app pod (in-cluster)
+echo -e "${COLOR_YELLOW}Deploying exp-app pod...${NC}"
+export RELEASE_NAME EXP_APP_RELEASE_NAME="${RELEASE_NAME}-exp-app"
+. "${SCRIPT_DIR}/deploy_exp_app.bash"
+echo -e "${COLOR_GREEN}✓ exp-app pod deployed${NC}\n"
 
 # Display summary
 echo -e "${COLOR_BLUE}========================================${NC}"
@@ -218,9 +224,18 @@ echo ""
 echo "  View services:  kubectl get svc -n ${NAMESPACE}"
 echo "  View pods:      kubectl get pods -n ${NAMESPACE}"
 echo ""
-echo "  Run perf test:  cd experiments/exp-app"
-echo "                  ./bin/exp-app --profile ../deploy/vars/network-profile.json \\"
-echo "                                 --duration 10m --concurrency 20 --enable-metrics"
+echo "  Access exp-app: kubectl exec -it ${RELEASE_NAME}-exp-app -n ${NAMESPACE} -- /bin/sh"
+echo ""
+echo "  Run experiments:"
+echo "    kubectl exec -it ${RELEASE_NAME}-exp-app -n ${NAMESPACE} -- /app/exp-app \\"
+echo "      --profile=/config/network-profile.json \\"
+echo "      --duration=5m \\"
+echo "      --concurrency=20 \\"
+echo "      --enable-metrics \\"
+echo "      --results=/results"
+echo ""
+echo "  Retrieve results:"
+echo "    kubectl cp ${NAMESPACE}/${RELEASE_NAME}-exp-app:/results ./exp-app-results"
 echo ""
 echo "  Pause cluster:  make aks-stop"
 echo "  Teardown:       make aks-down RESOURCE_GROUP=${RESOURCE_GROUP}"
