@@ -10,3 +10,7 @@ dependencies:
     version: 0.1.0
     repository: "file://charts/chaincode-service"
     condition: chaincodeService.enabled
+  - name: exp-app
+    version: 0.1.0
+    repository: "file://charts/exp-app"
+    condition: expApp.enabled
