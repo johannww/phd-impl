@@ -9,6 +9,7 @@ TOOLS_IMAGE="ghcr.io/${REPO}/fabric-tools:${FABRIC_TAG}"
 CARBON_CC_IMAGE="ghcr.io/${REPO}/carbon:latest"
 INTEROP_CC_IMAGE="ghcr.io/${REPO}/interop:latest"
 SICAR_IMAGE="ghcr.io/${REPO}/data-api:latest"
+EXP_APP_IMAGE="ghcr.io/${REPO}/exp-app:latest"
 CPUS="${CPUS:-6}"
 MEMORY="${MEMORY:-12000}"
 MINIKUBE_RELOAD_IMAGES="${MINIKUBE_RELOAD_IMAGES:-false}"
@@ -29,7 +30,7 @@ if ! docker image inspect "${TOOLS_IMAGE}" > /dev/null 2>&1; then
     make -C "${SCRIPT_DIR}/../images/fabric-tools" docker
 fi
 
-for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}" "${SICAR_IMAGE}"; do
+for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}" "${SICAR_IMAGE}" "${EXP_APP_IMAGE}"; do
   if minikube image ls | grep -Fq "${image}" && [ "$MINIKUBE_RELOAD_IMAGES" = "false" ]; then
     echo "Image ${image} already loaded in Minikube, skipping."
   else

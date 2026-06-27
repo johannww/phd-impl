@@ -6,7 +6,7 @@
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- printf "%s-%s" .Release.Name (include "exp-app.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- include "exp-app.name" . -}}
 {{- end -}}
 {{- end -}}
 

@@ -1,5 +1,9 @@
 # Default values for exp-app chart
 
+# Override generated full resource names (pod/pvc/etc.)
+# Set to "exp-app" to get pod name exactly "exp-app"
+fullnameOverride: ""
+
 # Number of exp-app pods to deploy (for multi-user simulation)
 replicaCount: 1
 

@@ -11,6 +11,7 @@ spec:
   serviceAccountName: {{ default (include "exp-app.fullname" .) .Values.serviceAccount.name }}
   {{- end }}
   restartPolicy: {{ .Values.pod.restartPolicy }}
+  terminationGracePeriodSeconds: 0
   containers:
   - name: exp-app
     image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

@@ -17,6 +17,7 @@ CHAINCODE_RELEASE_NAME="${CHAINCODE_RELEASE_NAME:-${RELEASE_NAME}-chaincode}"
 TEE_AUCTION_DIR="${TEE_AUCTION_DIR:-${SCRIPT_DIR}/../../../tee_auction}"
 CPUS="${CPUS:-6}"
 MEMORY="${MEMORY:-12000}"
+ENABLE_IN_CLUSTER_EXP_APP="${ENABLE_IN_CLUSTER_EXP_APP:-true}"
 COLOR_RED='\033[0;31m'
 NC='\033[0m' # No Color
 
@@ -60,6 +61,29 @@ helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
 
 wait
 
-. "${SCRIPT_DIR}/generate_network_profile.bash"
+if [[ "${ENABLE_IN_CLUSTER_EXP_APP}" == "true" ]]; then
+  echo "Deploying exp-app pod inside cluster..."
+  export RELEASE_NAME
+  export EXP_APP_RELEASE_NAME="${RELEASE_NAME}-exp-app"
+  export PROFILE_OUTPUT="${SCRIPT_DIR}/../vars/network-profile-in-cluster.json"
+  export PROFILE_IN_CLUSTER="true"
+  export PROFILE_NAMESPACE="${NAMESPACE}"
+  export NETWORK_PROFILE_CONFIGMAP_NAME="network-profile"
+  export EXP_APP_RESULTS_STORAGE_CLASS="standard"
+
+  . "${SCRIPT_DIR}/deploy_exp_app.bash"
+else
+  echo "Generating local network profile with Minikube IP..."
+  . "${SCRIPT_DIR}/generate_network_profile.bash"
+fi
+
+if [[ "${ENABLE_IN_CLUSTER_EXP_APP}" == "true" ]]; then
+  echo "In-cluster exp-app enabled. Access it with:"
+  echo "  kubectl exec -it ${RELEASE_NAME}-exp-app -n ${NAMESPACE} -- /bin/sh"
+  echo "Run workload with:"
+  echo "  kubectl exec -it ${RELEASE_NAME}-exp-app -n ${NAMESPACE} -- /app/exp-app --profile=/config/network-profile.json --duration=5m --results=/results"
+else
+  echo "In-cluster exp-app disabled. Local profile generated at experiments/deploy/vars/network-profile.json"
+fi
 
 echo "Done."
