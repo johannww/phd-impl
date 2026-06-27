@@ -40,7 +40,8 @@ data:
     #!/usr/bin/env bash
     set -euo pipefail
     source /scripts/envsettings.sh
-    mkdir -p {{ .Values.operations.workspace }}/organizations/channel-artifacts
+    ORGS_DIR="{{ .Values.operations.workspace }}/organizations"
+    mkdir -p "${ORGS_DIR}/channel-artifacts"
     run_step() {
       local step="$1"
       local script="$2"
@@ -49,8 +50,25 @@ data:
         bash "${script}"
       fi
     }
-    run_step "certificate generation" "/scripts/certgen.sh"
-    run_step "configtx create and genesis block" "/scripts/configtx.sh"
+
+    certs_ready=true
+    if [ ! -d "${ORGS_DIR}/peerOrganizations" ] || [ ! -d "${ORGS_DIR}/ordererOrganizations" ]; then
+      certs_ready=false
+    fi
+
+    if [ "${certs_ready}" = "true" ]; then
+      echo "==> certificate generation"
+      echo "Certificates already exist in ${ORGS_DIR}. Skipping certificate generation."
+    else
+      run_step "certificate generation" "/scripts/certgen.sh"
+    fi
+
+    if [ -f "${CHANNEL_TX_FILE}" ] && [ -f "${CHANNEL_BLOCK_FILE}" ]; then
+      echo "==> configtx create and genesis block"
+      echo "Channel artifacts already exist. Skipping configtx generation."
+    else
+      run_step "configtx create and genesis block" "/scripts/configtx.sh"
+    fi
   post-bootstrap.sh: |
     #!/usr/bin/env bash
     set -euo pipefail
@@ -103,7 +121,19 @@ data:
     export CORE_PEER_TLS_ROOTCERT_FILE="{{ $.Values.operations.workspace }}/organizations/peerOrganizations/{{ $org.name }}/peers/peer{{ $i }}.{{ $org.name }}/tls/ca.crt"
     export ORDERER_ADDRESS="{{ get $firstOrdererOrg "name" }}-orderer-0:7050"
     export ORDERER_TLS_CA="{{ $.Values.operations.workspace }}/organizations/ordererOrganizations/{{ get $firstOrdererOrg "name" }}/tlsca/tlsca.{{ get $firstOrdererOrg "name" }}-cert.pem"
-    peer channel join -b "${CHANNEL_BLOCK_FILE}" -o "${ORDERER_ADDRESS}" --cafile "${ORDERER_TLS_CA}" --tls
+    set +e
+    output=$(peer channel join -b "$CHANNEL_BLOCK_FILE" -o "$ORDERER_ADDRESS" --cafile "$ORDERER_TLS_CA" --tls 2>&1)
+    status=$?
+    set -e
+    if [ $status -ne 0 ]; then
+      if [[ "$output" == *"already exists"* ]]; then
+        echo "Peer {{ $org.name }}-peer-{{ $i }} is already joined to channel ${FABRIC_CHANNEL}. Skipping."
+        exit 0
+      fi
+      echo "Error joining peer {{ $org.name }}-peer-{{ $i }} to channel ${FABRIC_CHANNEL}:"
+      echo "$output"
+      exit 1
+    fi
 {{- end }}
 {{- end }}
 {{- end }}
