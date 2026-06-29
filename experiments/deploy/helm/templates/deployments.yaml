@@ -154,10 +154,12 @@ spec:
           env:
             - name: CORE_PEER_TLS_ENABLED
               value: "true"
-            #- name: FABRIC_LOGGING_SPEC
-            #  value: "debug"
+            - name: FABRIC_LOGGING_SPEC
+              value: "info"
             - name: CORE_LEDGER_STATE_TOTALQUERYLIMIT
               value: "{{ $.Values.network.peerLedgerStateTotalQueryLimit | default 100000 }}"
+            - name: CORE_PEER_GATEWAY_ENDORSEMENTTIMEOUT
+              value: "120s"
             - name: CORE_PEER_LOCALMSPID
               value: "{{ $orgName | title }}MSP"
             - name: CORE_PEER_GOSSIP_EXTERNALENDPOINT
