@@ -46,7 +46,19 @@ data:
     export CORE_PEER_MSPCONFIGPATH="{{ $.Values.workspace }}/organizations/peerOrganizations/{{ $org.name }}/users/Admin@{{ $org.name }}/msp"
     export CORE_PEER_TLS_ROOTCERT_FILE="{{ $.Values.workspace }}/organizations/peerOrganizations/{{ $org.name }}/peers/peer{{ $i }}.{{ $org.name }}/tls/ca.crt"
     echo "installing {{ $ccName }} on {{ $org.name }} peer{{ $i }} from ${package_file}"
-    peer lifecycle chaincode install "${package_file}"
+    set +e
+    install_output=$(peer lifecycle chaincode install "${package_file}" 2>&1)
+    install_status=$?
+    set -e
+    if [ ${install_status} -ne 0 ]; then
+      if [[ "${install_output}" == *"already successfully installed"* ]]; then
+        echo "package from ${package_file} already installed on {{ $org.name }} peer{{ $i }}; skipping"
+      else
+        echo "failed to install package from ${package_file} on {{ $org.name }} peer{{ $i }}"
+        echo "${install_output}"
+        exit 1
+      fi
+    fi
 {{- end }}
 {{- end }}
 {{- end }}
@@ -71,6 +83,28 @@ data:
 {{- $ccVersion := default "1.0" $cc.version -}}
 {{- $ccSequence := default 1 $cc.sequence }}
     sequence="{{ $ccSequence }}"
+    committed_sequence=""
+{{- range $org := $.Values.network.organizations }}
+{{- if and (eq (get $firstOrdererOrg "name") "") (gt (int (default 0 $org.peers)) 0) }}
+{{- $_ := set $firstOrdererOrg "name" $org.name -}}
+{{- end }}
+{{- end }}
+    export CORE_PEER_ADDRESS="{{ get $firstOrdererOrg "name" }}-peer-0:7051"
+    export CORE_PEER_LOCALMSPID="{{ get $firstOrdererOrg "name" | title }}MSP"
+    export CORE_PEER_MSPCONFIGPATH="{{ $.Values.workspace }}/organizations/peerOrganizations/{{ get $firstOrdererOrg "name" }}/users/Admin@{{ get $firstOrdererOrg "name" }}/msp"
+    export CORE_PEER_TLS_ROOTCERT_FILE="{{ $.Values.workspace }}/organizations/peerOrganizations/{{ get $firstOrdererOrg "name" }}/peers/peer0.{{ get $firstOrdererOrg "name" }}/tls/ca.crt"
+
+    set +e
+    committed_output=$(peer lifecycle chaincode querycommitted --channelID {{ $.Values.network.channelName }} --name {{ $ccName }} 2>&1)
+    committed_status=$?
+    set -e
+    if [ ${committed_status} -eq 0 ] && [[ "${committed_output}" =~ Sequence:[[:space:]]*([0-9]+) ]]; then
+      committed_sequence="${BASH_REMATCH[1]}"
+    fi
+
+    if [ -n "${committed_sequence}" ] && [ "${committed_sequence}" -ge "${sequence}" ]; then
+      echo "{{ $ccName }} already committed at sequence ${committed_sequence} (desired ${sequence}); skipping approve/commit"
+    else
 {{- range $org := $.Values.network.organizations }}
 {{- if gt (int (default 0 $org.peers)) 0 }}
 {{- $pkgIDs := default (dict) $cc.packageIds -}}
@@ -80,17 +114,25 @@ data:
     export CORE_PEER_LOCALMSPID="{{ $org.name | title }}MSP"
     export CORE_PEER_MSPCONFIGPATH="{{ $.Values.workspace }}/organizations/peerOrganizations/{{ $org.name }}/users/Admin@{{ $org.name }}/msp"
     export CORE_PEER_TLS_ROOTCERT_FILE="{{ $.Values.workspace }}/organizations/peerOrganizations/{{ $org.name }}/peers/peer0.{{ $org.name }}/tls/ca.crt"
-    echo "approving {{ $ccName }} for {{ $org.name }} with package {{ $ccID }}"
-    peer lifecycle chaincode approveformyorg \
-      --orderer "${ORDERER_ADDRESS}" \
-      --tls \
-      --cafile "${ORDERER_TLS_CA}" \
-      --channelID {{ $.Values.network.channelName }} \
-      --name {{ $ccName }} \
-      --version {{ $ccVersion }} \
-      --package-id {{ $ccID }} \
-      --sequence "${sequence}" \
-      --collections-config /collections-config/collections_config.json
+    set +e
+    approved_output=$(peer lifecycle chaincode queryapproved --channelID {{ $.Values.network.channelName }} --name {{ $ccName }} --sequence "${sequence}" 2>&1)
+    approved_status=$?
+    set -e
+    if [ ${approved_status} -eq 0 ]; then
+      echo "{{ $ccName }} sequence ${sequence} already approved for {{ $org.name }}; skipping approval"
+    else
+      echo "approving {{ $ccName }} for {{ $org.name }} with package {{ $ccID }}"
+      peer lifecycle chaincode approveformyorg \
+        --orderer "${ORDERER_ADDRESS}" \
+        --tls \
+        --cafile "${ORDERER_TLS_CA}" \
+        --channelID {{ $.Values.network.channelName }} \
+        --name {{ $ccName }} \
+        --version {{ $ccVersion }} \
+        --package-id {{ $ccID }} \
+        --sequence "${sequence}" \
+        --collections-config /collections-config/collections_config.json
+    fi
 {{- end }}
 {{- end }}
 {{- range $org := $.Values.network.organizations }}
@@ -115,5 +157,18 @@ data:
     commit_args+=(--tlsRootCertFiles {{ $.Values.workspace }}/organizations/peerOrganizations/{{ $org.name }}/peers/peer0.{{ $org.name }}/tls/ca.crt)
 {{- end }}
 {{- end }}
-    peer lifecycle chaincode commit "${commit_args[@]}"
+    set +e
+    commit_output=$(peer lifecycle chaincode commit "${commit_args[@]}" 2>&1)
+    commit_status=$?
+    set -e
+    if [ ${commit_status} -ne 0 ]; then
+      if [[ "${commit_output}" == *"requested sequence is"* ]] || [[ "${commit_output}" == *"new definition must be sequence"* ]]; then
+        echo "{{ $ccName }} commit skipped due to sequence mismatch: ${commit_output}"
+      else
+        echo "failed to commit {{ $ccName }} sequence ${sequence}"
+        echo "${commit_output}"
+        exit 1
+      fi
+    fi
+    fi
 {{- end }}
