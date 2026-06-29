@@ -1,0 +1,12 @@
+{{- if and .Values.tee.armTemplate.enabled .Values.tee.armTemplate.content }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.tee.armTemplate.configMapName }}
+  namespace: {{ include "exp-app.namespace" . }}
+  labels:
+    {{- include "exp-app.labels" . | nindent 4 }}
+data:
+  {{ .Values.tee.armTemplate.fileName }}: |
+{{ .Values.tee.armTemplate.content | nindent 4 }}
+{{- end }}
