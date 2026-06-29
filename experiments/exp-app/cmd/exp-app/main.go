@@ -6,14 +6,19 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/johannww/phd-impl/experiments/exp-app/pkg/charts"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/metrics"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/network"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/scenarios"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/setup"
+	"github.com/johannww/phd-impl/experiments/exp-app/pkg/tee"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/workload"
 )
 
@@ -37,6 +42,31 @@ func main() {
 	sellBidInterval := flag.Duration("sell-bid-interval", 2*time.Second, "Interval between sell bid submissions")
 	auctionInterval := flag.Duration("auction-interval", 15*time.Second, "Interval between auction rounds")
 
+	// Metrics collection flags
+	enableMetrics := flag.Bool("enable-metrics", false, "Enable post-execution metrics collection and visualization")
+	metricsOutputDir := flag.String("metrics-output", "monitoring-exports", "Directory for metrics exports")
+	metricsFormats := flag.String("metrics-formats", "png,html,pdf,json", "Chart formats (comma-separated: png,html,pdf,json)")
+	organizationFilter := flag.String("organization", strings.TrimSpace(os.Getenv("EXP_APP_ORGANIZATION")), "Organization to use from profile (default: first organization)")
+	defaultUserCount := 0
+	if envUserCount := strings.TrimSpace(os.Getenv("EXP_APP_USER_COUNT")); envUserCount != "" {
+		parsedUserCount, parseErr := strconv.Atoi(envUserCount)
+		if parseErr != nil {
+			log.Fatalf("Invalid EXP_APP_USER_COUNT value %q: %v", envUserCount, parseErr)
+		}
+		defaultUserCount = parsedUserCount
+	}
+	userCountOverride := flag.Int("user-count", defaultUserCount, "Number of users to run per organization (0 = use profile user count)")
+	defaultRunSetup := true
+	if envRunSetup := strings.TrimSpace(os.Getenv("EXP_APP_RUN_SETUP")); envRunSetup != "" {
+		defaultRunSetup = strings.EqualFold(envRunSetup, "true") || envRunSetup == "1"
+	}
+	defaultRunCoupled := true
+	if envRunCoupled := strings.TrimSpace(os.Getenv("EXP_APP_RUN_COUPLED")); envRunCoupled != "" {
+		defaultRunCoupled = strings.EqualFold(envRunCoupled, "true") || envRunCoupled == "1"
+	}
+	runSetup := flag.Bool("run-setup", defaultRunSetup, "Run InitializeBETS setup before workload")
+	runCoupled := flag.Bool("run-coupled", defaultRunCoupled, "Run coupled auction periodic routine")
+
 	flag.Parse()
 
 	// Validate required flags
@@ -53,13 +83,26 @@ func main() {
 		log.Fatalf("Failed to load network profile: %v", err)
 	}
 
-	// Get first organization from profile
+	// Get organization from profile (explicit if provided, deterministic first otherwise)
 	var orgName string
 	var orgConfig network.PeerConfig
-	for name, config := range profile.Peers {
-		orgName = name
-		orgConfig = config
-		break
+	if *organizationFilter != "" {
+		selected, ok := profile.Peers[*organizationFilter]
+		if !ok {
+			log.Fatalf("Organization %q not found in network profile", *organizationFilter)
+		}
+		orgName = *organizationFilter
+		orgConfig = selected
+	} else {
+		orgNames := make([]string, 0, len(profile.Peers))
+		for name := range profile.Peers {
+			orgNames = append(orgNames, name)
+		}
+		sort.Strings(orgNames)
+		if len(orgNames) > 0 {
+			orgName = orgNames[0]
+			orgConfig = profile.Peers[orgName]
+		}
 	}
 
 	if orgName == "" {
@@ -83,6 +126,18 @@ func main() {
 	// Validate that at least one user exists
 	if len(certs.Users) == 0 {
 		log.Fatal("No user certificates found in organization")
+	}
+
+	effectiveUserCount := *userCountOverride
+	if effectiveUserCount == 0 {
+		effectiveUserCount = len(certs.Users)
+	}
+	if effectiveUserCount <= 0 {
+		log.Fatal("No users available to run workload")
+	}
+	if effectiveUserCount > len(certs.Users) {
+		log.Printf("Requested user count %d exceeds available users %d for org %s; capping", effectiveUserCount, len(certs.Users), orgName)
+		effectiveUserCount = len(certs.Users)
 	}
 
 	tlsCertPath := certs.TLSCACert
@@ -124,40 +179,87 @@ func main() {
 
 	log.Println("Connected! Starting performance test...")
 
+	// Collect baseline Prometheus metrics if enabled
+	var baselineSnapshot *metrics.PrometheusSnapshot
+	if *enableMetrics {
+		log.Println("Collecting baseline Prometheus metrics snapshot...")
+		var err error
+		baselineSnapshot, err = metrics.CollectPrometheusSnapshot(context.Background(), profile, nil)
+		if err != nil {
+			log.Printf("Warning: Failed to collect baseline metrics: %v", err)
+			log.Println("Continuing without metrics collection...")
+			*enableMetrics = false
+		} else {
+			// Save baseline snapshot
+			if err := os.MkdirAll(*metricsOutputDir, 0755); err != nil {
+				log.Printf("Warning: Failed to create metrics output dir: %v", err)
+			}
+			if err := metrics.SavePrometheusSnapshot(baselineSnapshot, fmt.Sprintf("%s/metrics-baseline.json", *metricsOutputDir)); err != nil {
+				log.Printf("Warning: Failed to save baseline snapshot: %v", err)
+			}
+			log.Println("Baseline metrics collected successfully")
+		}
+	}
+
 	const (
-		nPropsPerOrg    = 2
-		nChunksPerProp  = 2
-		quantityPerMint = int64(1000)
+		nPropsPerIdentity = 2
+		nChunksPerProp    = 2
+		quantityPerMint   = int64(1000)
 	)
 
-	setupManager := setup.NewSetupManager(client, profile, *armTemplatePath)
-	teeClient, err := setupManager.InitializeBETS(context.Background(), nPropsPerOrg, nChunksPerProp)
-	if err != nil {
-		log.Fatalf("Setup failed: %v", err)
+	teeClient := (*tee.Client)(nil)
+	setupPropertyIDsByUser := make([][]uint64, effectiveUserCount)
+	if *runSetup {
+		log.Println("Global setup is enabled for first user only; identity setup runs for all users")
+	} else {
+		log.Println("Global setup disabled; identity setup still runs for all users")
 	}
 
-	// Create executor
-	execCfg := &workload.ExecutorConfig{
-		ConcurrencyLevel: *concurrency,
-		Duration:         *duration,
-		MetricsInterval:  *metricsInterval,
-		TPS:              *tps,
-		BurstSize:        *burst,
+	for userIdx := 0; userIdx < effectiveUserCount; userIdx++ {
+		user := certs.Users[userIdx]
+		setupGatewayCfg := &gateway.GatewayConfig{
+			PeerAddr:      peerAddr,
+			TLSCertPath:   tlsCertPath,
+			MspID:         orgConfig.MspID,
+			UserCertPath:  user.Cert,
+			UserKeyPath:   user.Key,
+			ChannelName:   channelName,
+			ChaincodeName: chaincodeName,
+		}
+
+		setupClient, setupClientErr := gateway.NewClientWrapper(setupGatewayCfg)
+		if setupClientErr != nil {
+			log.Fatalf("Failed to create setup gateway client for user %d: %v", userIdx+1, setupClientErr)
+		}
+
+		setupManager := setup.NewSetupManager(setupClient, profile, *armTemplatePath)
+		runtimeTEEClient, setupResult, setupErr := setupManager.InitializeBETS(
+			context.Background(),
+			nPropsPerIdentity,
+			nChunksPerProp,
+			effectiveUserCount,
+			setup.IdentityAssignment{Organization: orgName, UserIndex: userIdx},
+			*runSetup && *runCoupled && userIdx == 0,
+		)
+		if setupErr != nil {
+			_ = setupClient.Close()
+			log.Fatalf("Setup failed for user %d: %v", userIdx+1, setupErr)
+		}
+		if setupResult == nil || len(setupResult.PropertyIDs) == 0 {
+			_ = setupClient.Close()
+			log.Fatalf("Setup returned no property IDs for user %d", userIdx+1)
+		}
+		log.Printf("Setup assigned properties for user %d: %v", userIdx+1, setupResult.PropertyIDs)
+		setupPropertyIDsByUser[userIdx] = append([]uint64(nil), setupResult.PropertyIDs...)
+		if runtimeTEEClient != nil && teeClient == nil {
+			teeClient = runtimeTEEClient
+		}
+
+		_ = setupClient.Close()
 	}
 
-	executor := workload.NewExecutor(client, execCfg)
-
-	// Scenarios setup
-	creditScenario := scenarios.NewCreditScenario(executor)
-	biddingScenario := scenarios.NewBiddingScenario(executor)
-	coupledScenario := scenarios.NewCoupledAuctionScenario(executor)
-	interopScenario := scenarios.NewInteropScenario(executor)
-	_ = interopScenario // Placeholder for future use
-
-	// Set TEE client if it was initialized
 	if teeClient != nil {
 		log.Println("Using real TEE service for coupled auctions")
-		coupledScenario.SetTEEClient(teeClient)
 	} else {
 		log.Println("TEE not available, using mock results for coupled auctions")
 	}
@@ -168,59 +270,224 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	log.Println("Starting Parallel Continuous Workload...")
+	log.Printf("Starting parallel workload for org=%s users=%d", orgName, effectiveUserCount)
 
-	// 1. Continuous Minting (every 10 seconds)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		log.Println("Launcher: Continuous Minting started")
-		if err := creditScenario.MintCreditsContinuous(ctx, client, *mintInterval, nPropsPerOrg, quantityPerMint); err != nil && err != context.Canceled {
-			log.Printf("MintCreditsContinuous error: %v", err)
+	type userRuntime struct {
+		idx         int
+		id          string
+		client      *gateway.ClientWrapper
+		executor    *workload.Executor
+		credit      *scenarios.CreditScenario
+		bidding     *scenarios.BiddingScenario
+		interop     *scenarios.InteropScenario
+		coupled     *scenarios.CoupledAuctionScenario
+		propertyIDs []uint64
+		ownsCoupled bool
+	}
+
+	runtimes := make([]*userRuntime, 0, effectiveUserCount)
+	for userIdx := 0; userIdx < effectiveUserCount; userIdx++ {
+		user := certs.Users[userIdx]
+		propertyIDs := append([]uint64(nil), setupPropertyIDsByUser[userIdx]...)
+		if len(propertyIDs) == 0 {
+			log.Fatalf("No setup property IDs available for user %d", userIdx+1)
+		}
+		userGatewayCfg := &gateway.GatewayConfig{
+			PeerAddr:      peerAddr,
+			TLSCertPath:   tlsCertPath,
+			MspID:         orgConfig.MspID,
+			UserCertPath:  user.Cert,
+			UserKeyPath:   user.Key,
+			ChannelName:   channelName,
+			ChaincodeName: chaincodeName,
+		}
+
+		userClient, userClientErr := gateway.NewClientWrapper(userGatewayCfg)
+		if userClientErr != nil {
+			log.Fatalf("Failed to create gateway client for user %d: %v", userIdx+1, userClientErr)
+		}
+
+		runtimeExecCfg := &workload.ExecutorConfig{
+			ConcurrencyLevel: *concurrency,
+			Duration:         *duration,
+			MetricsInterval:  *metricsInterval,
+			TPS:              *tps,
+			BurstSize:        *burst,
+		}
+		exec := workload.NewExecutor(userClient, runtimeExecCfg)
+		runtimeCoupled := scenarios.NewCoupledAuctionScenario(exec)
+		if teeClient != nil {
+			runtimeCoupled.SetTEEClient(teeClient)
+		}
+
+		runtimes = append(runtimes, &userRuntime{
+			idx:         userIdx + 1,
+			id:          userClient.GetIdentityID(),
+			client:      userClient,
+			executor:    exec,
+			credit:      scenarios.NewCreditScenario(exec),
+			bidding:     scenarios.NewBiddingScenario(exec),
+			interop:     scenarios.NewInteropScenario(exec),
+			coupled:     runtimeCoupled,
+			propertyIDs: propertyIDs,
+			ownsCoupled: userIdx == 0 && *runCoupled,
+		})
+	}
+	defer func() {
+		for _, rt := range runtimes {
+			_ = rt.client.Close()
 		}
 	}()
 
-	// 2. Continuous Buy Bidding
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		log.Println("Launcher: Continuous Buy Bidding started")
-		if err := biddingScenario.CreateBuyBidsContinuous(ctx, client, *buyBidInterval); err != nil && err != context.Canceled {
-			log.Printf("CreateBuyBidsContinuous error: %v", err)
-		}
-	}()
+	for _, rt := range runtimes {
+		rt := rt
+		log.Printf("Launcher: user[%d]=%s minting started", rt.idx, rt.id)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := rt.credit.MintCreditsContinuous(ctx, rt.client, *mintInterval, rt.propertyIDs, quantityPerMint); err != nil && err != context.Canceled {
+				log.Printf("MintCreditsContinuous user %d error: %v", rt.idx, err)
+			}
+		}()
 
-	// 3. Continuous Sell Bidding
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		log.Println("Launcher: Continuous Sell Bidding started")
-		if err := biddingScenario.CreateSellBidsContinuous(ctx, client, *sellBidInterval); err != nil && err != context.Canceled {
-			log.Printf("CreateSellBidsContinuous error: %v", err)
-		}
-	}()
+		log.Printf("Launcher: user[%d]=%s buy bidding started", rt.idx, rt.id)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := rt.bidding.CreateBuyBidsContinuous(ctx, rt.client, *buyBidInterval); err != nil && err != context.Canceled {
+				log.Printf("CreateBuyBidsContinuous user %d error: %v", rt.idx, err)
+			}
+		}()
 
-	// 4. Periodic Auction Settlement (every 15 seconds)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		log.Println("Launcher: Periodic Auction started")
-		if err := coupledScenario.PeriodicAuction(ctx, client, *auctionInterval); err != nil && err != context.Canceled {
-			log.Printf("PeriodicAuction error: %v", err)
+		log.Printf("Launcher: user[%d]=%s sell bidding started", rt.idx, rt.id)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := rt.bidding.CreateSellBidsContinuous(ctx, rt.client, *sellBidInterval); err != nil && err != context.Canceled {
+				log.Printf("CreateSellBidsContinuous user %d error: %v", rt.idx, err)
+			}
+		}()
+
+		log.Printf("Launcher: user[%d]=%s interop workflow started", rt.idx, rt.id)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := rt.interop.HTLCWorkflow(ctx, rt.client, rt.client, 100); err != nil && err != context.Canceled {
+				log.Printf("HTLCWorkflow user %d error: %v", rt.idx, err)
+			}
+		}()
+
+		if rt.ownsCoupled {
+			log.Printf("Launcher: user[%d]=%s periodic auction started", rt.idx, rt.id)
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := rt.coupled.PeriodicAuction(ctx, rt.client, *auctionInterval); err != nil && err != context.Canceled {
+					log.Printf("PeriodicAuction user %d error: %v", rt.idx, err)
+				}
+			}()
 		}
-	}()
-	// Print final report
-	reporter := metrics.NewReporter(executor.GetCollector())
+	}
+
+	// Wait for duration to expire
+	log.Printf("Workload running for %v...", *duration)
+	select {
+	case <-time.After(*duration):
+		log.Println("Test duration reached, stopping...")
+		cancel()
+	case <-ctx.Done():
+		log.Println("Context done, stopping...")
+	}
+
+	wg.Wait()
+
+	// Stop the metrics collector worker pool
+	log.Println("Stopping metrics collectors...")
+	for _, rt := range runtimes {
+		rt.executor.GetCollector().Stop()
+	}
+
+	reporter := metrics.NewReporter(runtimes[0].executor.GetCollector())
 	reporter.PrintFinalReport()
 
-	// Export results
-	log.Printf("Exporting results to %s and %s...", *outputJSON, *outputCSV)
-	if err := reporter.ExportJSON(*outputJSON); err != nil {
-		log.Printf("Failed to export JSON: %v", err)
+	// Export one report set per user
+	for _, rt := range runtimes {
+		jsonPath := fmt.Sprintf("%s.user-%02d", *outputJSON, rt.idx)
+		csvPath := fmt.Sprintf("%s.user-%02d", *outputCSV, rt.idx)
+		rep := metrics.NewReporter(rt.executor.GetCollector())
+		if err := rep.ExportJSON(jsonPath); err != nil {
+			log.Printf("Failed to export JSON for user %d: %v", rt.idx, err)
+		}
+		if err := rep.ExportCSV(csvPath); err != nil {
+			log.Printf("Failed to export CSV for user %d: %v", rt.idx, err)
+		}
 	}
-	if err := reporter.ExportCSV(*outputCSV); err != nil {
-		log.Printf("Failed to export CSV: %v", err)
+
+	// Collect final Prometheus metrics and generate charts if enabled
+	if *enableMetrics && baselineSnapshot != nil {
+		log.Println("Collecting final Prometheus metrics snapshot...")
+		finalSnapshot, err := metrics.CollectPrometheusSnapshot(context.Background(), profile, runtimes[0].executor.GetCollector())
+		if err != nil {
+			log.Printf("Warning: Failed to collect final metrics: %v", err)
+		} else {
+			// Save final snapshot
+			if err := metrics.SavePrometheusSnapshot(finalSnapshot, fmt.Sprintf("%s/metrics-final.json", *metricsOutputDir)); err != nil {
+				log.Printf("Warning: Failed to save final snapshot: %v", err)
+			}
+
+			// Calculate delta
+			log.Println("Calculating metrics delta...")
+			deltaSnapshot, err := metrics.CalculateDelta(baselineSnapshot, finalSnapshot)
+			if err != nil {
+				log.Printf("Warning: Failed to calculate delta: %v", err)
+			} else {
+				// Save delta snapshot
+				if err := metrics.SavePrometheusSnapshot(deltaSnapshot, fmt.Sprintf("%s/metrics-delta.json", *metricsOutputDir)); err != nil {
+					log.Printf("Warning: Failed to save delta snapshot: %v", err)
+				}
+
+				// Parse formats
+				formatStrings := strings.Split(*metricsFormats, ",")
+				formats := make([]charts.ChartFormat, 0, len(formatStrings))
+				for _, f := range formatStrings {
+					formats = append(formats, charts.ChartFormat(strings.TrimSpace(f)))
+				}
+
+				// Generate charts
+				log.Println("Generating charts...")
+				if err := charts.GenerateAllCharts(deltaSnapshot, *metricsOutputDir, formats); err != nil {
+					log.Printf("Warning: Failed to generate charts: %v", err)
+				} else {
+					chartsDir := fmt.Sprintf("%s/charts", *metricsOutputDir)
+
+					// Generate PDF report if requested
+					for _, format := range formats {
+						if format == charts.FormatPDF {
+							log.Println("Generating PDF report...")
+							if err := charts.GeneratePDFReport(chartsDir, fmt.Sprintf("%s/report.pdf", *metricsOutputDir)); err != nil {
+								log.Printf("Warning: Failed to generate PDF report: %v", err)
+							}
+						}
+						if format == charts.FormatHTML {
+							log.Println("Generating HTML report...")
+							if err := charts.GenerateHTMLReport(deltaSnapshot, chartsDir, fmt.Sprintf("%s/report.html", *metricsOutputDir)); err != nil {
+								log.Printf("Warning: Failed to generate HTML report: %v", err)
+							}
+						}
+						if format == charts.FormatJSON {
+							log.Println("Generating JSON report...")
+							if err := charts.GenerateJSONReport(deltaSnapshot, fmt.Sprintf("%s/metrics-report.json", *metricsOutputDir)); err != nil {
+								log.Printf("Warning: Failed to generate JSON report: %v", err)
+							}
+						}
+					}
+
+					log.Printf("Metrics collection complete. Results saved to: %s", *metricsOutputDir)
+				}
+			}
+		}
 	}
 
 	log.Println("Test complete!")
+
 }

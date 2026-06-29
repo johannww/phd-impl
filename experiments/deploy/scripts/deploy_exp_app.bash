@@ -13,10 +13,34 @@ PROFILE_IN_CLUSTER="${PROFILE_IN_CLUSTER:-true}"
 PROFILE_NAMESPACE="${PROFILE_NAMESPACE:-${NAMESPACE}}"
 PROFILE_MINIKUBE_IP="${PROFILE_MINIKUBE_IP:-}"
 PROFILE_TEE_IP="${PROFILE_TEE_IP:-}"
+TEE_RESOURCE_GROUP="${TEE_RESOURCE_GROUP:-${RESOURCE_GROUP:-carbon}}"
+TEE_CONTAINER_NAME="${TEE_CONTAINER_NAME:-carbon-auction-container}"
 NETWORK_PROFILE_CONFIGMAP_NAME="${NETWORK_PROFILE_CONFIGMAP_NAME:-network-profile}"
 EXP_APP_RESULTS_STORAGE_CLASS="${EXP_APP_RESULTS_STORAGE_CLASS:-}"
+EXP_APP_FULLNAME_OVERRIDE="${EXP_APP_FULLNAME_OVERRIDE:-}"
 
 echo "==> Deploying exp-app to namespace: ${NAMESPACE}"
+
+if [[ -z "${PROFILE_TEE_IP}" ]] && command -v az &>/dev/null; then
+  PROFILE_TEE_IP="$(az container show \
+    --resource-group "${TEE_RESOURCE_GROUP}" \
+    --name "${TEE_CONTAINER_NAME}" \
+    --query "ipAddress.ip" \
+    -o tsv 2>/dev/null || true)"
+fi
+
+if [[ "${PROFILE_TEE_IP}" == "null" ]]; then
+  PROFILE_TEE_IP=""
+fi
+
+TEE_FLAG=()
+if [[ -n "${PROFILE_TEE_IP}" ]]; then
+  echo "==> Using TEE auction IP: ${PROFILE_TEE_IP}"
+  TEE_FLAG+=("--tee-ip=${PROFILE_TEE_IP}")
+else
+  echo "==> TEE lookup target: rg=${TEE_RESOURCE_GROUP}, name=${TEE_CONTAINER_NAME}"
+  echo "==> TEE auction IP not found; tee_auction will be disabled in the generated profile"
+fi
 
 # Generate network profile
 if [[ "${PROFILE_IN_CLUSTER}" == "true" ]]; then
@@ -38,6 +62,7 @@ if [[ "${PROFILE_IN_CLUSTER}" == "true" ]]; then
     --deploy-dir="${DEPLOY_DIR}" \
     --in-cluster \
     --namespace="${PROFILE_NAMESPACE}" \
+    "${TEE_FLAG[@]}" \
     --output="${PROFILE_OUTPUT}" \
     --verbose
 else
@@ -49,7 +74,7 @@ else
   "${DEPLOY_DIR}/../exp-app/bin/generate-profile" \
     --deploy-dir="${DEPLOY_DIR}" \
     --minikube-ip="${PROFILE_MINIKUBE_IP}" \
-    --tee-ip="${PROFILE_TEE_IP}" \
+    "${TEE_FLAG[@]}" \
     --output="${PROFILE_OUTPUT}" \
     --verbose
 fi
@@ -66,23 +91,17 @@ kubectl create configmap "${NETWORK_PROFILE_CONFIGMAP_NAME}" \
 # Deploy exp-app using Helm with exploded values
 echo "==> Deploying exp-app chart..."
 EXP_APP_VALUES_FILE="$(mktemp)"
-trap 'rm -f "${EXP_APP_VALUES_FILE}"' EXIT
+trap 'rm -f "${EXP_APP_VALUES_FILE}"' RETURN
 yq e 'explode(.expApp) | .expApp' "${CHART_DIR}/values.yaml" > "${EXP_APP_VALUES_FILE}"
 
-HELM_ARGS=(
-  --namespace "${NAMESPACE}"
-  -f "${EXP_APP_VALUES_FILE}"
-  --set storage.organizationsClaimName="${RELEASE_NAME}-organizations"
-  --set networkProfile.configMapName="${NETWORK_PROFILE_CONFIGMAP_NAME}"
-  --wait --timeout 5m
-)
-
-if [[ -n "${EXP_APP_RESULTS_STORAGE_CLASS}" ]]; then
-  HELM_ARGS+=(--set storage.results.storageClassName="${EXP_APP_RESULTS_STORAGE_CLASS}")
-fi
-
 helm upgrade --install "${EXP_APP_RELEASE_NAME}" "${EXP_APP_CHART_DIR}" \
-  "${HELM_ARGS[@]}"
+  --namespace "${NAMESPACE}" \
+  -f "${EXP_APP_VALUES_FILE}" \
+  --set storage.organizationsClaimName="${RELEASE_NAME}-organizations" \
+  --set networkProfile.configMapName="${NETWORK_PROFILE_CONFIGMAP_NAME}" \
+  ${EXP_APP_RESULTS_STORAGE_CLASS:+--set storage.results.storageClassName="${EXP_APP_RESULTS_STORAGE_CLASS}"} \
+  ${EXP_APP_FULLNAME_OVERRIDE:+--set-string fullnameOverride="${EXP_APP_FULLNAME_OVERRIDE}"} \
+  --wait --timeout 5m
 
 EXP_APP_POD_NAME="$(kubectl get pods -n "${NAMESPACE}" -l "app.kubernetes.io/instance=${EXP_APP_RELEASE_NAME},app.kubernetes.io/name=exp-app" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
 if [[ -z "${EXP_APP_POD_NAME}" ]]; then

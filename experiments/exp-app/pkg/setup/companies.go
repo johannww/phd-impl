@@ -3,6 +3,7 @@ package setup
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
@@ -11,11 +12,25 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/common/utils"
 )
 
-// SetupCompanies initializes one company metadata for the current identity
+// SetupCompanies initializes one company metadata for the current identity.
 // and creates the pseudonym-to-companyID mapping required for auction participation.
-func (s *SetupManager) SetupCompanies(ctx context.Context) ([]*client.Commit, error) {
+func (s *SetupManager) SetupCompanies(
+	ctx context.Context,
+	usersPerOrg int,
+	assignment IdentityAssignment,
+) ([]*client.Commit, error) {
+	_, _, err := s.resolveIdentitySlot(usersPerOrg, assignment)
+	if err != nil {
+		return nil, err
+	}
+
 	id := s.client.GetIdentityID()
-	log.Printf("Preparing company for current identity: %s", id)
+	log.Printf(
+		"Preparing company for current identity: %s (org=%s userIndex=%d)",
+		id,
+		assignment.Organization,
+		assignment.UserIndex,
+	)
 
 	company := &companies.Company{
 		ID: id,
@@ -32,7 +47,7 @@ func (s *SetupManager) SetupCompanies(ctx context.Context) ([]*client.Commit, er
 	_, commit1, err := s.client.SubmitAsync("RegisterCompany", string(compJSON))
 	if err != nil {
 		log.Printf("Warning: Failed to submit register company %s: %v", id, err)
-		return nil, nil
+		return nil, fmt.Errorf("failed to submit RegisterCompany for %s: %v", id, err)
 	}
 
 	// Create pseudonym-to-companyID mapping (stores caller's pseudonym -> company.ID in private data)
@@ -48,7 +63,7 @@ func (s *SetupManager) SetupCompanies(ctx context.Context) ([]*client.Commit, er
 	_, commit2, err := s.client.SubmitAsyncWithTransient("CreatePseudonymToCompanyID", transient, "")
 	if err != nil {
 		log.Printf("Warning: Failed to create pseudonym mapping for %s: %v", id, err)
-		return []*client.Commit{commit1}, nil
+		return []*client.Commit{commit1}, fmt.Errorf("failed to submit CreatePseudonymToCompanyID for %s: %v", id, err)
 	}
 
 	return []*client.Commit{commit1, commit2}, nil

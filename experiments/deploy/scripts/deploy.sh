@@ -62,14 +62,16 @@ helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
 wait
 
 if [[ "${ENABLE_IN_CLUSTER_EXP_APP}" == "true" ]]; then
-  echo "Deploying exp-app pod inside cluster..."
+  echo "Deploying exp-app pods inside cluster (one per peer organization)..."
   export RELEASE_NAME
   export EXP_APP_RELEASE_NAME="${RELEASE_NAME}-exp-app"
+  export EXP_APP_FULLNAME_OVERRIDE="exp-app"
   export PROFILE_OUTPUT="${SCRIPT_DIR}/../vars/network-profile-in-cluster.json"
   export PROFILE_IN_CLUSTER="true"
   export PROFILE_NAMESPACE="${NAMESPACE}"
   export NETWORK_PROFILE_CONFIGMAP_NAME="network-profile"
   export EXP_APP_RESULTS_STORAGE_CLASS="standard"
+  unset EXP_APP_ORGANIZATION EXP_APP_USER_COUNT EXP_APP_RUN_SETUP EXP_APP_RUN_COUPLED
 
   . "${SCRIPT_DIR}/deploy_exp_app.bash"
 else
@@ -78,10 +80,13 @@ else
 fi
 
 if [[ "${ENABLE_IN_CLUSTER_EXP_APP}" == "true" ]]; then
-  echo "In-cluster exp-app enabled. Access it with:"
-  echo "  kubectl exec -it ${RELEASE_NAME}-exp-app -n ${NAMESPACE} -- /bin/sh"
-  echo "Run workload with:"
-  echo "  kubectl exec -it ${RELEASE_NAME}-exp-app -n ${NAMESPACE} -- /app/exp-app --profile=/config/network-profile.json --duration=5m --results=/results"
+  echo "In-cluster exp-app enabled (one pod per peer organization)."
+  echo "List exp-app pods:"
+  echo "  kubectl get pods -n ${NAMESPACE} -l app.kubernetes.io/name=exp-app"
+  echo "Access one pod (example mma):"
+  echo "  kubectl exec -it exp-app-mma -n ${NAMESPACE} -- /bin/sh"
+  echo "Run workload in one pod (example mma):"
+  echo "  kubectl exec -it exp-app-mma -n ${NAMESPACE} -- /app/exp-app --profile=/config/network-profile.json --duration=5m --output-json=/results/results-mma.json --output-csv=/results/results-mma.csv"
 else
   echo "In-cluster exp-app disabled. Local profile generated at experiments/deploy/vars/network-profile.json"
 fi

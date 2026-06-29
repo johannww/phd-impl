@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-
-	"math/rand"
 	"os"
-	"time"
+	"sort"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/johannww/phd-impl/chaincodes/carbon/data"
@@ -18,13 +16,34 @@ import (
 )
 
 type SicarData struct {
-	SicarIDs []string
+	SicarIDs    []string
+	PropertyIDs []uint64
 }
 
-// SetupProperties initializes nProps properties for each organization in the registry
-func (s *SetupManager) SetupProperties(ctx context.Context, nPropsPerOrg int, nChunksPerProp int) ([]*client.Commit, *SicarData, error) {
-	log.Printf("Preparing %d properties for each of the %d organizations...", nPropsPerOrg, len(s.profile.Peers))
+// IdentityAssignment identifies which org/user slot this setup manager should initialize.
+type IdentityAssignment struct {
+	Organization string
+	UserIndex    int // 0-based index within organization
+}
+
+// SetupProperties initializes nPropsPerIdentity properties for one deterministic identity slot.
+// Property IDs and SICAR IDs are deterministically partitioned across org/user slots to avoid collisions.
+func (s *SetupManager) SetupProperties(
+	ctx context.Context,
+	nPropsPerIdentity int,
+	nChunksPerProp int,
+	usersPerOrg int,
+	assignment IdentityAssignment,
+) ([]*client.Commit, *SicarData, error) {
+	if nPropsPerIdentity <= 0 {
+		return nil, nil, fmt.Errorf("nPropsPerIdentity must be > 0")
+	}
+	if usersPerOrg <= 0 {
+		return nil, nil, fmt.Errorf("usersPerOrg must be > 0")
+	}
+
 	ownerID := s.client.GetIdentityID()
+	log.Printf("Preparing %d properties for identity %s (org=%s userIndex=%d)", nPropsPerIdentity, ownerID, assignment.Organization, assignment.UserIndex)
 
 	// Load SICAR IDs from profile-defined path
 	sicarFile, err := os.ReadFile(s.profile.SICAR.DataPath)
@@ -39,64 +58,80 @@ func (s *SetupManager) SetupProperties(ctx context.Context, nPropsPerOrg int, nC
 	for id := range sicarData {
 		sicarIDs = append(sicarIDs, id)
 	}
+	sort.Strings(sicarIDs)
 	if len(sicarIDs) == 0 {
 		return nil, nil, fmt.Errorf("no SICAR IDs found in sicar.json")
 	}
 
-	rand.Seed(time.Now().UnixNano())
-
-	var commits []*client.Commit
-	propCounter := 1
-	for orgName := range s.profile.Peers {
-		log.Printf("Setting up %d properties for org %s (owned by current user %s)...", nPropsPerOrg, orgName, ownerID)
-		for i := 0; i < nPropsPerOrg; i++ {
-			propID := uint64(propCounter)
-			propCounter++
-
-			// Select a random SICAR ID
-			sicarID := sicarIDs[rand.Intn(len(sicarIDs))]
-
-			var chunks []*properties.PropertyChunk
-			for j := 0; j < nChunksPerProp; j++ {
-				chunk := &properties.PropertyChunk{
-					PropertyID: propID,
-					Coordinates: []utils.Coordinate{
-						{
-							Latitude:  -23.5505 + float64(propCounter)*0.01 + float64(j)*0.001,
-							Longitude: -46.6333 + float64(propCounter)*0.01 + float64(j)*0.001,
-						},
-					},
-					VegetationsProps: &v.VegetationProps{
-						ForestType:    v.AtlanticForest,
-						ForestDensity: 1.0,
-						CropType:      v.Corn,
-					},
-					ValidationProps: &data.ValidationProps{
-						Methods: []data.ValidationMethod{data.ValidationMethodSattelite},
-					},
-				}
-				chunks = append(chunks, chunk)
-			}
-
-			property := &properties.Property{
-				OwnerID:          ownerID,
-				ID:               propID,
-				RegistryID:       sicarID,
-				RegistryProvider: "SICAR",
-				Chunks:           chunks,
-			}
-
-			propJSON, _ := json.Marshal(property)
-			_, commit, err := s.client.SubmitAsync("RegisterProperty", string(propJSON))
-			if err != nil {
-				log.Printf("Warning: Failed to submit property %d for org %s: %v", propID, orgName, err)
-				continue
-			}
-			commits = append(commits, commit)
-		}
+	slot, totalIdentities, err := s.resolveIdentitySlot(usersPerOrg, assignment)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return commits, &SicarData{SicarIDs: sicarIDs}, nil
+	requiredSicar := totalIdentities * nPropsPerIdentity
+	if len(sicarIDs) < requiredSicar {
+		return nil, nil, fmt.Errorf(
+			"insufficient SICAR properties: required=%d available=%d (totalIdentities=%d nPropsPerIdentity=%d)",
+			requiredSicar,
+			len(sicarIDs),
+			totalIdentities,
+			nPropsPerIdentity,
+		)
+	}
+
+	start := slot * nPropsPerIdentity
+	end := start + nPropsPerIdentity
+	assignedSicar := sicarIDs[start:end]
+
+	var commits []*client.Commit
+	registeredSicarIDs := make([]string, 0, nPropsPerIdentity)
+	registeredPropertyIDs := make([]uint64, 0, nPropsPerIdentity)
+	for i := 0; i < nPropsPerIdentity; i++ {
+		propID := uint64(start + i + 1)
+		sicarID := assignedSicar[i]
+
+		var chunks []*properties.PropertyChunk
+		for j := 0; j < nChunksPerProp; j++ {
+			chunk := &properties.PropertyChunk{
+				PropertyID: propID,
+				Coordinates: []utils.Coordinate{
+					{
+						Latitude:  -23.5505 + float64(start+i+1)*0.01 + float64(j)*0.001,
+						Longitude: -46.6333 + float64(start+i+1)*0.01 + float64(j)*0.001,
+					},
+				},
+				VegetationsProps: &v.VegetationProps{
+					ForestType:    v.AtlanticForest,
+					ForestDensity: 1.0,
+					CropType:      v.Corn,
+				},
+				ValidationProps: &data.ValidationProps{
+					Methods: []data.ValidationMethod{data.ValidationMethodSattelite},
+				},
+			}
+			chunks = append(chunks, chunk)
+		}
+
+		property := &properties.Property{
+			OwnerID:          ownerID,
+			ID:               propID,
+			RegistryID:       sicarID,
+			RegistryProvider: "SICAR",
+			Chunks:           chunks,
+		}
+
+		propJSON, _ := json.Marshal(property)
+		_, commit, submitErr := s.client.SubmitAsync("RegisterProperty", string(propJSON))
+		if submitErr != nil {
+			log.Printf("Warning: Failed to submit property %d (owner=%s sicar=%s): %v", propID, ownerID, sicarID, submitErr)
+			continue
+		}
+		commits = append(commits, commit)
+		registeredSicarIDs = append(registeredSicarIDs, sicarID)
+		registeredPropertyIDs = append(registeredPropertyIDs, propID)
+	}
+
+	return commits, &SicarData{SicarIDs: registeredSicarIDs, PropertyIDs: registeredPropertyIDs}, nil
 }
 
 // RefreshProperties updates the registry data for each property in the world state

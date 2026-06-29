@@ -34,8 +34,12 @@ func (s *CreditScenario) MintCreditsContinuous(
 	ctx context.Context,
 	gw *gateway.ClientWrapper,
 	interval time.Duration,
-	nProps int,
+	propertyIDs []uint64,
 	quantityPerMint int64) error {
+	if len(propertyIDs) == 0 {
+		return fmt.Errorf("no property IDs provided for minting")
+	}
+
 	tick := 0
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -48,8 +52,7 @@ func (s *CreditScenario) MintCreditsContinuous(
 		case <-ticker.C:
 			timestamp := time.Now().Format(utils.RFC3339WithMillis)
 
-			for propIdx := 0; propIdx < nProps; propIdx++ {
-				propID := uint64(propIdx + 1)
+			for _, propID := range propertyIDs {
 				propertyID, _ := json.Marshal([]string{ownerID, fmt.Sprintf("%d", propID)})
 				txID := fmt.Sprintf("mint-tick%d-prop%d", tick, propID)
 
