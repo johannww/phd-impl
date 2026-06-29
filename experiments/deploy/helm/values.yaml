@@ -138,6 +138,12 @@ expApp:
   enabled: false
   fullnameOverride: ""
   replicaCount: 1
+  network: *defaultNetwork
+  app:
+    organization: ""
+    userCount: 0
+    runSetup: true
+    runCoupled: true
   image:
     repository: ghcr.io/johannww/phd-impl/exp-app
     tag: latest
@@ -156,11 +162,15 @@ expApp:
       accessMode: ReadWriteMany
       size: 2Gi
     organizationsClaimName: organizations
-    workspacePath: /workspace
+    workspacePath: /workspace/organizations
     resultsPath: /results
     configPath: /config
   networkProfile:
     configMapName: network-profile
+  sicarTLS:
+    enabled: true
+    secretName: sicar-mock-tls
+    mountPath: /workspace/sicar
   pod:
     keepAlive: true
     restartPolicy: Always
@@ -170,4 +180,3 @@ expApp:
   serviceAccount:
     create: false
     name: ""
-

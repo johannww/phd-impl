@@ -3,7 +3,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "exp-app.fullname" . }}-results
-  namespace: {{ include "exp-app.namespace" . }}
+  namespace: {{ include "exp-app.namespace" $ }}
   labels:
     {{- include "exp-app.labels" . | nindent 4 }}
 spec:

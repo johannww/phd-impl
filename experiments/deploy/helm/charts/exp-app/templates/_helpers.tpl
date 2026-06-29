@@ -22,3 +22,9 @@ app: exp-app
 {{- $global := default (dict) .Values.global -}}
 {{- default .Release.Namespace (get $global "namespace") -}}
 {{- end -}}
+
+{{- define "exp-app.orgFullname" -}}
+{{- $root := .root -}}
+{{- $org := .org -}}
+{{- printf "%s-%s" (include "exp-app.fullname" $root) $org | trunc 63 | trimSuffix "-" -}}
+{{- end -}}

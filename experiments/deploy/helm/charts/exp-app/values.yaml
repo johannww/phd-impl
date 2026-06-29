@@ -10,7 +10,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/johannww/phd-impl/exp-app
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 # Pod resources
 resources:
@@ -34,7 +34,7 @@ storage:
   organizationsClaimName: organizations
   
   # Mount paths
-  workspacePath: /workspace
+  workspacePath: /workspace/organizations
   resultsPath: /results
   configPath: /config
 
@@ -42,6 +42,34 @@ storage:
 networkProfile:
   # ConfigMap name containing network-profile.json
   configMapName: network-profile
+
+# SICAR TLS secret mount for trusted provider registration
+sicarTLS:
+  enabled: true
+  secretName: sicar-mock-tls
+  mountPath: /workspace/sicar
+
+# exp-app runtime configuration
+app:
+  # Target organization from network-profile (empty = first organization)
+  organization: ""
+  # Number of users to run in this pod (0 = all users found in profile)
+  userCount: 0
+  # Run setup initialization in this pod
+  runSetup: true
+  # Run coupled auction routine in this pod
+  runCoupled: true
+
+# Fabric network layout used to create one exp-app pod per peer organization
+network:
+  userCount: 1
+  organizations: []
+  # Example:
+  # organizations:
+  #   - name: mma
+  #     peers: 1
+  #   - name: farmers
+  #     peers: 1
 
 # Pod behavior
 pod:
