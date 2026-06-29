@@ -222,8 +222,8 @@ func TestGeneratorInClusterMode(t *testing.T) {
 		}
 	}
 
-	// Verify data-api uses Kubernetes DNS
-	expectedDataAPIAddress := "data-api.fabric-experiments.svc.cluster.local:8443"
+	// Verify SICAR mock service uses Kubernetes DNS
+	expectedDataAPIAddress := "sicar-mock.fabric-experiments.svc.cluster.local:8443"
 	if profile.DataAPI.Address != expectedDataAPIAddress {
 		t.Errorf("expected data-api address %q, got %q", expectedDataAPIAddress, profile.DataAPI.Address)
 	}

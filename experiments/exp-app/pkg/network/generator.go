@@ -219,7 +219,7 @@ func (g *Generator) generateOrdererConfigs(orgName string, ordererCount, nodePor
 // generateDataAPIConfig generates Data API (SICAR) configuration
 func (g *Generator) generateDataAPIConfig() DataAPIConfig {
 	certBasePath := g.getCertBasePath()
-	serviceName := "data-api"
+	serviceName := "sicar-mock"
 	nodePort := 30443
 
 	return DataAPIConfig{
@@ -235,7 +235,7 @@ func (g *Generator) generateDataAPIConfig() DataAPIConfig {
 // generateSICARConfig generates SICAR configuration
 func (g *Generator) generateSICARConfig() SICARConfig {
 	certBasePath := g.getCertBasePath()
-	serviceName := "data-api"
+	serviceName := "sicar-mock"
 	nodePort := 30443
 
 	return SICARConfig{
