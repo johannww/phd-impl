@@ -46,6 +46,11 @@ spec:
       mountPath: {{ $.Values.sicarTLS.mountPath }}
       readOnly: true
     {{- end }}
+    {{- if $.Values.tee.armTemplate.enabled }}
+    - name: tee-arm-template
+      mountPath: {{ $.Values.tee.armTemplate.mountPath }}
+      readOnly: true
+    {{- end }}
     env:
     - name: EXP_APP_ORGANIZATION
       value: {{ $org.name | quote }}
@@ -59,6 +64,10 @@ spec:
       valueFrom:
         fieldRef:
           fieldPath: metadata.namespace
+    {{- if $.Values.tee.armTemplate.enabled }}
+    - name: EXP_APP_ARM_TEMPLATE
+      value: {{ printf "%s/%s" $.Values.tee.armTemplate.mountPath $.Values.tee.armTemplate.fileName | quote }}
+    {{- end }}
     {{- with $.Values.pod.env }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -85,6 +94,14 @@ spec:
         path: server.crt
       - key: tls.key
         path: server.key
+  {{- end }}
+  {{- if $.Values.tee.armTemplate.enabled }}
+  - name: tee-arm-template
+    configMap:
+      name: {{ $.Values.tee.armTemplate.configMapName }}
+      items:
+      - key: {{ $.Values.tee.armTemplate.fileName }}
+        path: {{ $.Values.tee.armTemplate.fileName }}
   {{- end }}
 ---
 {{- $idx = add1 $idx -}}

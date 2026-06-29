@@ -16,6 +16,7 @@ PROFILE_TEE_IP="${PROFILE_TEE_IP:-}"
 TEE_RESOURCE_GROUP="${TEE_RESOURCE_GROUP:-${RESOURCE_GROUP:-carbon}}"
 TEE_CONTAINER_NAME="${TEE_CONTAINER_NAME:-carbon-auction-container}"
 NETWORK_PROFILE_CONFIGMAP_NAME="${NETWORK_PROFILE_CONFIGMAP_NAME:-network-profile}"
+ARM_TEMPLATE_SOURCE="${ARM_TEMPLATE_SOURCE:-${DEPLOY_DIR}/../../tee_auction/azure/arm_template.json}"
 EXP_APP_RESULTS_STORAGE_CLASS="${EXP_APP_RESULTS_STORAGE_CLASS:-}"
 EXP_APP_FULLNAME_OVERRIDE="${EXP_APP_FULLNAME_OVERRIDE:-}"
 
@@ -88,19 +89,45 @@ kubectl create configmap "${NETWORK_PROFILE_CONFIGMAP_NAME}" \
   -n "${NAMESPACE}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
+# Configure TEE ARM template ConfigMap creation in exp-app chart
+TEE_ARM_TEMPLATE_ENABLED="false"
+if [[ -f "${ARM_TEMPLATE_SOURCE}" ]]; then
+  echo "==> TEE ARM template source found: ${ARM_TEMPLATE_SOURCE}"
+  TEE_ARM_TEMPLATE_ENABLED="true"
+else
+  echo "==> WARNING: ARM template not found at ${ARM_TEMPLATE_SOURCE}; tee ARM template mount disabled"
+fi
+
 # Deploy exp-app using Helm with exploded values
 echo "==> Deploying exp-app chart..."
 EXP_APP_VALUES_FILE="$(mktemp)"
 trap 'rm -f "${EXP_APP_VALUES_FILE}"' RETURN
 yq e 'explode(.expApp) | .expApp' "${CHART_DIR}/values.yaml" > "${EXP_APP_VALUES_FILE}"
 
+TEE_ARM_TEMPLATE_CONTENT_FLAG=()
+if [[ "${TEE_ARM_TEMPLATE_ENABLED}" == "true" ]]; then
+  TEE_ARM_TEMPLATE_CONTENT_FLAG=(--set-file "tee.armTemplate.content=${ARM_TEMPLATE_SOURCE}")
+fi
+
+RESULTS_STORAGE_CLASS_FLAG=()
+if [[ -n "${EXP_APP_RESULTS_STORAGE_CLASS}" ]]; then
+  RESULTS_STORAGE_CLASS_FLAG=(--set "storage.results.storageClassName=${EXP_APP_RESULTS_STORAGE_CLASS}")
+fi
+
+FULLNAME_OVERRIDE_FLAG=()
+if [[ -n "${EXP_APP_FULLNAME_OVERRIDE}" ]]; then
+  FULLNAME_OVERRIDE_FLAG=(--set-string "fullnameOverride=${EXP_APP_FULLNAME_OVERRIDE}")
+fi
+
 helm upgrade --install "${EXP_APP_RELEASE_NAME}" "${EXP_APP_CHART_DIR}" \
   --namespace "${NAMESPACE}" \
   -f "${EXP_APP_VALUES_FILE}" \
-  --set storage.organizationsClaimName="${RELEASE_NAME}-organizations" \
-  --set networkProfile.configMapName="${NETWORK_PROFILE_CONFIGMAP_NAME}" \
-  ${EXP_APP_RESULTS_STORAGE_CLASS:+--set storage.results.storageClassName="${EXP_APP_RESULTS_STORAGE_CLASS}"} \
-  ${EXP_APP_FULLNAME_OVERRIDE:+--set-string fullnameOverride="${EXP_APP_FULLNAME_OVERRIDE}"} \
+  --set "storage.organizationsClaimName=${RELEASE_NAME}-organizations" \
+  --set "networkProfile.configMapName=${NETWORK_PROFILE_CONFIGMAP_NAME}" \
+  --set "tee.armTemplate.enabled=${TEE_ARM_TEMPLATE_ENABLED}" \
+  "${TEE_ARM_TEMPLATE_CONTENT_FLAG[@]}" \
+  "${RESULTS_STORAGE_CLASS_FLAG[@]}" \
+  "${FULLNAME_OVERRIDE_FLAG[@]}" \
   --wait --timeout 5m
 
 EXP_APP_POD_NAME="$(kubectl get pods -n "${NAMESPACE}" -l "app.kubernetes.io/instance=${EXP_APP_RELEASE_NAME},app.kubernetes.io/name=exp-app" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"

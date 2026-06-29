@@ -49,6 +49,15 @@ sicarTLS:
   secretName: sicar-mock-tls
   mountPath: /workspace/sicar
 
+# TEE ARM template mount for CCE policy publishing during setup
+tee:
+  armTemplate:
+    enabled: true
+    configMapName: tee-arm-template
+    mountPath: /config/tee
+    fileName: arm_template.json
+    content: ""
+
 # exp-app runtime configuration
 app:
   # Target organization from network-profile (empty = first organization)
