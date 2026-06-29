@@ -6,7 +6,7 @@ images:
   tools:
     repository: "ghcr.io/johannww/phd-impl/fabric-tools"
     tag: "3.1.4"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 network:
   channelName: "carbon"
@@ -25,7 +25,7 @@ chaincodes:
     image:
       repository: "ghcr.io/johannww/phd-impl/carbon"
       tag: "latest"
-      pullPolicy: IfNotPresent
+      pullPolicy: Always
     servicePort: 7055
     metricsPort: 9443
     metricsNodePortBase: 30100
@@ -39,7 +39,7 @@ chaincodes:
     image:
       repository: "ghcr.io/johannww/phd-impl/interop"
       tag: "latest"
-      pullPolicy: IfNotPresent
+      pullPolicy: Always
     servicePort: 7055
     metricsPort: 9443
     metricsNodePortBase: 30200

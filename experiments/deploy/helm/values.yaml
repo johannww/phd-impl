@@ -6,15 +6,15 @@ images:
   peer:
     repository: "ghcr.io/hyperledger/fabric-peer"
     tag: "3.1.4"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   orderer:
     repository: "ghcr.io/hyperledger/fabric-orderer"
     tag: "3.1.4"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   tools:
     repository: "ghcr.io/johannww/phd-impl/fabric-tools"
     tag: "3.1.4"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 # collections are defined in ../../../chaincodes/common/state/collections.go
 network: &defaultNetwork
@@ -102,7 +102,7 @@ chaincodeService:
       image:
         repository: "ghcr.io/johannww/phd-impl/carbon"
         tag: "latest"
-        pullPolicy: IfNotPresent
+        pullPolicy: Always
       servicePort: 7055
       metricsPort: 9443
       metricsNodePortBase: 30100
@@ -115,7 +115,7 @@ chaincodeService:
       image:
         repository: "ghcr.io/johannww/phd-impl/interop"
         tag: "latest"
-        pullPolicy: IfNotPresent
+        pullPolicy: Always
       servicePort: 7055
       metricsPort: 9443
       metricsNodePortBase: 30200
@@ -127,7 +127,7 @@ sicar:
   image:
     repository: "ghcr.io/johannww/phd-impl/data-api"
     tag: "latest"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   mockgen:
     count: 100
     seed: "sicar-dev"
@@ -141,7 +141,7 @@ expApp:
   image:
     repository: ghcr.io/johannww/phd-impl/exp-app
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   resources:
     requests:
       memory: "512Mi"
