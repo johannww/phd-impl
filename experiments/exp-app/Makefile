@@ -1,4 +1,4 @@
-.PHONY: build build-all clean run help test fmt docker docker-push
+.PHONY: build build-setup build-all clean run help test fmt docker docker-push
 
 IMAGE_REPO ?= ghcr.io/johannww/phd-impl/exp-app
 IMAGE_TAG ?= latest
@@ -9,8 +9,14 @@ build:
 	go build -o bin/exp-app ./cmd/exp-app
 	@echo "Built: bin/exp-app"
 
-# Build all binaries (exp-app and generate-profile)
-build-all: build
+# Build global setup binary
+build-setup:
+	@echo "Building exp-app-setup..."
+	go build -o bin/exp-app-setup ./cmd/exp-app-setup
+	@echo "Built: bin/exp-app-setup"
+
+# Build all binaries (exp-app, exp-app-setup and generate-profile)
+build-all: build build-setup
 	@echo "Building generate-profile..."
 	go build -o bin/generate-profile ./cmd/generate-profile
 	@echo "Built: bin/generate-profile"
@@ -47,7 +53,8 @@ help:
 	@echo "Performance Test Framework Commands:"
 	@echo ""
 	@echo "  make build              Build the main exp-app binary"
-	@echo "  make build-all          Build all binaries (exp-app + generate-profile)"
+	@echo "  make build-setup        Build the exp-app-setup binary"
+	@echo "  make build-all          Build all binaries (exp-app + exp-app-setup + generate-profile)"
 	@echo "  make clean              Clean build artifacts"
 	@echo "  make test               Run tests"
 	@echo "  make fmt                Format code"

@@ -37,10 +37,14 @@ docker-push:
 	$(MAKE) -C ./experiments/deploy/images/fabric-tools docker-push
 	$(MAKE) -C ./experiments/exp-app docker-push
 
-.PHONY: experiments
+.PHONY: experiments experiments-run
 experiments:
 	cd ./experiments/deploy; \
 	./scripts/deploy.sh
+
+experiments-run:
+	cd ./experiments/deploy; \
+	./scripts/run_exp_app_experiments.bash
 
 experiments-clean:
 	cd ./experiments/deploy; \

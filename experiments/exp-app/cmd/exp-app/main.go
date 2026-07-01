@@ -29,11 +29,6 @@ func main() {
 
 	// Parse flags
 	profilePath := flag.String("profile", "", "Path to network profile JSON (required)")
-	defaultArmTemplatePath := strings.TrimSpace(os.Getenv("EXP_APP_ARM_TEMPLATE"))
-	if defaultArmTemplatePath == "" {
-		defaultArmTemplatePath = "../../tee_auction/azure/arm_template.json"
-	}
-	armTemplatePath := flag.String("arm-template", defaultArmTemplatePath, "Path to ARM template JSON for CCE policy")
 	duration := flag.Duration("duration", 120*time.Second, "Test duration")
 	concurrency := flag.Int("concurrency", 5, "Number of concurrent transactions")
 	tps := flag.Float64("tps", 0, "Target throughput in transactions per second (0 = unlimited)")
@@ -60,15 +55,10 @@ func main() {
 		defaultUserCount = parsedUserCount
 	}
 	userCountOverride := flag.Int("user-count", defaultUserCount, "Number of users to run per organization (0 = use profile user count)")
-	defaultRunSetup := true
-	if envRunSetup := strings.TrimSpace(os.Getenv("EXP_APP_RUN_SETUP")); envRunSetup != "" {
-		defaultRunSetup = strings.EqualFold(envRunSetup, "true") || envRunSetup == "1"
-	}
 	defaultRunCoupled := true
 	if envRunCoupled := strings.TrimSpace(os.Getenv("EXP_APP_RUN_COUPLED")); envRunCoupled != "" {
 		defaultRunCoupled = strings.EqualFold(envRunCoupled, "true") || envRunCoupled == "1"
 	}
-	runSetup := flag.Bool("run-setup", defaultRunSetup, "Run InitializeBETS setup before workload")
 	runCoupled := flag.Bool("run-coupled", defaultRunCoupled, "Run coupled auction periodic routine")
 
 	flag.Parse()
@@ -211,13 +201,18 @@ func main() {
 		quantityPerMint   = int64(1000)
 	)
 
-	teeClient := (*tee.Client)(nil)
-	setupPropertyIDsByUser := make([][]uint64, effectiveUserCount)
-	if *runSetup {
-		log.Println("Global setup is enabled for first user only; identity setup runs for all users")
-	} else {
-		log.Println("Global setup disabled; identity setup still runs for all users")
+	var teeClient *tee.Client
+	if *runCoupled && profile.TEEAuction.Enabled {
+		candidate := tee.NewClient(fmt.Sprintf("https://%s", profile.TEEAuction.Address), true)
+		if err := candidate.Ping(); err != nil {
+			log.Printf("TEE ping failed, using mock results for coupled auctions: %v", err)
+		} else {
+			teeClient = candidate
+		}
 	}
+
+	setupPropertyIDsByUser := make([][]uint64, effectiveUserCount)
+	log.Println("Running identity-scoped setup for all users")
 
 	for userIdx := 0; userIdx < effectiveUserCount; userIdx++ {
 		user := certs.Users[userIdx]
@@ -236,14 +231,13 @@ func main() {
 			log.Fatalf("Failed to create setup gateway client for user %d: %v", userIdx+1, setupClientErr)
 		}
 
-		setupManager := setup.NewSetupManager(setupClient, profile, *armTemplatePath)
-		runtimeTEEClient, setupResult, setupErr := setupManager.InitializeBETS(
+		setupManager := setup.NewSetupManager(setupClient, profile, "")
+		setupResult, setupErr := setupManager.InitializeBETS(
 			context.Background(),
 			nPropsPerIdentity,
 			nChunksPerProp,
 			effectiveUserCount,
 			setup.IdentityAssignment{Organization: orgName, UserIndex: userIdx},
-			*runSetup && *runCoupled && userIdx == 0,
 		)
 		if setupErr != nil {
 			_ = setupClient.Close()
@@ -255,9 +249,6 @@ func main() {
 		}
 		log.Printf("Setup assigned properties for user %d: %v", userIdx+1, setupResult.PropertyIDs)
 		setupPropertyIDsByUser[userIdx] = append([]uint64(nil), setupResult.PropertyIDs...)
-		if runtimeTEEClient != nil && teeClient == nil {
-			teeClient = runtimeTEEClient
-		}
 
 		_ = setupClient.Close()
 	}

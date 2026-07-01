@@ -24,6 +24,7 @@ COPY chaincodes/common/ ./chaincodes/common/
 # Build the binary
 WORKDIR /build/experiments/exp-app
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /exp-app ./cmd/exp-app
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /exp-app-setup ./cmd/exp-app-setup
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /generate-profile ./cmd/generate-profile
 
 # Runtime stage
@@ -37,6 +38,7 @@ WORKDIR /app
 
 # Copy binaries from builder
 COPY --from=builder /exp-app .
+COPY --from=builder /exp-app-setup .
 COPY --from=builder /generate-profile .
 
 # No default command - let Kubernetes control execution

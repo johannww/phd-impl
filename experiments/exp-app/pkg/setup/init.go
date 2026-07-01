@@ -16,65 +16,87 @@ type IdentitySetupResult struct {
 	SicarIDs    []string
 }
 
-// InitializeBETS performs all necessary setup steps and returns a TEE client if enabled
+// RunGlobalSetup executes global initialization steps that must run once per test run.
+func (s *SetupManager) RunGlobalSetup(ctx context.Context) (*tee.Client, error) {
+	log.Println("Starting global BETS setup...")
+
+	var globalCommits []*client.Commit
+
+	_, commit, err := s.client.SubmitAsync("Init", "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to submit Init: %v", err)
+	}
+	globalCommits = append(globalCommits, commit)
+
+	commits, err := s.SetupSICAR(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup SICAR: %v", err)
+	}
+	globalCommits = append(globalCommits, commits...)
+
+	commits, err = s.SetupPolicies(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup policies: %v", err)
+	}
+	globalCommits = append(globalCommits, commits...)
+
+	log.Printf("Waiting for %d global setup transactions to commit...", len(globalCommits))
+	for i, globalCommit := range globalCommits {
+		if _, err := globalCommit.Status(); err != nil {
+			log.Printf("Warning: Global setup transaction commitment %d failed: %v", i+1, err)
+		}
+	}
+
+	if !s.profile.TEEAuction.Enabled {
+		return nil, nil
+	}
+
+	log.Println("Setting up TEE auction service...")
+	teeSetupMgr := NewTEESetupManager(s.client, s.profile, s.armTemplatePath)
+	teeClient, err := teeSetupMgr.SetupTEE(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup TEE auction service: %v", err)
+	}
+
+	log.Println("Global BETS setup completed")
+	return teeClient, nil
+}
+
+// InitializeBETS performs identity-scoped setup steps.
 func (s *SetupManager) InitializeBETS(
 	ctx context.Context,
 	nPropsPerIdentity int,
 	nChunksPerProp int,
 	usersPerOrg int,
 	assignment IdentityAssignment,
-	runGlobal bool,
-) (*tee.Client, *IdentitySetupResult, error) {
+) (*IdentitySetupResult, error) {
 	log.Printf(
-		"Starting BETS initialization for org=%s userIndex=%d (global=%t)...",
+		"Starting BETS initialization for org=%s userIndex=%d...",
 		assignment.Organization,
 		assignment.UserIndex,
-		runGlobal,
 	)
 
 	var allCommits []*client.Commit
-
-	if runGlobal {
-		// Call init function to initialize chaincode state
-		_, commit, err := s.client.SubmitAsync("Init", "")
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to submit Init: %v", err)
-		}
-		allCommits = append(allCommits, commit)
-
-		// 0. Setup SICAR
-		commits, err := s.SetupSICAR(ctx)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to setup SICAR: %v", err)
-		}
-		allCommits = append(allCommits, commits...)
-
-		// 1. Set active policies
-		commits, err = s.SetupPolicies(ctx)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to setup policies: %v", err)
-		}
-		allCommits = append(allCommits, commits...)
-	}
+	var err error
 
 	// 2. Register company for this identity slot
 	commits, err := s.SetupCompanies(ctx, usersPerOrg, assignment)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to setup companies: %v", err)
+		return nil, fmt.Errorf("failed to setup companies: %v", err)
 	}
 	allCommits = append(allCommits, commits...)
 
 	// 3. Register buyer wallet for this identity slot
 	commits, err = s.SetupBuyerWallets(ctx, usersPerOrg, assignment)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to setup buyer wallets: %v", err)
+		return nil, fmt.Errorf("failed to setup buyer wallets: %v", err)
 	}
 	allCommits = append(allCommits, commits...)
 
 	// 4. Register properties for this identity slot
 	commits, sicarData, err := s.SetupProperties(ctx, nPropsPerIdentity, nChunksPerProp, usersPerOrg, assignment)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to setup properties: %v", err)
+		return nil, fmt.Errorf("failed to setup properties: %v", err)
 	}
 	allCommits = append(allCommits, commits...)
 
@@ -86,7 +108,7 @@ func (s *SetupManager) InitializeBETS(
 	}
 
 	if len(sicarData.PropertyIDs) == 0 {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"no properties were registered for org=%s userIndex=%d; cannot continue",
 			assignment.Organization,
 			assignment.UserIndex,
@@ -98,7 +120,7 @@ func (s *SetupManager) InitializeBETS(
 	log.Println("Refreshing property registry data from SICAR...")
 	refreshCommits, err := s.RefreshProperties(ctx, sicarData.SicarIDs)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to refresh properties: %v", err)
+		return nil, fmt.Errorf("failed to refresh properties: %v", err)
 	}
 
 	log.Printf("Waiting for %d refresh transactions to commit...", len(refreshCommits))
@@ -108,26 +130,11 @@ func (s *SetupManager) InitializeBETS(
 		}
 	}
 
-	// 6. Setup TEE if enabled (global setup owner only)
-	var teeClient *tee.Client
-	if runGlobal && s.profile.TEEAuction.Enabled {
-		log.Println("Setting up TEE auction service...")
-		teeSetupMgr := NewTEESetupManager(s.client, s.profile, s.armTemplatePath)
-		teeClient, err = teeSetupMgr.SetupTEE(ctx)
-		if err != nil {
-			log.Fatalf("WARNING: TEE setup failed: %v", err)
-			log.Println("Continuing without TEE - will fall back to mock results")
-			teeClient = nil
-		} else {
-			log.Println("TEE setup completed successfully")
-		}
-	}
-
 	log.Printf(
 		"BETS initialization complete for org=%s userIndex=%d with properties=%v",
 		assignment.Organization,
 		assignment.UserIndex,
 		sicarData.PropertyIDs,
 	)
-	return teeClient, &IdentitySetupResult{PropertyIDs: sicarData.PropertyIDs, SicarIDs: sicarData.SicarIDs}, nil
+	return &IdentitySetupResult{PropertyIDs: sicarData.PropertyIDs, SicarIDs: sicarData.SicarIDs}, nil
 }
