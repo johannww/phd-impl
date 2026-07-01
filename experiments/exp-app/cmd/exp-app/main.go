@@ -334,8 +334,13 @@ func main() {
 		}
 	}()
 
+	runtimeCollectors := make([]metrics.MetricsCollector, 0, len(runtimes))
 	for _, rt := range runtimes {
-		rt := rt
+		runtimeCollectors = append(runtimeCollectors, rt.executor.GetCollector())
+	}
+	combinedCollector := metrics.NewCombinedCollector(runtimeCollectors...)
+
+	for _, rt := range runtimes {
 		log.Printf("Launcher: user[%d]=%s minting started", rt.idx, rt.id)
 		wg.Add(1)
 		go func() {
@@ -402,8 +407,15 @@ func main() {
 		rt.executor.GetCollector().Stop()
 	}
 
-	reporter := metrics.NewReporter(runtimes[0].executor.GetCollector())
-	reporter.PrintFinalReport()
+	aggregateReporter := metrics.NewReporter(combinedCollector)
+	aggregateReporter.PrintFinalReport()
+
+	if err := aggregateReporter.ExportJSON(*outputJSON); err != nil {
+		log.Printf("Failed to export aggregate JSON: %v", err)
+	}
+	if err := aggregateReporter.ExportCSV(*outputCSV); err != nil {
+		log.Printf("Failed to export aggregate CSV: %v", err)
+	}
 
 	// Export one report set per user
 	for _, rt := range runtimes {
@@ -421,7 +433,7 @@ func main() {
 	// Collect final Prometheus metrics and generate charts if enabled
 	if *enableMetrics && baselineSnapshot != nil {
 		log.Println("Collecting final Prometheus metrics snapshot...")
-		finalSnapshot, err := metrics.CollectPrometheusSnapshot(context.Background(), profile, runtimes[0].executor.GetCollector())
+		finalSnapshot, err := metrics.CollectPrometheusSnapshot(context.Background(), profile, combinedCollector)
 		if err != nil {
 			log.Printf("Warning: Failed to collect final metrics: %v", err)
 		} else {
