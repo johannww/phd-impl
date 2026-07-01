@@ -64,13 +64,7 @@
       "name": "[parameters('name')]",
       "location": "[parameters('location')]",
       "properties": {
-        "imageRegistryCredentials": [
-          {
-            "server": "ghcr.io",
-            "username": "REGISTRY_USER",
-            "password": "REGISTRY_PASS"
-          }
-        ],
+        "imageRegistryCredentials": [],
         "confidentialComputeProperties": {
           "ccePolicy": ""
         },

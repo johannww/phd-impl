@@ -22,11 +22,11 @@ docker-push: docker
 	docker push $(REGISTRY)/carbon_auction:latest
 
 policy:
-	CREDS=`cat ~/.docker/config.json | jq '."auths"."ghcr.io".auth' | sed s/\"//g | base64 -d`; \
-	REGISTRY_USER=`echo $$CREDS | cut -d: -f1`; \
-    REGISTRY_PASS=`echo $$CREDS | cut -d: -f2`; \
-	sed -i "s/REGISTRY_USER/$$REGISTRY_USER/" ./azure/arm_template.json; \
-	sed -i "s/REGISTRY_PASS/$$REGISTRY_PASS/" ./azure/arm_template.json; \
+	# CREDS=`cat ~/.docker/config.json | jq '."auths"."ghcr.io".auth' | sed s/\"//g | base64 -d`; \
+	# REGISTRY_USER=`echo $$CREDS | cut -d: -f1`; \
+	#    REGISTRY_PASS=`echo $$CREDS | cut -d: -f2`; \
+	# sed -i "s/REGISTRY_USER/$$REGISTRY_USER/" ./azure/arm_template.json; \
+	# sed -i "s/REGISTRY_PASS/$$REGISTRY_PASS/" ./azure/arm_template.json; \
 	echo y | az confcom acipolicygen -a ./azure/arm_template.json
 
 deploy:
