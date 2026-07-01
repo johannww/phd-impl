@@ -182,3 +182,6 @@ echo "Example report: ${local_run_dir}/${setup_pod}/monitoring-exports/report.ht
 if [[ ${#failed_pods[@]} -gt 0 || ${#download_failed[@]} -gt 0 ]]; then
   exit 1
 fi
+
+echo "==> Aggregating cross-pod results for run ${RUN_ID}"
+"${SCRIPT_DIR}/aggregate_exp_app_results.bash" "${RUN_ID}"
