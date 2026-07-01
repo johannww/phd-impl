@@ -22,6 +22,41 @@ make experiments-run
 experiments/deploy/vars/exp-app-runs/<run-id>/<pod>/
 ```
 
+## Topology And Flow
+
+```mermaid
+flowchart LR
+    A["Developer machine: make experiments"] --> K["Kubernetes cluster"]
+    C["Developer machine: make experiments-run"] --> K
+    K --> D["Downloaded artifacts: experiments/deploy/vars/exp-app-runs/run-id/"]
+
+    subgraph K["Kubernetes cluster (namespace fabric-experiments)"]
+        subgraph FAB["Fabric network"]
+            O["Orderers: orderer0, orderer1"]
+            P["Peers: mma, farmers, companies"]
+            CC["Chaincodes: carbon v1.0, interop v1.0"]
+            S["SICAR mock service: sicar-mock:8443"]
+
+            O <--> P
+            P <--> CC
+            P <--> S
+        end
+
+        subgraph EXP["Experiment apps"]
+            G["exp-app-setup (run once)"]
+            X["exp-app pods (N = peer orgs with peers, default 3)"]
+            M["Prometheus endpoints: chaincodes, peers, orderers"]
+
+            G --> X
+            X --> M
+        end
+
+        X --> CC
+        X --> P
+        X --> S
+    end
+```
+
 Each pod directory contains:
 
 - `results.json` and `results.csv` (aggregate runtime metrics in that pod)
