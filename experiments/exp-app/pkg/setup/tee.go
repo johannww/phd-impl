@@ -177,8 +177,7 @@ func (m *TEESetupManager) publishTEEReport(ctx context.Context, reportJSON []byt
 	return err
 }
 
-
-// CertificateChainJSON avoids the omission of empty fields, which the 
+// CertificateChainJSON avoids the omission of empty fields, which the
 // fabric-contract-api requires to be defined (even if empty) for correct deserialization in the chaincode.
 type CertificateChainJSON struct {
 	VcekCert     []byte            `json:"vcek_cert"`
