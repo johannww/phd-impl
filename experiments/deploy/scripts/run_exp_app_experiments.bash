@@ -32,6 +32,12 @@ echo "Namespace: ${NAMESPACE}"
 echo "Selector: ${POD_SELECTOR}"
 echo "Run ID: ${RUN_ID}"
 
+local_run_dir="${LOCAL_RESULTS_BASE}/${RUN_ID}"
+mkdir -p "${local_run_dir}"
+
+POD_FLAGS_FILE="$(mktemp)"
+trap 'rm -f "${POD_FLAGS_FILE}"' EXIT
+
 mapfile -t pods < <(kubectl get pods -n "${NAMESPACE}" -l "${POD_SELECTOR}" -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}')
 if [[ ${#pods[@]} -eq 0 ]]; then
   echo "Error: no running exp-app pods found with selector ${POD_SELECTOR} in namespace ${NAMESPACE}"
@@ -103,12 +109,39 @@ for pod in "${pods[@]}"; do
   if [[ "${run_setup}" == "true" || "${run_setup}" == "1" ]]; then
     setup_pod="${pod}"
   fi
+
+  printf '%s\t%s\t%s\n' "${pod}" "${pod_org[${pod}]}" "${pod_run_coupled[${pod}]}" >> "${POD_FLAGS_FILE}"
 done
 
 if [[ -z "${setup_pod}" ]]; then
   setup_pod="${pods[0]}"
   echo "==> No setup-designated pod found, defaulting setup owner to ${setup_pod}"
 fi
+
+RUN_FLAGS_JSON="${local_run_dir}/exp_app_flags.json"
+RUN_ID="${RUN_ID}" \
+NAMESPACE="${NAMESPACE}" \
+POD_SELECTOR="${POD_SELECTOR}" \
+PROFILE_IN_POD="${PROFILE_IN_POD}" \
+DURATION="${DURATION}" \
+CONCURRENCY="${CONCURRENCY}" \
+METRICS_INTERVAL="${METRICS_INTERVAL}" \
+MINT_INTERVAL="${MINT_INTERVAL}" \
+BUY_BID_INTERVAL="${BUY_BID_INTERVAL}" \
+SELL_BID_INTERVAL="${SELL_BID_INTERVAL}" \
+AUCTION_INTERVAL="${AUCTION_INTERVAL}" \
+METRICS_FORMATS="${METRICS_FORMATS}" \
+TPS="${TPS}" \
+BURST="${BURST}" \
+USER_COUNT="${USER_COUNT}" \
+RUN_GLOBAL_SETUP="${RUN_GLOBAL_SETUP}" \
+SETUP_USER_INDEX="${SETUP_USER_INDEX}" \
+"${SCRIPT_DIR}/write_exp_app_run_config.bash" \
+  --output "${RUN_FLAGS_JSON}" \
+  --setup-pod "${setup_pod}" \
+  --pod-flags-file "${POD_FLAGS_FILE}"
+
+echo "==> Saved run parameters: ${RUN_FLAGS_JSON}"
 
 failed_pods=()
 
@@ -145,9 +178,6 @@ for pid in "${pids[@]}"; do
     failed_pods+=("${pid_to_pod[${pid}]}")
   fi
 done
-
-local_run_dir="${LOCAL_RESULTS_BASE}/${RUN_ID}"
-mkdir -p "${local_run_dir}"
 
 download_failed=()
 for pod in "${pods[@]}"; do
