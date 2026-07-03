@@ -15,6 +15,8 @@ PROFILE_MINIKUBE_IP="${PROFILE_MINIKUBE_IP:-}"
 PROFILE_TEE_IP="${PROFILE_TEE_IP:-}"
 TEE_RESOURCE_GROUP="${TEE_RESOURCE_GROUP:-${RESOURCE_GROUP:-carbon}}"
 TEE_CONTAINER_NAME="${TEE_CONTAINER_NAME:-carbon-auction-container}"
+TEE_IP_LOOKUP_RETRIES="${TEE_IP_LOOKUP_RETRIES:-24}"
+TEE_IP_LOOKUP_SLEEP_SECONDS="${TEE_IP_LOOKUP_SLEEP_SECONDS:-5}"
 NETWORK_PROFILE_CONFIGMAP_NAME="${NETWORK_PROFILE_CONFIGMAP_NAME:-network-profile}"
 ARM_TEMPLATE_SOURCE="${ARM_TEMPLATE_SOURCE:-${DEPLOY_DIR}/../../tee_auction/azure/arm_template.json}"
 EXP_APP_RESULTS_STORAGE_CLASS="${EXP_APP_RESULTS_STORAGE_CLASS:-}"
@@ -23,11 +25,21 @@ EXP_APP_FULLNAME_OVERRIDE="${EXP_APP_FULLNAME_OVERRIDE:-}"
 echo "==> Deploying exp-app to namespace: ${NAMESPACE}"
 
 if [[ -z "${PROFILE_TEE_IP}" ]] && command -v az &>/dev/null; then
-  PROFILE_TEE_IP="$(az container show \
-    --resource-group "${TEE_RESOURCE_GROUP}" \
-    --name "${TEE_CONTAINER_NAME}" \
-    --query "ipAddress.ip" \
-    -o tsv 2>/dev/null || true)"
+  for ((attempt = 1; attempt <= TEE_IP_LOOKUP_RETRIES; attempt++)); do
+    PROFILE_TEE_IP="$(az container show \
+      --resource-group "${TEE_RESOURCE_GROUP}" \
+      --name "${TEE_CONTAINER_NAME}" \
+      --query "ipAddress.ip" \
+      -o tsv 2>/dev/null || true)"
+
+    if [[ -n "${PROFILE_TEE_IP}" && "${PROFILE_TEE_IP}" != "null" ]]; then
+      break
+    fi
+
+    if (( attempt < TEE_IP_LOOKUP_RETRIES )); then
+      sleep "${TEE_IP_LOOKUP_SLEEP_SECONDS}"
+    fi
+  done
 fi
 
 if [[ "${PROFILE_TEE_IP}" == "null" ]]; then
