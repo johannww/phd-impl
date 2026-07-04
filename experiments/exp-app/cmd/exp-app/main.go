@@ -255,6 +255,8 @@ func main() {
 
 	if teeClient != nil {
 		log.Println("Using real TEE service for coupled auctions")
+	} else if !(*runCoupled) {
+		log.Println("TEE not available, but this instance is not configured to run coupled auctions")
 	} else {
 		log.Println("TEE not available, using mock results for coupled auctions")
 	}
