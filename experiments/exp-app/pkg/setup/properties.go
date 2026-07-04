@@ -123,6 +123,12 @@ func (s *SetupManager) SetupProperties(
 		propJSON, _ := json.Marshal(property)
 		_, commit, submitErr := s.client.SubmitAsync("RegisterProperty", string(propJSON))
 		if submitErr != nil {
+			if isAlreadySetupError(submitErr) {
+				log.Printf("Property %d already registered for owner=%s (sicar=%s), reusing", propID, ownerID, sicarID)
+				registeredSicarIDs = append(registeredSicarIDs, sicarID)
+				registeredPropertyIDs = append(registeredPropertyIDs, propID)
+				continue
+			}
 			log.Printf("Warning: Failed to submit property %d (owner=%s sicar=%s): %v", propID, ownerID, sicarID, submitErr)
 			continue
 		}

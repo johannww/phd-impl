@@ -24,9 +24,14 @@ func (s *SetupManager) RunGlobalSetup(ctx context.Context) (*tee.Client, error) 
 
 	_, commit, err := s.client.SubmitAsync("Init", "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to submit Init: %v", err)
+		if isAlreadySetupError(err) {
+			log.Printf("Init already applied, continuing: %v", err)
+		} else {
+			return nil, fmt.Errorf("failed to submit Init: %v", err)
+		}
+	} else {
+		globalCommits = append(globalCommits, commit)
 	}
-	globalCommits = append(globalCommits, commit)
 
 	commits, err := s.SetupSICAR(ctx)
 	if err != nil {
