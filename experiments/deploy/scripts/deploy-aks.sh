@@ -162,7 +162,7 @@ echo -e "${COLOR_GREEN}✓ Fabric binaries installed${NC}\n"
 # Step 6: Deploy TEE auction service (in background)
 echo -e "${COLOR_YELLOW}[6/9] Deploying TEE auction service...${NC}"
 (
-    make -C "${TEE_AUCTION_DIR}" resource-group docker policy deploy > /dev/null 2>&1
+    make -C "${TEE_AUCTION_DIR}" RESOURCE_GROUP="${RESOURCE_GROUP}" resource-group docker policy deploy > /dev/null 2>&1
     if [ $? -eq 0 ]; then
         echo -e "${COLOR_GREEN}✓ TEE auction service deployed${NC}"
     else
@@ -223,6 +223,18 @@ echo "Fetching organization data and collection configs..."
 . "${SCRIPT_DIR}/fetch_organizations.bash"
 . "${SCRIPT_DIR}/fetch_collections_config.bash"
 echo -e "${COLOR_GREEN}✓ Organization data fetched${NC}\n"
+
+# Wait for background TEE deployment process before generating exp-app profile.
+# The deployment command can finish before public IP is immediately queryable,
+# so deploy_exp_app.bash also retries IP lookup.
+if [[ -n "${TEE_PID:-}" ]]; then
+  echo -e "${COLOR_YELLOW}Waiting for TEE deployment process to finish...${NC}"
+  if wait "${TEE_PID}"; then
+    echo -e "${COLOR_GREEN}✓ TEE deployment process finished${NC}\n"
+  else
+    echo -e "${COLOR_RED}Warning: TEE deployment process failed; exp-app may use mock TEE results${NC}\n"
+  fi
+fi
 
 # Deploy exp-app pod (in-cluster)
 echo -e "${COLOR_YELLOW}Deploying exp-app pod...${NC}"
