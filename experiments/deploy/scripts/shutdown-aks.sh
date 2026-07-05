@@ -12,6 +12,7 @@ CHAINCODE_RELEASE_NAME="${CHAINCODE_RELEASE_NAME:-${RELEASE_NAME}-chaincode}"
 TEE_AUCTION_DIR="${TEE_AUCTION_DIR:-${SCRIPT_DIR}/../../../tee_auction}"
 RESOURCE_GROUP="${RESOURCE_GROUP:-carbon}"
 CLUSTER_NAME="${CLUSTER_NAME:-carbon-aks}"
+ENABLE_CLUSTER_MONITORING="${ENABLE_CLUSTER_MONITORING:-true}"
 
 COLOR_GREEN='\033[0;32m'
 COLOR_YELLOW='\033[1;33m'
@@ -39,7 +40,7 @@ if ! kubectl cluster-info &>/dev/null; then
 fi
 
 # Step 1: Uninstall chaincode Helm release
-echo -e "${COLOR_YELLOW}[1/3] Uninstalling chaincode Helm release...${NC}"
+echo -e "${COLOR_YELLOW}[1/4] Uninstalling chaincode Helm release...${NC}"
 if helm status "${CHAINCODE_RELEASE_NAME}" -n "${NAMESPACE}" >/dev/null 2>&1; then
     echo "Uninstalling ${CHAINCODE_RELEASE_NAME}..."
     helm uninstall "${CHAINCODE_RELEASE_NAME}" -n "${NAMESPACE}"
@@ -50,7 +51,7 @@ else
 fi
 
 # Step 2: Uninstall main Fabric network Helm release
-echo -e "${COLOR_YELLOW}[2/3] Uninstalling Fabric network Helm release...${NC}"
+echo -e "${COLOR_YELLOW}[2/4] Uninstalling Fabric network Helm release...${NC}"
 if helm status "${RELEASE_NAME}" -n "${NAMESPACE}" >/dev/null 2>&1; then
     echo "Uninstalling ${RELEASE_NAME}..."
     helm uninstall "${RELEASE_NAME}" -n "${NAMESPACE}"
@@ -60,8 +61,17 @@ else
     echo ""
 fi
 
-# Step 3: Cleanup TEE auction container in Azure
-echo -e "${COLOR_YELLOW}[3/3] Cleaning up TEE auction container...${NC}"
+# Step 3: Uninstall monitoring stack
+echo -e "${COLOR_YELLOW}[3/4] Uninstalling monitoring stack...${NC}"
+if [[ "${ENABLE_CLUSTER_MONITORING}" == "true" ]]; then
+    . "${SCRIPT_DIR}/uninstall_monitoring_stack.bash"
+else
+    echo "Monitoring uninstall disabled (ENABLE_CLUSTER_MONITORING=${ENABLE_CLUSTER_MONITORING})"
+fi
+echo -e "${COLOR_GREEN}✓ Monitoring cleanup attempted${NC}\n"
+
+# Step 4: Cleanup TEE auction container in Azure
+echo -e "${COLOR_YELLOW}[4/4] Cleaning up TEE auction container...${NC}"
 if ! make -C "${TEE_AUCTION_DIR}" cleanup 2>/dev/null; then
     echo -e "${COLOR_YELLOW}Warning: TEE auction cleanup failed or container not found (continuing)${NC}"
 fi

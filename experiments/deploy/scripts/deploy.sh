@@ -18,6 +18,7 @@ TEE_AUCTION_DIR="${TEE_AUCTION_DIR:-${SCRIPT_DIR}/../../../tee_auction}"
 CPUS="${CPUS:-6}"
 MEMORY="${MEMORY:-12000}"
 ENABLE_IN_CLUSTER_EXP_APP="${ENABLE_IN_CLUSTER_EXP_APP:-true}"
+ENABLE_CLUSTER_MONITORING="${ENABLE_CLUSTER_MONITORING:-true}"
 COLOR_RED='\033[0;31m'
 NC='\033[0m' # No Color
 
@@ -36,6 +37,10 @@ NC='\033[0m' # No Color
 MINIKUBE_IP="$(minikube ip)"
 
 kubectl get namespace "${NAMESPACE}" > /dev/null 2>&1 || kubectl create namespace "${NAMESPACE}"
+
+if [[ "${ENABLE_CLUSTER_MONITORING}" == "true" ]]; then
+  . "${SCRIPT_DIR}/install_monitoring_stack.bash"
+fi
 
 . "${SCRIPT_DIR}/generate_sicar_cert.bash"
 

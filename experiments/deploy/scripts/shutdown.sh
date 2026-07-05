@@ -8,6 +8,7 @@ STOP_MINIKUBE="${STOP_MINIKUBE:-false}"
 CHAINCODE_RELEASE_NAME="${CHAINCODE_RELEASE_NAME:-${RELEASE_NAME}-chaincode}"
 EXP_APP_RELEASE_NAME="${EXP_APP_RELEASE_NAME:-${RELEASE_NAME}-exp-app}"
 TEE_AUCTION_DIR="${TEE_AUCTION_DIR:-${SCRIPT_DIR}/../../../tee_auction}"
+ENABLE_CLUSTER_MONITORING="${ENABLE_CLUSTER_MONITORING:-true}"
 
 if helm status "${RELEASE_NAME}" -n "${NAMESPACE}" >/dev/null 2>&1; then
   echo "Uninstalling Helm release ${RELEASE_NAME} from namespace ${NAMESPACE}..."
@@ -28,6 +29,10 @@ if helm status "${EXP_APP_RELEASE_NAME}" -n "${NAMESPACE}" >/dev/null 2>&1; then
   helm uninstall "${EXP_APP_RELEASE_NAME}" -n "${NAMESPACE}"
 else
   echo "Release ${EXP_APP_RELEASE_NAME} not found in namespace ${NAMESPACE}, skipping uninstall."
+fi
+
+if [[ "${ENABLE_CLUSTER_MONITORING}" == "true" ]]; then
+  . "${SCRIPT_DIR}/uninstall_monitoring_stack.bash"
 fi
 
 echo "Cleaning up tee_auction container resources..."

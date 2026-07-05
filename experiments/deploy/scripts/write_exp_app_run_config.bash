@@ -65,6 +65,7 @@ jq -n \
   --arg user_count "${USER_COUNT:-}" \
   --arg run_global_setup "${RUN_GLOBAL_SETUP:-}" \
   --arg setup_user_index "${SETUP_USER_INDEX:-}" \
+  --arg cluster_metrics_rate_window "${CLUSTER_METRICS_RATE_WINDOW:-}" \
   --arg setup_pod "${SETUP_POD}" \
   --argjson per_pod "${per_pod_json}" \
   '{
@@ -77,6 +78,9 @@ jq -n \
     global_setup: {
       run_global_setup: ($run_global_setup == "true" or $run_global_setup == "1"),
       setup_user_index: $setup_user_index
+    },
+    cluster_metrics: {
+      rate_window: (if $cluster_metrics_rate_window == "" then null else $cluster_metrics_rate_window end)
     },
     exp_app_flags: {
       profile: $profile_in_pod,

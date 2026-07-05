@@ -22,6 +22,19 @@ make experiments-run
 experiments/deploy/vars/exp-app-runs/<run-id>/<pod>/
 ```
 
+Run-level artifacts are also written under:
+
+```text
+experiments/deploy/vars/exp-app-runs/<run-id>/
+```
+
+- `exp_app_flags.json` (captured run configuration)
+- `cluster-metrics-baseline.json`
+- `cluster-metrics-final.json`
+- `cluster-metrics-delta.json`
+- `aggregate/results.csv` and `aggregate/results.json`
+- `aggregate/monitoring-exports/` (copied from one pod)
+
 ## Topology And Flow
 
 ```mermaid
@@ -70,6 +83,14 @@ Each pod directory contains:
   - `report.pdf` (if requested)
   - `charts/*.png`
 
+`cluster-metrics-final.json` includes role-based resource snapshots:
+
+- `metrics.component_totals` for peers/orderers/exp-app/chaincodes (CPU and memory)
+- `metrics.component_per_pod` for per-pod CPU and memory maps
+- `timeseries` with the workload window (`start_ts`, `end_ts`, `step`) and range-query series for totals and per-pod values
+
+`cluster-metrics-delta.json` includes deep numeric deltas for all fields under `metrics`, including role totals and per-pod maps, plus the final `timeseries` payload for charting.
+
 ## Important Design Notes
 
 - Global setup is separated from workload execution:
@@ -94,6 +115,8 @@ make experiments-run
 ```
 
 Other available knobs include `TPS`, `BURST`, `USER_COUNT`, `MINT_INTERVAL`, `BUY_BID_INTERVAL`, `SELL_BID_INTERVAL`, `AUCTION_INTERVAL`.
+
+To tune cluster-metrics range granularity, set `CLUSTER_METRICS_STEP` (default: `15s`).
 
 ## Cleanup
 

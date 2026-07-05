@@ -21,6 +21,7 @@ CLUSTER_NAME="${CLUSTER_NAME:-carbon-aks}"
 LOCATION="${LOCATION:-centralindia}"
 NODE_COUNT="${NODE_COUNT:-3}"
 VM_SIZE="${VM_SIZE:-Standard_D4s_v5}"  # 4 vCPU, 16 GB RAM
+ENABLE_CLUSTER_MONITORING="${ENABLE_CLUSTER_MONITORING:-true}"
 
 COLOR_GREEN='\033[0;32m'
 COLOR_YELLOW='\033[1;33m'
@@ -112,6 +113,12 @@ az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME"
 echo -e "${COLOR_YELLOW}[2/9] Creating namespace...${NC}"
 kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
 echo -e "${COLOR_GREEN}✓ Namespace created${NC}\n"
+
+if [[ "${ENABLE_CLUSTER_MONITORING}" == "true" ]]; then
+    echo -e "${COLOR_YELLOW}[monitoring] Installing kube-prometheus-stack...${NC}"
+    . "${SCRIPT_DIR}/install_monitoring_stack.bash"
+    echo -e "${COLOR_GREEN}✓ Monitoring stack ready${NC}\n"
+fi
 
 # Step 3: Create Azure Storage Account for Azure Files (ReadWriteMany PVCs)
 echo -e "${COLOR_YELLOW}[3/9] Setting up Azure Files storage...${NC}"
