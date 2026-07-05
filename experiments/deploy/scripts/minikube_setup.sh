@@ -30,11 +30,11 @@ if ! docker image inspect "${TOOLS_IMAGE}" > /dev/null 2>&1; then
     make -C "${SCRIPT_DIR}/../images/fabric-tools" docker
 fi
 
-for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}" "${SICAR_IMAGE}" "${EXP_APP_IMAGE}"; do
-  if minikube image ls | grep -Fq "${image}" && [ "$MINIKUBE_RELOAD_IMAGES" = "false" ]; then
-    echo "Image ${image} already loaded in Minikube, skipping."
-  else
-    echo "Loading ${image} into Minikube..."
-    minikube image load "${image}"
-  fi
-done
+# for image in "${TOOLS_IMAGE}" "${CARBON_CC_IMAGE}" "${INTEROP_CC_IMAGE}" "${SICAR_IMAGE}" "${EXP_APP_IMAGE}"; do
+#   if minikube image ls | grep -Fq "${image}" && [ "$MINIKUBE_RELOAD_IMAGES" = "false" ]; then
+#     echo "Image ${image} already loaded in Minikube, skipping."
+#   else
+#     echo "Loading ${image} into Minikube..."
+#     minikube image load "${image}"
+#   fi
+# done
