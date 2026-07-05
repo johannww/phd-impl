@@ -2,6 +2,14 @@ global:
   fabricVersion: "3.1.4"
   namespace: ""
 
+monitoring:
+  serviceMonitors:
+    enabled: false
+    namespace: "monitoring"
+    releaseLabel: "monitoring"
+    interval: "30s"
+    scrapeTimeout: "10s"
+
 images:
   peer:
     repository: "ghcr.io/hyperledger/fabric-peer"

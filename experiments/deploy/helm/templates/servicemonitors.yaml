@@ -1,0 +1,48 @@
+{{- if .Values.monitoring.serviceMonitors.enabled }}
+{{- $ns := include "fabric-experiments.namespace" . -}}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "fabric-experiments.fullname" . }}-peers
+  namespace: {{ .Values.monitoring.serviceMonitors.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "fabric-experiments.labels" . | nindent 4 }}
+    release: {{ .Values.monitoring.serviceMonitors.releaseLabel | quote }}
+    app.kubernetes.io/component: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ $ns }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: peer
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitors.interval | quote }}
+      scrapeTimeout: {{ .Values.monitoring.serviceMonitors.scrapeTimeout | quote }}
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "fabric-experiments.fullname" . }}-orderers
+  namespace: {{ .Values.monitoring.serviceMonitors.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "fabric-experiments.labels" . | nindent 4 }}
+    release: {{ .Values.monitoring.serviceMonitors.releaseLabel | quote }}
+    app.kubernetes.io/component: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ $ns }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: orderer
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitors.interval | quote }}
+      scrapeTimeout: {{ .Values.monitoring.serviceMonitors.scrapeTimeout | quote }}
+{{- end }}

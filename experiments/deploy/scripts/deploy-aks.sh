@@ -22,6 +22,9 @@ LOCATION="${LOCATION:-centralindia}"
 NODE_COUNT="${NODE_COUNT:-3}"
 VM_SIZE="${VM_SIZE:-Standard_D4s_v5}"  # 4 vCPU, 16 GB RAM
 ENABLE_CLUSTER_MONITORING="${ENABLE_CLUSTER_MONITORING:-true}"
+MONITORING_SERVICEMONITORS_ENABLED="${MONITORING_SERVICEMONITORS_ENABLED:-${ENABLE_CLUSTER_MONITORING}}"
+MONITORING_RELEASE_NAME="${MONITORING_RELEASE_NAME:-monitoring}"
+MONITORING_NAMESPACE="${MONITORING_NAMESPACE:-monitoring}"
 
 COLOR_GREEN='\033[0;32m'
 COLOR_YELLOW='\033[1;33m'
@@ -182,6 +185,9 @@ helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
   --set "storage.organizations.storageClassName=azurefile" \
   --set "images.tools.repository=ghcr.io/${REPO}/fabric-tools" \
   --set "images.tools.tag=${FABRIC_TAG}" \
+  --set "monitoring.serviceMonitors.enabled=${MONITORING_SERVICEMONITORS_ENABLED}" \
+  --set "monitoring.serviceMonitors.releaseLabel=${MONITORING_RELEASE_NAME}" \
+  --set "monitoring.serviceMonitors.namespace=${MONITORING_NAMESPACE}" \
   --wait --timeout 15m --create-namespace
 
 # # Wait for LoadBalancer IPs
@@ -204,6 +210,9 @@ helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
   --set packageConfigMapName="${CHAINCODE_PACKAGE_CONFIGMAP}" \
   --set "chaincodes[0].image.repository=ghcr.io/${REPO}/carbon" \
   --set "chaincodes[1].image.repository=ghcr.io/${REPO}/interop" \
+  --set "monitoring.serviceMonitors.enabled=${MONITORING_SERVICEMONITORS_ENABLED}" \
+  --set "monitoring.serviceMonitors.releaseLabel=${MONITORING_RELEASE_NAME}" \
+  --set "monitoring.serviceMonitors.namespace=${MONITORING_NAMESPACE}" \
   "${CC_SET_ARGS[@]}" \
   --wait --timeout 10m
 

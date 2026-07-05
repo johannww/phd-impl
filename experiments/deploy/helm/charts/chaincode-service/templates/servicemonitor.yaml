@@ -1,0 +1,24 @@
+{{- if .Values.monitoring.serviceMonitors.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "chaincode-service.fullname" . }}-chaincodes
+  namespace: {{ .Values.monitoring.serviceMonitors.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "chaincode-service.labels" . | nindent 4 }}
+    release: {{ .Values.monitoring.serviceMonitors.releaseLabel | quote }}
+    app.kubernetes.io/component: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ include "chaincode-service.namespace" . }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: chaincode-runtime
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitors.interval | quote }}
+      scrapeTimeout: {{ .Values.monitoring.serviceMonitors.scrapeTimeout | quote }}
+{{- end }}

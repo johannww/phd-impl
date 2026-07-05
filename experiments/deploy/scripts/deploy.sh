@@ -19,6 +19,9 @@ CPUS="${CPUS:-6}"
 MEMORY="${MEMORY:-12000}"
 ENABLE_IN_CLUSTER_EXP_APP="${ENABLE_IN_CLUSTER_EXP_APP:-true}"
 ENABLE_CLUSTER_MONITORING="${ENABLE_CLUSTER_MONITORING:-true}"
+MONITORING_SERVICEMONITORS_ENABLED="${MONITORING_SERVICEMONITORS_ENABLED:-${ENABLE_CLUSTER_MONITORING}}"
+MONITORING_RELEASE_NAME="${MONITORING_RELEASE_NAME:-monitoring}"
+MONITORING_NAMESPACE="${MONITORING_NAMESPACE:-monitoring}"
 COLOR_RED='\033[0;31m'
 NC='\033[0m' # No Color
 
@@ -48,6 +51,9 @@ echo "Installing Helm release ${RELEASE_NAME} in namespace ${NAMESPACE}..."
 helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
   --namespace "${NAMESPACE}" \
   --set "network.externalIPs={${MINIKUBE_IP}}" \
+  --set "monitoring.serviceMonitors.enabled=${MONITORING_SERVICEMONITORS_ENABLED}" \
+  --set "monitoring.serviceMonitors.releaseLabel=${MONITORING_RELEASE_NAME}" \
+  --set "monitoring.serviceMonitors.namespace=${MONITORING_NAMESPACE}" \
   --wait \
   --create-namespace
 
@@ -59,6 +65,9 @@ helm upgrade --install "${CHAINCODE_RELEASE_NAME}" "${CHAINCODE_CHART_DIR}" \
   -f <(yq e 'explode(.chaincodeService) | .chaincodeService' ${CHART_DIR}/values.yaml) \
   --set organizationsClaimName="${RELEASE_NAME}-organizations" \
   --set packageConfigMapName="${CHAINCODE_PACKAGE_CONFIGMAP}" \
+  --set "monitoring.serviceMonitors.enabled=${MONITORING_SERVICEMONITORS_ENABLED}" \
+  --set "monitoring.serviceMonitors.releaseLabel=${MONITORING_RELEASE_NAME}" \
+  --set "monitoring.serviceMonitors.namespace=${MONITORING_NAMESPACE}" \
   "${CC_SET_ARGS[@]}"
 
 . "${SCRIPT_DIR}/fetch_organizations.bash"

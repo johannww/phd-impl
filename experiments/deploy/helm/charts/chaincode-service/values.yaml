@@ -2,6 +2,14 @@ workspace: "/workspace"
 organizationsClaimName: ""
 packageConfigMapName: ""
 
+monitoring:
+  serviceMonitors:
+    enabled: false
+    namespace: "monitoring"
+    releaseLabel: "monitoring"
+    interval: "30s"
+    scrapeTimeout: "10s"
+
 images:
   tools:
     repository: "ghcr.io/johannww/phd-impl/fabric-tools"
