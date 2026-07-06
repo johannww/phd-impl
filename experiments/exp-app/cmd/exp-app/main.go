@@ -339,6 +339,7 @@ func main() {
 		if teeClient != nil {
 			runtimeCoupled.SetTEEClient(teeClient)
 		}
+		sharedBuckets := scenarios.NewSharedCreditBuckets()
 
 		runtimes = append(runtimes, &userRuntime{
 			idx:         userIdx + 1,
@@ -347,8 +348,8 @@ func main() {
 			interop:     interopClient,
 			executor:    exec,
 			credit:      scenarios.NewCreditScenario(exec),
-			bidding:     scenarios.NewBiddingScenario(exec),
-			interopFlow: scenarios.NewInteropScenario(exec),
+			bidding:     scenarios.NewBiddingScenario(exec, sharedBuckets),
+			interopFlow: scenarios.NewInteropScenario(exec, sharedBuckets),
 			coupled:     runtimeCoupled,
 			propertyIDs: propertyIDs,
 			ownsCoupled: userIdx == 0 && *runCoupled,

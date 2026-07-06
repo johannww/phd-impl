@@ -19,18 +19,24 @@ import (
 type BiddingScenario struct {
 	executor  *workload.Executor
 	collector metrics.MetricsCollector
+	buckets   *SharedCreditBuckets
 }
 
 // NewBiddingScenario creates a new bidding scenario
-func NewBiddingScenario(executor *workload.Executor) *BiddingScenario {
+func NewBiddingScenario(executor *workload.Executor, buckets *SharedCreditBuckets) *BiddingScenario {
 	return &BiddingScenario{
 		executor:  executor,
 		collector: executor.GetCollector(),
+		buckets:   buckets,
 	}
 }
 
 // CreateSellBidsContinuous runs a continuous sell bidding loop based on available credits
 func (s *BiddingScenario) CreateSellBidsContinuous(ctx context.Context, client *gateway.ClientWrapper, interval time.Duration) error {
+	if s.buckets == nil {
+		return fmt.Errorf("shared credit buckets are required for bidding scenario")
+	}
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	i := 0
@@ -52,20 +58,28 @@ func (s *BiddingScenario) CreateSellBidsContinuous(ctx context.Context, client *
 			creditsRes, err := client.EvaluateTransaction("GetAvailableCreditsByOwner", sellerID)
 			if err != nil {
 				log.Printf("Error fetching credits for seller %s: %v", sellerID, err)
+				continue
 			}
 			err = json.Unmarshal(creditsRes, &creditsList)
 			if err != nil {
 				log.Printf("Error unmarshaling credits for seller %s: %v", sellerID, err)
+				continue
 			}
+			s.buckets.RefreshFromAvailable(creditsList)
 
 			if len(creditsList) == 0 {
 				continue
 			}
 
 			// 2. Create sell bid for available credits
+			biddingCredits := s.buckets.BiddingCredits()
 
-			for _, credit := range creditsList {
-				creditID := (*credit.GetID())[0]
+			for _, credit := range biddingCredits {
+				idParts := credit.GetID()
+				if idParts == nil || len(*idParts) == 0 {
+					panic(fmt.Sprintf("Credit %v has no ID parts", credit))
+				}
+				creditID := (*idParts)[0]
 				creditIDBytes, err := json.Marshal(creditID)
 				if err != nil {
 					log.Fatalf("Error marshaling credit ID for credit %v: %v", creditID, err)

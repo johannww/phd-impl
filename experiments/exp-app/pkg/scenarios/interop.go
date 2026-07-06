@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/johannww/phd-impl/chaincodes/carbon/credits"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/gateway"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/metrics"
 	"github.com/johannww/phd-impl/experiments/exp-app/pkg/workload"
@@ -18,42 +17,48 @@ import (
 type InteropScenario struct {
 	executor  *workload.Executor
 	collector metrics.MetricsCollector
+	buckets   *SharedCreditBuckets
 }
 
 // NewInteropScenario creates a new interop scenario
-func NewInteropScenario(executor *workload.Executor) *InteropScenario {
+func NewInteropScenario(executor *workload.Executor, buckets *SharedCreditBuckets) *InteropScenario {
 	return &InteropScenario{
 		executor:  executor,
 		collector: executor.GetCollector(),
+		buckets:   buckets,
 	}
 }
 
 // HTLCWorkflow executes a full HTLC cycle: LockCredit -> CreateHTLC -> ClaimHTLC
 func (s *InteropScenario) HTLCWorkflow(ctx context.Context, carbonClient *gateway.ClientWrapper, interopClient *gateway.ClientWrapper, count int) error {
+	if s.buckets == nil {
+		return fmt.Errorf("shared credit buckets are required for interop workflow")
+	}
+
 	ownerID := carbonClient.GetIdentityID()
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < count; {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
 		}
 
-		creditsRes, err := carbonClient.EvaluateTransaction("GetAvailableCreditsByOwner", ownerID)
-		if err != nil {
+		assignedCredit, ok := s.buckets.TakeInteropCredit()
+		if !ok {
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 
-		availableCredits := []credits.MintCredit{}
-		if err := json.Unmarshal(creditsRes, &availableCredits); err != nil {
-			continue
-		}
-		if len(availableCredits) == 0 {
-			continue
-		}
+		attempt := i
+		i++
 
-		credit := availableCredits[i%len(availableCredits)]
-		creditID := (*credit.GetID())[0]
+		idParts := assignedCredit.GetID()
+		if idParts == nil || len(*idParts) == 0 {
+			panic(fmt.Sprintf("credit has no ID parts: %v", assignedCredit))
+		}
+		creditID := (*idParts)[0]
+
 		creditIDBytes, err := json.Marshal(creditID)
 		if err != nil {
 			continue
@@ -75,7 +80,7 @@ func (s *InteropScenario) HTLCWorkflow(ctx context.Context, carbonClient *gatewa
 			destChainID,
 		)
 		lockID := string(res)
-		recordTransaction(s.collector, fmt.Sprintf("interop-lock-%d", i), "interop-lock-credit", start, err)
+		recordTransaction(s.collector, fmt.Sprintf("interop-lock-%d", attempt), "interop-lock-credit", start, err)
 
 		if err != nil {
 			continue
@@ -93,7 +98,7 @@ func (s *InteropScenario) HTLCWorkflow(ctx context.Context, carbonClient *gatewa
 			destChainID,
 			amount,
 		)
-		recordTransaction(s.collector, fmt.Sprintf("interop-htlc-create-%d", i), "interop-create-htlc", start, err)
+		recordTransaction(s.collector, fmt.Sprintf("interop-htlc-create-%d", attempt), "interop-create-htlc", start, err)
 
 		if err != nil {
 			continue
@@ -102,7 +107,7 @@ func (s *InteropScenario) HTLCWorkflow(ctx context.Context, carbonClient *gatewa
 		// 3. ClaimHTLC on Interop Chain
 		start = time.Now()
 		_, err = interopClient.SubmitTransaction("ClaimHTLC", lockID, preimage)
-		recordTransaction(s.collector, fmt.Sprintf("interop-htlc-claim-%d", i), "interop-claim-htlc", start, err)
+		recordTransaction(s.collector, fmt.Sprintf("interop-htlc-claim-%d", attempt), "interop-claim-htlc", start, err)
 	}
 
 	return nil
