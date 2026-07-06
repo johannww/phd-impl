@@ -144,7 +144,13 @@ func main() {
 	if !ok {
 		log.Fatal("Carbon chaincode not found in network profile")
 	}
-	chaincodeName := carbonCC.Name
+	carbonChaincodeName := carbonCC.Name
+
+	interopCC, ok := profile.Chaincodes["interop"]
+	if !ok {
+		log.Fatal("Interop chaincode not found in network profile")
+	}
+	interopChaincodeName := interopCC.Name
 
 	// Validate certificates exist
 	for _, path := range []string{tlsCertPath, userCertPath, userKeyPath} {
@@ -161,7 +167,7 @@ func main() {
 		UserCertPath:  userCertPath,
 		UserKeyPath:   userKeyPath,
 		ChannelName:   channelName,
-		ChaincodeName: chaincodeName,
+		ChaincodeName: carbonChaincodeName,
 	}
 
 	log.Println("Connecting to gateway...")
@@ -223,7 +229,7 @@ func main() {
 			UserCertPath:  user.Cert,
 			UserKeyPath:   user.Key,
 			ChannelName:   channelName,
-			ChaincodeName: chaincodeName,
+			ChaincodeName: carbonChaincodeName,
 		}
 
 		setupClient, setupClientErr := gateway.NewClientWrapper(setupGatewayCfg)
@@ -272,11 +278,12 @@ func main() {
 	type userRuntime struct {
 		idx         int
 		id          string
-		client      *gateway.ClientWrapper
+		carbon      *gateway.ClientWrapper
+		interop     *gateway.ClientWrapper
 		executor    *workload.Executor
 		credit      *scenarios.CreditScenario
 		bidding     *scenarios.BiddingScenario
-		interop     *scenarios.InteropScenario
+		interopFlow *scenarios.InteropScenario
 		coupled     *scenarios.CoupledAuctionScenario
 		propertyIDs []uint64
 		ownsCoupled bool
@@ -296,12 +303,28 @@ func main() {
 			UserCertPath:  user.Cert,
 			UserKeyPath:   user.Key,
 			ChannelName:   channelName,
-			ChaincodeName: chaincodeName,
+			ChaincodeName: carbonChaincodeName,
 		}
 
-		userClient, userClientErr := gateway.NewClientWrapper(userGatewayCfg)
-		if userClientErr != nil {
-			log.Fatalf("Failed to create gateway client for user %d: %v", userIdx+1, userClientErr)
+		carbonClient, carbonClientErr := gateway.NewClientWrapper(userGatewayCfg)
+		if carbonClientErr != nil {
+			log.Fatalf("Failed to create gateway client for user %d: %v", userIdx+1, carbonClientErr)
+		}
+
+		interopGatewayCfg := &gateway.GatewayConfig{
+			PeerAddr:      peerAddr,
+			TLSCertPath:   tlsCertPath,
+			MspID:         orgConfig.MspID,
+			UserCertPath:  user.Cert,
+			UserKeyPath:   user.Key,
+			ChannelName:   channelName,
+			ChaincodeName: interopChaincodeName,
+		}
+
+		interopClient, interopClientErr := gateway.NewClientWrapper(interopGatewayCfg)
+		if interopClientErr != nil {
+			_ = carbonClient.Close()
+			log.Fatalf("Failed to create interop gateway client for user %d: %v", userIdx+1, interopClientErr)
 		}
 
 		runtimeExecCfg := &workload.ExecutorConfig{
@@ -311,7 +334,7 @@ func main() {
 			TPS:              *tps,
 			BurstSize:        *burst,
 		}
-		exec := workload.NewExecutor(userClient, runtimeExecCfg)
+		exec := workload.NewExecutor(carbonClient, runtimeExecCfg)
 		runtimeCoupled := scenarios.NewCoupledAuctionScenario(exec)
 		if teeClient != nil {
 			runtimeCoupled.SetTEEClient(teeClient)
@@ -319,12 +342,13 @@ func main() {
 
 		runtimes = append(runtimes, &userRuntime{
 			idx:         userIdx + 1,
-			id:          userClient.GetIdentityID(),
-			client:      userClient,
+			id:          carbonClient.GetIdentityID(),
+			carbon:      carbonClient,
+			interop:     interopClient,
 			executor:    exec,
 			credit:      scenarios.NewCreditScenario(exec),
 			bidding:     scenarios.NewBiddingScenario(exec),
-			interop:     scenarios.NewInteropScenario(exec),
+			interopFlow: scenarios.NewInteropScenario(exec),
 			coupled:     runtimeCoupled,
 			propertyIDs: propertyIDs,
 			ownsCoupled: userIdx == 0 && *runCoupled,
@@ -332,7 +356,8 @@ func main() {
 	}
 	defer func() {
 		for _, rt := range runtimes {
-			_ = rt.client.Close()
+			_ = rt.carbon.Close()
+			_ = rt.interop.Close()
 		}
 	}()
 
@@ -347,7 +372,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := rt.credit.MintCreditsContinuous(ctx, rt.client, *mintInterval, rt.propertyIDs, quantityPerMint); err != nil && err != context.Canceled {
+			if err := rt.credit.MintCreditsContinuous(ctx, rt.carbon, *mintInterval, rt.propertyIDs, quantityPerMint); err != nil && err != context.Canceled {
 				log.Printf("MintCreditsContinuous user %d error: %v", rt.idx, err)
 			}
 		}()
@@ -356,7 +381,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := rt.bidding.CreateBuyBidsContinuous(ctx, rt.client, *buyBidInterval); err != nil && err != context.Canceled {
+			if err := rt.bidding.CreateBuyBidsContinuous(ctx, rt.carbon, *buyBidInterval); err != nil && err != context.Canceled {
 				log.Printf("CreateBuyBidsContinuous user %d error: %v", rt.idx, err)
 			}
 		}()
@@ -365,7 +390,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := rt.bidding.CreateSellBidsContinuous(ctx, rt.client, *sellBidInterval); err != nil && err != context.Canceled {
+			if err := rt.bidding.CreateSellBidsContinuous(ctx, rt.carbon, *sellBidInterval); err != nil && err != context.Canceled {
 				log.Printf("CreateSellBidsContinuous user %d error: %v", rt.idx, err)
 			}
 		}()
@@ -374,7 +399,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := rt.interop.HTLCWorkflow(ctx, rt.client, rt.client, 100); err != nil && err != context.Canceled {
+			if err := rt.interopFlow.HTLCWorkflow(ctx, rt.carbon, rt.interop, 100); err != nil && err != context.Canceled {
 				log.Printf("HTLCWorkflow user %d error: %v", rt.idx, err)
 			}
 		}()
@@ -384,7 +409,7 @@ func main() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				if err := rt.coupled.PeriodicAuction(ctx, rt.client, *auctionInterval); err != nil && err != context.Canceled {
+				if err := rt.coupled.PeriodicAuction(ctx, rt.carbon, *auctionInterval); err != nil && err != context.Canceled {
 					log.Printf("PeriodicAuction user %d error: %v", rt.idx, err)
 				}
 			}()
