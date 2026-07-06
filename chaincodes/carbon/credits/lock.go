@@ -8,7 +8,6 @@ import (
 	"github.com/johannww/phd-impl/chaincodes/common/identities"
 	"github.com/johannww/phd-impl/chaincodes/common/pb"
 	"github.com/johannww/phd-impl/chaincodes/common/state"
-	"github.com/johannww/phd-impl/chaincodes/common/utils"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -86,9 +85,7 @@ func LockCredit(stub shim.ChaincodeStubInterface,
 		return "", fmt.Errorf("could not update credit in world state: %v", err)
 	}
 
-	// TODOHP: think about the id later
-	lockID := utils.UnixNowFromTransactionTimestamp(stub)
-	lockIDStr = fmt.Sprintf("%x", lockID)
+	lockIDStr = stub.GetTxID()
 
 	lockedCredit := &LockedCredit{
 		CreditID:    creditID,
