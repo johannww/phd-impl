@@ -237,6 +237,8 @@ func publishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, withPrivate
 
 	buyerID := identities.GetID(stub)
 	buyerWallet := &payment.VirtualTokenWallet{}
+	// TODO: this will cause MVCC_READ_CONFLICT if many bids from the same caller
+	// are published in the same block, consider a more scalable approach if this becomes an issue
 	err = buyerWallet.FromWorldState(stub, []string{buyerID})
 	if err != nil {
 		return fmt.Errorf("could not get buyer wallet from world state: %v", err)
