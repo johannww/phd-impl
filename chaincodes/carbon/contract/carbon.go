@@ -137,6 +137,14 @@ func (c *CarbonContract) CreateBuyBidPrivateQuantity(ctx contractapi.Transaction
 	})
 }
 
+func (c *CarbonContract) CreateBuyBidPrivateQuantityForWallet(ctx contractapi.TransactionContextInterface, walletNumber int64) error {
+	return c.withMetricsErr("CreateBuyBidPrivateQuantityForWallet", func() error {
+		stub := ctx.GetStub()
+		err := bids.PublishBuyBidWithPrivateQuantityForWallet(stub, walletNumber)
+		return err
+	})
+}
+
 func (c *CarbonContract) ReturnCallerID(ctx contractapi.TransactionContextInterface) (string, error) {
 	id := identities.GetID(ctx.GetStub())
 	return id, nil
@@ -481,6 +489,16 @@ func (c *CarbonContract) MintVirtualToken(ctx contractapi.TransactionContextInte
 	err := c.withMetricsErr("MintVirtualToken", func() error {
 		var err error
 		wallet, err = payment.MintVirtualToken(ctx.GetStub(), ownerID, quantity)
+		return err
+	})
+	return wallet, err
+}
+
+func (c *CarbonContract) MintVirtualTokenForWalletId(ctx contractapi.TransactionContextInterface, ownerID string, walletNumber int64, quantity int64) (*payment.VirtualTokenWallet, error) {
+	var wallet *payment.VirtualTokenWallet
+	err := c.withMetricsErr("MintVirtualTokenForWalletId", func() error {
+		var err error
+		wallet, err = payment.MintVirtualTokenForWalletID(ctx.GetStub(), ownerID, walletNumber, quantity)
 		return err
 	})
 	return wallet, err

@@ -123,6 +123,7 @@ func (s *BiddingScenario) CreateBuyBidsContinuous(ctx context.Context, client *g
 		case <-ticker.C:
 			quantity := int64(2000) // must be greater than common.QUANTITY_SCALE
 			price := int64(25)
+			walletNumber := i % 3
 
 			transient := map[string][]byte{
 				"price":    []byte(strconv.FormatInt(price, 10)),
@@ -130,7 +131,7 @@ func (s *BiddingScenario) CreateBuyBidsContinuous(ctx context.Context, client *g
 			}
 
 			start := time.Now()
-			_, commit, txErr := client.SubmitAsyncWithTransient("CreateBuyBidPrivateQuantity", transient)
+			_, commit, txErr := client.SubmitAsyncWithTransient("CreateBuyBidPrivateQuantityForWallet", transient, strconv.Itoa(walletNumber))
 			awaitAndRecord(s.collector, fmt.Sprintf("buy-bid-cont-%d", i), "bidding-buy-continuous", start, commit, txErr, nil)
 
 			i++

@@ -224,7 +224,7 @@ func (b *BuyBid) FromProto(m proto.Message) error {
 	return nil
 }
 
-func publishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, withPrivateQuantity bool) error {
+func publishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, withPrivateQuantity bool, walletNumber int64) error {
 	priceBytes, err := ccstate.GetTransientData(stub, "price")
 	if err != nil {
 		return err
@@ -236,10 +236,10 @@ func publishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, withPrivate
 	}
 
 	buyerID := identities.GetID(stub)
-	buyerWallet := &payment.VirtualTokenWallet{}
+	buyerWallet := &payment.VirtualTokenWallet{OwnerID: buyerID, Number: walletNumber}
 	// TODO: this will cause MVCC_READ_CONFLICT if many bids from the same caller
 	// are published in the same block, consider a more scalable approach if this becomes an issue
-	err = buyerWallet.FromWorldState(stub, []string{buyerID})
+	err = buyerWallet.FromWorldState(stub, (*buyerWallet.GetID())[0])
 	if err != nil {
 		return fmt.Errorf("could not get buyer wallet from world state: %v", err)
 	}
@@ -293,10 +293,14 @@ func publishBuyBid(stub shim.ChaincodeStubInterface, quantity int64, withPrivate
 }
 
 func PublishBuyBidWithPublicQuanitity(stub shim.ChaincodeStubInterface, quantity int64) error {
-	return publishBuyBid(stub, quantity, false)
+	return publishBuyBid(stub, quantity, false, 0)
 }
 
 func PublishBuyBidWithPrivateQuantity(stub shim.ChaincodeStubInterface) error {
+	return PublishBuyBidWithPrivateQuantityForWallet(stub, 0)
+}
+
+func PublishBuyBidWithPrivateQuantityForWallet(stub shim.ChaincodeStubInterface, walletNumber int64) error {
 	quantityBytes, err := ccstate.GetTransientData(stub, "quantity")
 	if err != nil {
 		return err
@@ -305,7 +309,7 @@ func PublishBuyBidWithPrivateQuantity(stub shim.ChaincodeStubInterface) error {
 	if err != nil {
 		return fmt.Errorf("could not parse quantity: %v", err)
 	}
-	return publishBuyBid(stub, quantity, true)
+	return publishBuyBid(stub, quantity, true, walletNumber)
 }
 
 func RetractBuyBid(stub shim.ChaincodeStubInterface, bidID []string) error {
@@ -333,8 +337,8 @@ func RetractBuyBid(stub shim.ChaincodeStubInterface, bidID []string) error {
 	}
 
 	reservedFunds := mockBid.PrivatePrice.Price * quantity
-	buyerWallet := &payment.VirtualTokenWallet{}
-	if err := buyerWallet.FromWorldState(stub, []string{mockBid.BuyerID}); err != nil {
+	buyerWallet := &payment.VirtualTokenWallet{OwnerID: mockBid.BuyerID, Number: 0}
+	if err := buyerWallet.FromWorldState(stub, (*buyerWallet.GetID())[0]); err != nil {
 		return fmt.Errorf("could not get buyer wallet from world state: %v", err)
 	}
 	buyerWallet.Quantity += reservedFunds

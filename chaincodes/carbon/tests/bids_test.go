@@ -234,8 +234,8 @@ func TestRetractBidRefundsWalletAndDeletesBid(t *testing.T) {
 	bidID := []string{bidTS, creatorID}
 
 	// Wallet should be debited after placing the bid.
-	wallet := &payment.VirtualTokenWallet{}
-	err = wallet.FromWorldState(stub, []string{creatorID})
+	wallet := &payment.VirtualTokenWallet{OwnerID: creatorID, Number: 0}
+	err = wallet.FromWorldState(stub, (*wallet.GetID())[0])
 	require.NoError(t, err)
 	require.Equal(t, initialWallet-price*quantity, wallet.Quantity)
 
@@ -245,7 +245,8 @@ func TestRetractBidRefundsWalletAndDeletesBid(t *testing.T) {
 
 	// Wallet should be restored after retract.
 	stub.MockTransactionStart("tx2")
-	err = wallet.FromWorldState(stub, []string{creatorID})
+	wallet = &payment.VirtualTokenWallet{OwnerID: creatorID, Number: 0}
+	err = wallet.FromWorldState(stub, (*wallet.GetID())[0])
 	require.NoError(t, err)
 	require.Equal(t, initialWallet, wallet.Quantity)
 

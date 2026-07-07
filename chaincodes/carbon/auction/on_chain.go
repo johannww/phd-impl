@@ -248,13 +248,14 @@ func transferPaymentToken(
 
 	for matchedBid := range matchedChan {
 
+		walletNumber := "0"
 		//get virtual token wallet
-		buyerVtw, err := state.GetStateFromCache(stub, &vtwCache, payment.VIRTUAL_TOKEN_WALLET_PREFIX, []string{matchedBid.BuyBid.BuyerID})
+		buyerVtw, err := state.GetStateFromCache(stub, &vtwCache, payment.VIRTUAL_TOKEN_WALLET_PREFIX, []string{matchedBid.BuyBid.BuyerID, walletNumber})
 		if err != nil {
 			// close(matchedChan)
 			panic("could not get buyer virtual token wallet: " + err.Error())
 		}
-		sellerVtw, err := state.GetStateFromCache(stub, &vtwCache, payment.VIRTUAL_TOKEN_WALLET_PREFIX, []string{matchedBid.SellBid.SellerID})
+		sellerVtw, err := state.GetStateFromCache(stub, &vtwCache, payment.VIRTUAL_TOKEN_WALLET_PREFIX, []string{matchedBid.SellBid.SellerID, walletNumber})
 		if err != nil {
 			// close(matchedChan)
 			panic("could not get seller virtual token wallet: " + err.Error())

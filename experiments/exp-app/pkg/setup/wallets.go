@@ -40,15 +40,20 @@ func (s *SetupManager) SetupBuyerWallets(
 		return nil, fmt.Errorf("caller ID mismatch during wallet setup. expected %s, got %s", id, string(callerID))
 	}
 
-	_, commit, err := s.client.SubmitAsync(
-		"MintVirtualToken",
-		id,
-		strconv.FormatInt(initialBalance, 10),
-	)
-	if err != nil {
-		log.Printf("Warning: Failed to submit wallet setup for %s: %v", id, err)
-		return nil, fmt.Errorf("failed to submit wallet setup for %s: %v", id, err)
+	commits := make([]*client.Commit, 0, 3)
+	for walletNumber := int64(0); walletNumber < 3; walletNumber++ {
+		_, commit, submitErr := s.client.SubmitAsync(
+			"MintVirtualTokenForWalletId",
+			id,
+			strconv.FormatInt(walletNumber, 10),
+			strconv.FormatInt(initialBalance, 10),
+		)
+		if submitErr != nil {
+			log.Printf("Warning: Failed to submit wallet setup for %s wallet %d: %v", id, walletNumber, submitErr)
+			return nil, fmt.Errorf("failed to submit wallet setup for %s wallet %d: %v", id, walletNumber, submitErr)
+		}
+		commits = append(commits, commit)
 	}
 
-	return []*client.Commit{commit}, nil
+	return commits, nil
 }

@@ -145,7 +145,7 @@ func AggregateUTXOsIntoWallet(stub shim.ChaincodeStubInterface, ownerID string) 
 	}
 
 	// Update the wallet balance
-	err = UpdateVirtualTokenWallet(stub, ownerID, totalAmount)
+	err = UpdateVirtualTokenWalletForWalletID(stub, ownerID, 0, totalAmount)
 	if err != nil {
 		return 0, fmt.Errorf("failed to update wallet for owner %s: %v", ownerID, err)
 	}

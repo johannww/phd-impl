@@ -2,6 +2,7 @@ package payment
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
@@ -20,6 +21,7 @@ const (
 type VirtualTokenWallet struct {
 	OwnerID  string `json:"owner"`
 	Quantity int64  `json:"quantity"`
+	Number   int64  `json:"number"`
 }
 
 var _ state.WorldStateManager = (*VirtualTokenWallet)(nil)
@@ -28,6 +30,7 @@ func (vtw *VirtualTokenWallet) ToProto() proto.Message {
 	return &pb.VirtualTokenWallet{
 		Owner:    vtw.OwnerID,
 		Quantity: vtw.Quantity,
+		Number:   vtw.Number,
 	}
 }
 
@@ -38,6 +41,7 @@ func (vtw *VirtualTokenWallet) FromProto(m proto.Message) error {
 	}
 	vtw.OwnerID = pv.Owner
 	vtw.Quantity = pv.Quantity
+	vtw.Number = pv.Number
 	return nil
 }
 
@@ -50,19 +54,23 @@ func (vtw *VirtualTokenWallet) ToWorldState(stub shim.ChaincodeStubInterface) er
 }
 
 func (vtw *VirtualTokenWallet) GetID() *[][]string {
-	return &[][]string{{vtw.OwnerID}}
+	return &[][]string{{vtw.OwnerID, strconv.FormatInt(vtw.Number, 10)}}
 }
 
 func MintVirtualToken(stub shim.ChaincodeStubInterface, ownerID string, quantity int64) (*VirtualTokenWallet, error) {
-	tokenWallet := &VirtualTokenWallet{OwnerID: ownerID}
+	return MintVirtualTokenForWalletID(stub, ownerID, 0, quantity)
+}
+
+func MintVirtualTokenForWalletID(stub shim.ChaincodeStubInterface, ownerID string, walletNumber int64, quantity int64) (*VirtualTokenWallet, error) {
+	tokenWallet := &VirtualTokenWallet{OwnerID: ownerID, Number: walletNumber}
 	if cid.AssertAttributeValue(stub, identities.PaymentCompanyAttr, "true") != nil {
 		return nil, fmt.Errorf("only identities with the attribute %s can mint virtual tokens", identities.PaymentCompanyAttr)
 	}
 
-	err := tokenWallet.FromWorldState(stub, []string{ownerID})
+	err := tokenWallet.FromWorldState(stub, (*tokenWallet.GetID())[0])
 
 	if err != nil {
-		tokenWallet.Quantity = quantity
+		tokenWallet.Quantity = 0
 	}
 
 	tokenWallet.Quantity += quantity
@@ -76,9 +84,15 @@ func MintVirtualToken(stub shim.ChaincodeStubInterface, ownerID string, quantity
 // UpdateVirtualTokenWallet updates the balance of a virtual token wallet.
 // If the wallet doesn't exist, it creates a new one.
 func UpdateVirtualTokenWallet(stub shim.ChaincodeStubInterface, ownerID string, quantity int64) error {
-	wallet := &VirtualTokenWallet{OwnerID: ownerID}
+	return UpdateVirtualTokenWalletForWalletID(stub, ownerID, 0, quantity)
+}
+
+// UpdateVirtualTokenWalletForWalletID updates the balance of a virtual token wallet.
+// If the wallet doesn't exist, it creates a new one.
+func UpdateVirtualTokenWalletForWalletID(stub shim.ChaincodeStubInterface, ownerID string, walletNumber int64, quantity int64) error {
+	wallet := &VirtualTokenWallet{OwnerID: ownerID, Number: walletNumber}
 	// Try to get existing wallet
-	err := wallet.FromWorldState(stub, []string{ownerID})
+	err := wallet.FromWorldState(stub, (*wallet.GetID())[0])
 	if err != nil {
 		// Wallet doesn't exist, start with 0
 		wallet.Quantity = 0
