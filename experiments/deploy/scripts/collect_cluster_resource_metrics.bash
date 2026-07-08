@@ -10,6 +10,9 @@ END_TS=""
 STEP="15s"
 RATE_WINDOW="${RATE_WINDOW:-5m}"
 
+TIMESERIES_FILE="$(mktemp)"
+trap 'rm -f "${TIMESERIES_FILE}"' EXIT
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --output)
@@ -241,7 +244,7 @@ orderer_memory_per_pod="$(query_prometheus_map "${orderer_memory_per_pod_query}"
 exp_app_memory_per_pod="$(query_prometheus_map "${exp_app_memory_per_pod_query}" "pod")"
 chaincode_memory_per_pod="$(query_prometheus_map "${chaincode_memory_per_pod_query}" "pod")"
 
-timeseries_json="null"
+printf 'null' > "${TIMESERIES_FILE}"
 if [[ -n "${START_TS}" ]]; then
   peer_cpu_total_series="$(query_prometheus_range_values "${peer_cpu_total_query}")"
   orderer_cpu_total_series="$(query_prometheus_range_values "${orderer_cpu_total_query}")"
@@ -263,7 +266,7 @@ if [[ -n "${START_TS}" ]]; then
   exp_app_memory_per_pod_series="$(query_prometheus_range_grouped "${exp_app_memory_per_pod_query}" "pod")"
   chaincode_memory_per_pod_series="$(query_prometheus_range_grouped "${chaincode_memory_per_pod_query}" "pod")"
 
-  timeseries_json="$(jq -n \
+  jq -n \
     --arg start_ts "${START_TS}" \
     --arg end_ts "${END_TS}" \
     --arg step "${STEP}" \
@@ -317,7 +320,7 @@ if [[ -n "${START_TS}" ]]; then
           chaincodes: $chaincode_memory_per_pod_series
         }
       }
-    }')"
+    }' > "${TIMESERIES_FILE}"
 fi
 
 mkdir -p "$(dirname "${OUTPUT}")"
@@ -354,7 +357,7 @@ jq -n \
   --argjson orderer_memory_per_pod "${orderer_memory_per_pod}" \
   --argjson exp_app_memory_per_pod "${exp_app_memory_per_pod}" \
   --argjson chaincode_memory_per_pod "${chaincode_memory_per_pod}" \
-  --argjson timeseries "${timeseries_json}" \
+  --slurpfile timeseries "${TIMESERIES_FILE}" \
   '{
     timestamp: $timestamp,
     target_namespace: $target_namespace,
@@ -403,7 +406,7 @@ jq -n \
         }
       }
     },
-    timeseries: $timeseries
+    timeseries: ($timeseries[0] // null)
   }' > "${OUTPUT}"
 
 echo "Cluster resource metrics saved: ${OUTPUT}"
