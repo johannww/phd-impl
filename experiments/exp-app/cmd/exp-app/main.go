@@ -381,6 +381,7 @@ func main() {
 			if err := rt.credit.MintCreditsContinuous(ctx, rt.carbon, *mintInterval, rt.propertyIDs, quantityPerMint); err != nil && err != context.Canceled {
 				log.Printf("MintCreditsContinuous user %d error: %v", rt.idx, err)
 			}
+			log.Printf("MintCreditsContinuous user %d stopped", rt.idx)
 		}()
 
 		log.Printf("Launcher: user[%d]=%s buy bidding started", rt.idx, rt.id)
@@ -390,6 +391,7 @@ func main() {
 			if err := rt.bidding.CreateBuyBidsContinuous(ctx, rt.carbon, *buyBidInterval); err != nil && err != context.Canceled {
 				log.Printf("CreateBuyBidsContinuous user %d error: %v", rt.idx, err)
 			}
+			log.Printf("CreateBuyBidsContinuous user %d stopped", rt.idx)
 		}()
 
 		log.Printf("Launcher: user[%d]=%s sell bidding started", rt.idx, rt.id)
@@ -399,6 +401,7 @@ func main() {
 			if err := rt.bidding.CreateSellBidsContinuous(ctx, rt.carbon, *sellBidInterval); err != nil && err != context.Canceled {
 				log.Printf("CreateSellBidsContinuous user %d error: %v", rt.idx, err)
 			}
+			log.Printf("CreateSellBidsContinuous user %d stopped", rt.idx)
 		}()
 
 		log.Printf("Launcher: user[%d]=%s interop workflow started", rt.idx, rt.id)
@@ -408,6 +411,7 @@ func main() {
 			if err := rt.interopFlow.HTLCWorkflow(ctx, rt.carbon, rt.interop, 100); err != nil && err != context.Canceled {
 				log.Printf("HTLCWorkflow user %d error: %v", rt.idx, err)
 			}
+			log.Printf("HTLCWorkflow user %d stopped", rt.idx)
 		}()
 
 		if rt.ownsCoupled {
@@ -418,6 +422,7 @@ func main() {
 				if err := rt.coupled.PeriodicAuction(ctx, rt.carbon, *auctionInterval); err != nil && err != context.Canceled {
 					log.Printf("PeriodicAuction user %d error: %v", rt.idx, err)
 				}
+				log.Printf("PeriodicAuction user %d stopped", rt.idx)
 			}()
 		}
 	}

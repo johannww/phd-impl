@@ -81,6 +81,13 @@ func (s *BiddingScenario) CreateSellBidsContinuous(ctx context.Context, client *
 			biddingCredits := s.buckets.BiddingCredits()
 
 			for _, credit := range biddingCredits {
+				select {
+				case <-ctx.Done():
+					log.Printf("Context done while creating sell bids: %v", ctx.Err())
+					return ctx.Err()
+				default:
+				}
+
 				idParts := credit.GetID()
 				if idParts == nil || len(*idParts) == 0 {
 					panic(fmt.Sprintf("Credit %v has no ID parts", credit))
