@@ -54,7 +54,10 @@ func NewClientWrapper(cfg *GatewayConfig) (*ClientWrapper, error) {
 	tlsConfig := credentials.NewClientTLSFromCert(certPool, "")
 
 	// Create gRPC connection
-	conn, err := grpc.NewClient(cfg.PeerAddr, grpc.WithTransportCredentials(tlsConfig))
+	conn, err := grpc.NewClient(cfg.PeerAddr,
+		grpc.WithTransportCredentials(tlsConfig),
+		// fabric chaincode can handle 100 MiB messages max
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100*1024*1024)))
 	if err != nil {
 		return nil, fmt.Errorf("grpc dial: %w", err)
 	}
