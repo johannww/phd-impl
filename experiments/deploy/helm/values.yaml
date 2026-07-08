@@ -34,7 +34,7 @@ network: &defaultNetwork
   batch:
     timeout: "500ms"
     maxMessageCount: 500
-    absoluteMaxBytes: "10 MB"
+    absoluteMaxBytes: "50 MB"
     preferredMaxBytes: "2 MB"
   organizations:
     - name: "mma"
