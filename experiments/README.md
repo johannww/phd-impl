@@ -118,6 +118,15 @@ Other available knobs include `TPS`, `BURST`, `USER_COUNT`, `MINT_INTERVAL`, `BU
 
 To tune cluster-metrics range granularity, set `CLUSTER_METRICS_STEP` (default: `15s`).
 
+To have Prometheus/Grafana scrape Fabric peer/orderer/chaincode metrics, enable ServiceMonitors during deploy:
+
+```bash
+MONITORING_SERVICEMONITORS_ENABLED=true \
+MONITORING_RELEASE_NAME=monitoring \
+MONITORING_NAMESPACE=monitoring \
+make experiments
+```
+
 ## Cleanup
 
 ```bash
