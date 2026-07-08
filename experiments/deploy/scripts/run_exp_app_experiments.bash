@@ -159,8 +159,10 @@ run_pod_experiment() {
 setup_pod=""
 declare -A pod_org
 declare -A pod_run_coupled
+declare -A pod_user_count
 for pod in "${pods[@]}"; do
   pod_org["${pod}"]="$(pod_env_value "${pod}" "EXP_APP_ORGANIZATION")"
+  pod_user_count["${pod}"]="$(pod_env_value "${pod}" "EXP_APP_USER_COUNT")"
 
   run_coupled="$(pod_env_value "${pod}" "EXP_APP_RUN_COUPLED")"
   if [[ -z "${run_coupled}" ]]; then
@@ -179,6 +181,24 @@ done
 if [[ -z "${setup_pod}" ]]; then
   setup_pod="${pods[0]}"
   echo "==> No setup-designated pod found, defaulting setup owner to ${setup_pod}"
+fi
+
+# set USER_COUNT from pod env if not explicitly set
+if [[ -z "${USER_COUNT}" ]]; then
+  inferred_user_count="${pod_user_count[${setup_pod}]}"
+  if [[ -z "${inferred_user_count}" ]]; then
+    for pod in "${pods[@]}"; do
+      if [[ -n "${pod_user_count[${pod}]}" ]]; then
+        inferred_user_count="${pod_user_count[${pod}]}"
+        break
+      fi
+    done
+  fi
+
+  if [[ -n "${inferred_user_count}" ]]; then
+    USER_COUNT="${inferred_user_count}"
+    echo "==> Using USER_COUNT from pod env (EXP_APP_USER_COUNT): ${USER_COUNT}"
+  fi
 fi
 
 RUN_FLAGS_JSON="${local_run_dir}/exp_app_flags.json"
