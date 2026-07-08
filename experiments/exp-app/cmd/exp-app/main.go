@@ -55,6 +55,7 @@ func main() {
 		defaultUserCount = parsedUserCount
 	}
 	userCountOverride := flag.Int("user-count", defaultUserCount, "Number of users to run per organization (0 = use profile user count)")
+	walletsPerBuyer := flag.Int("wallets-per-buyer", 4, "Number of virtual token wallets to create/use per buyer")
 	defaultRunCoupled := true
 	if envRunCoupled := strings.TrimSpace(os.Getenv("EXP_APP_RUN_COUPLED")); envRunCoupled != "" {
 		defaultRunCoupled = strings.EqualFold(envRunCoupled, "true") || envRunCoupled == "1"
@@ -62,6 +63,10 @@ func main() {
 	runCoupled := flag.Bool("run-coupled", defaultRunCoupled, "Run coupled auction periodic routine")
 
 	flag.Parse()
+
+	if *walletsPerBuyer <= 0 {
+		log.Fatalf("wallets-per-buyer must be > 0, got %d", *walletsPerBuyer)
+	}
 
 	// Validate required flags
 	if *profilePath == "" {
@@ -237,7 +242,7 @@ func main() {
 			log.Fatalf("Failed to create setup gateway client for user %d: %v", userIdx+1, setupClientErr)
 		}
 
-		setupManager := setup.NewSetupManager(setupClient, profile, "")
+		setupManager := setup.NewSetupManager(setupClient, profile, "", *walletsPerBuyer)
 		setupResult, setupErr := setupManager.InitializeBETS(
 			context.Background(),
 			nPropsPerIdentity,
@@ -348,7 +353,7 @@ func main() {
 			interop:     interopClient,
 			executor:    exec,
 			credit:      scenarios.NewCreditScenario(exec),
-			bidding:     scenarios.NewBiddingScenario(exec, sharedBuckets),
+			bidding:     scenarios.NewBiddingScenario(exec, sharedBuckets, *walletsPerBuyer),
 			interopFlow: scenarios.NewInteropScenario(exec, sharedBuckets),
 			coupled:     runtimeCoupled,
 			propertyIDs: propertyIDs,

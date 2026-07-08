@@ -24,6 +24,7 @@ BUY_BID_INTERVAL="${BUY_BID_INTERVAL:-500ms}"
 SELL_BID_INTERVAL="${SELL_BID_INTERVAL:-500ms}"
 AUCTION_INTERVAL="${AUCTION_INTERVAL:-15s}"
 USER_COUNT="${USER_COUNT:-}"
+WALLETS_PER_BUYER="${WALLETS_PER_BUYER:-4}"
 RUN_GLOBAL_SETUP="${RUN_GLOBAL_SETUP:-true}"
 SETUP_USER_INDEX="${SETUP_USER_INDEX:-0}"
 MONITORING_NAMESPACE="${MONITORING_NAMESPACE:-monitoring}"
@@ -141,6 +142,9 @@ run_pod_experiment() {
   if [[ -n "${USER_COUNT}" ]]; then
     cmd+=("--user-count=${USER_COUNT}")
   fi
+  if [[ -n "${WALLETS_PER_BUYER}" ]]; then
+    cmd+=("--wallets-per-buyer=${WALLETS_PER_BUYER}")
+  fi
   if [[ -n "${TPS}" ]]; then
     cmd+=("--tps=${TPS}")
   fi
@@ -195,6 +199,7 @@ BURST="${BURST}" \
 USER_COUNT="${USER_COUNT}" \
 RUN_GLOBAL_SETUP="${RUN_GLOBAL_SETUP}" \
 SETUP_USER_INDEX="${SETUP_USER_INDEX}" \
+WALLETS_PER_BUYER="${WALLETS_PER_BUYER}" \
 CLUSTER_METRICS_RATE_WINDOW="${CLUSTER_METRICS_RATE_WINDOW}" \
 "${SCRIPT_DIR}/write_exp_app_run_config.bash" \
   --output "${RUN_FLAGS_JSON}" \
@@ -211,6 +216,7 @@ if [[ "${RUN_GLOBAL_SETUP}" == "true" ]]; then
     /app/exp-app-setup
     "--profile=${PROFILE_IN_POD}"
     "--user-index=${SETUP_USER_INDEX}"
+    "--wallets-per-buyer=${WALLETS_PER_BUYER}"
   )
   if [[ -n "${pod_org[${setup_pod}]}" ]]; then
     setup_cmd+=("--organization=${pod_org[${setup_pod}]}")

@@ -13,14 +13,20 @@ type SetupManager struct {
 	client          *gateway.ClientWrapper
 	profile         *network.NetworkProfile
 	armTemplatePath string
+	walletsPerBuyer int
 }
 
 // NewSetupManager creates a new setup manager
-func NewSetupManager(client *gateway.ClientWrapper, profile *network.NetworkProfile, armTemplatePath string) *SetupManager {
+func NewSetupManager(client *gateway.ClientWrapper, profile *network.NetworkProfile, armTemplatePath string, walletsPerBuyer int) *SetupManager {
+	if walletsPerBuyer <= 0 {
+		walletsPerBuyer = 1
+	}
+
 	return &SetupManager{
 		client:          client,
 		profile:         profile,
 		armTemplatePath: armTemplatePath,
+		walletsPerBuyer: walletsPerBuyer,
 	}
 }
 

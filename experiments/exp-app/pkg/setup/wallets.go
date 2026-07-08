@@ -40,8 +40,8 @@ func (s *SetupManager) SetupBuyerWallets(
 		return nil, fmt.Errorf("caller ID mismatch during wallet setup. expected %s, got %s", id, string(callerID))
 	}
 
-	commits := make([]*client.Commit, 0, 3)
-	for walletNumber := int64(0); walletNumber < 3; walletNumber++ {
+	commits := make([]*client.Commit, 0, s.walletsPerBuyer)
+	for walletNumber := int64(0); walletNumber < int64(s.walletsPerBuyer); walletNumber++ {
 		_, commit, submitErr := s.client.SubmitAsync(
 			"MintVirtualTokenForWalletId",
 			id,

@@ -23,6 +23,7 @@ func main() {
 	armTemplatePath := flag.String("arm-template", defaultArmTemplatePath, "Path to ARM template JSON for CCE policy")
 	organizationFilter := flag.String("organization", strings.TrimSpace(os.Getenv("EXP_APP_ORGANIZATION")), "Organization to use from profile (default: first organization)")
 	userIndex := flag.Int("user-index", 0, "User index to use for setup identity")
+	walletsPerBuyer := flag.Int("wallets-per-buyer", 4, "Number of virtual token wallets to create per buyer")
 
 	flag.Parse()
 
@@ -30,6 +31,9 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: --profile is required\n")
 		flag.PrintDefaults()
 		os.Exit(1)
+	}
+	if *walletsPerBuyer <= 0 {
+		log.Fatalf("wallets-per-buyer must be > 0, got %d", *walletsPerBuyer)
 	}
 
 	profile, err := network.LoadJSON(*profilePath)
@@ -73,7 +77,7 @@ func main() {
 		_ = client.Close()
 	}()
 
-	setupMgr := setup.NewSetupManager(client, profile, *armTemplatePath)
+	setupMgr := setup.NewSetupManager(client, profile, *armTemplatePath, *walletsPerBuyer)
 	log.Printf("Running global setup (org=%s, userIndex=%d, armTemplate=%s)", orgName, *userIndex, *armTemplatePath)
 	teeClient, err := setupMgr.RunGlobalSetup(context.Background())
 	if err != nil {

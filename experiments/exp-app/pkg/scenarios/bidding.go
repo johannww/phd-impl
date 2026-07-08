@@ -17,17 +17,23 @@ import (
 
 // BiddingScenario creates buy and sell bids for auctions
 type BiddingScenario struct {
-	executor  *workload.Executor
-	collector metrics.MetricsCollector
-	buckets   *SharedCreditBuckets
+	executor        *workload.Executor
+	collector       metrics.MetricsCollector
+	buckets         *SharedCreditBuckets
+	walletsPerBuyer int
 }
 
 // NewBiddingScenario creates a new bidding scenario
-func NewBiddingScenario(executor *workload.Executor, buckets *SharedCreditBuckets) *BiddingScenario {
+func NewBiddingScenario(executor *workload.Executor, buckets *SharedCreditBuckets, walletsPerBuyer int) *BiddingScenario {
+	if walletsPerBuyer <= 0 {
+		walletsPerBuyer = 1
+	}
+
 	return &BiddingScenario{
-		executor:  executor,
-		collector: executor.GetCollector(),
-		buckets:   buckets,
+		executor:        executor,
+		collector:       executor.GetCollector(),
+		buckets:         buckets,
+		walletsPerBuyer: walletsPerBuyer,
 	}
 }
 
@@ -123,7 +129,7 @@ func (s *BiddingScenario) CreateBuyBidsContinuous(ctx context.Context, client *g
 		case <-ticker.C:
 			quantity := int64(2000) // must be greater than common.QUANTITY_SCALE
 			price := int64(25)
-			walletNumber := i % 3
+			walletNumber := i % s.walletsPerBuyer
 
 			transient := map[string][]byte{
 				"price":    []byte(strconv.FormatInt(price, 10)),

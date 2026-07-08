@@ -65,6 +65,7 @@ jq -n \
   --arg user_count "${USER_COUNT:-}" \
   --arg run_global_setup "${RUN_GLOBAL_SETUP:-}" \
   --arg setup_user_index "${SETUP_USER_INDEX:-}" \
+  --arg wallets_per_buyer "${WALLETS_PER_BUYER:-}" \
   --arg cluster_metrics_rate_window "${CLUSTER_METRICS_RATE_WINDOW:-}" \
   --arg setup_pod "${SETUP_POD}" \
   --argjson per_pod "${per_pod_json}" \
@@ -95,7 +96,8 @@ jq -n \
       metrics_formats: $metrics_formats,
       tps: (if $tps == "" then null else $tps end),
       burst: (if $burst == "" then null else $burst end),
-      user_count: (if $user_count == "" then null else $user_count end)
+      user_count: (if $user_count == "" then null else $user_count end),
+      wallets_per_buyer: (if $wallets_per_buyer == "" then null else $wallets_per_buyer end)
     },
     per_pod: $per_pod
   }' > "${OUTPUT}"
