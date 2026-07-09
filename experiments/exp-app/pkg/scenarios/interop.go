@@ -29,29 +29,23 @@ func NewInteropScenario(executor *workload.Executor, buckets *SharedCreditBucket
 	}
 }
 
-// HTLCWorkflow executes a full HTLC cycle: LockCredit -> CreateHTLC -> ClaimHTLC
-func (s *InteropScenario) HTLCWorkflow(ctx context.Context, carbonClient *gateway.ClientWrapper, interopClient *gateway.ClientWrapper, count int) error {
+// HTLCWorkflow continuously executes HTLC cycles until the context is cancelled:
+// LockCredit -> CreateHTLC -> ClaimHTLC.
+func (s *InteropScenario) HTLCWorkflow(ctx context.Context, carbonClient *gateway.ClientWrapper, interopClient *gateway.ClientWrapper) error {
 	if s.buckets == nil {
 		return fmt.Errorf("shared credit buckets are required for interop workflow")
 	}
 
 	ownerID := carbonClient.GetIdentityID()
 
-	for i := 0; i < count; {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		assignedCredit, ok := s.buckets.TakeInteropCredit()
+	for attempt := 0; ; attempt++ {
+		assignedCredit, ok := s.buckets.TakeInteropCredit(ctx)
 		if !ok {
-			time.Sleep(100 * time.Millisecond)
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			continue
 		}
-
-		attempt := i
-		i++
 
 		idParts := assignedCredit.GetID()
 		if idParts == nil || len(*idParts) == 0 {

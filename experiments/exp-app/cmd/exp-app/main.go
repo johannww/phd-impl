@@ -408,7 +408,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := rt.interopFlow.HTLCWorkflow(ctx, rt.carbon, rt.interop, 100); err != nil && err != context.Canceled {
+			if err := rt.interopFlow.HTLCWorkflow(ctx, rt.carbon, rt.interop); err != nil && err != context.Canceled {
 				log.Printf("HTLCWorkflow user %d error: %v", rt.idx, err)
 			}
 			log.Printf("HTLCWorkflow user %d stopped", rt.idx)

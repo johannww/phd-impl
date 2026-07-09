@@ -1,6 +1,7 @@
 package scenarios
 
 import (
+	"context"
 	"strings"
 	"sync"
 
@@ -15,12 +16,14 @@ type SharedCreditBuckets struct {
 	interopQueue []*credits.MintCredit
 	reserved     map[string]struct{}
 	bidding      []*credits.MintCredit
+	interopReady chan struct{}
 }
 
 // NewSharedCreditBuckets creates an empty shared bucket set.
 func NewSharedCreditBuckets() *SharedCreditBuckets {
 	return &SharedCreditBuckets{
-		reserved: make(map[string]struct{}),
+		reserved:     make(map[string]struct{}),
+		interopReady: make(chan struct{}, 1),
 	}
 }
 
@@ -28,7 +31,6 @@ func NewSharedCreditBuckets() *SharedCreditBuckets {
 // GetAvailableCreditsByOwner response.
 func (s *SharedCreditBuckets) RefreshFromAvailable(available []credits.MintCredit) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	current := make(map[string]*credits.MintCredit, len(available))
 	for _, credit := range available {
@@ -47,6 +49,7 @@ func (s *SharedCreditBuckets) RefreshFromAvailable(available []credits.MintCredi
 		s.interopQueue = nil
 		s.bidding = nil
 		s.reserved = make(map[string]struct{})
+		s.mu.Unlock()
 		return
 	}
 
@@ -89,6 +92,12 @@ func (s *SharedCreditBuckets) RefreshFromAvailable(available []credits.MintCredi
 
 	s.reserved = newReserved
 	s.bidding = bidding
+	hasInteropCredit := len(s.interopQueue) > 0
+	s.mu.Unlock()
+
+	if hasInteropCredit {
+		s.signalInteropReady()
+	}
 }
 
 // BiddingCredits returns current bidding credits.
@@ -106,23 +115,44 @@ func (s *SharedCreditBuckets) BiddingCredits() []*credits.MintCredit {
 }
 
 // TakeInteropCredit pops next interop credit from queue.
-func (s *SharedCreditBuckets) TakeInteropCredit() (*credits.MintCredit, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *SharedCreditBuckets) TakeInteropCredit(ctx context.Context) (*credits.MintCredit, bool) {
+	for {
+		s.mu.Lock()
+		if len(s.interopQueue) > 0 {
+			credit := s.interopQueue[0]
+			s.interopQueue = s.interopQueue[1:]
 
-	if len(s.interopQueue) == 0 {
-		return nil, false
+			key, ok := mintCreditIDKey(credit)
+			if ok {
+				delete(s.reserved, key)
+			}
+			s.mu.Unlock()
+			return credit, true
+		}
+		s.mu.Unlock()
+
+		if err := s.drainInteropReady(ctx); err != nil {
+			return nil, false
+		}
 	}
+}
 
-	credit := s.interopQueue[0]
-	s.interopQueue = s.interopQueue[1:]
-
-	key, ok := mintCreditIDKey(credit)
-	if ok {
-		delete(s.reserved, key)
+// signalInteropReady performs a non-blocking send to the interopReady channel
+func (s *SharedCreditBuckets) signalInteropReady() {
+	select {
+	case s.interopReady <- struct{}{}:
+	default:
 	}
+}
 
-	return credit, true
+// drainInteropReady waits for a signal that interop credits are available or for the context to be done.
+func (s *SharedCreditBuckets) drainInteropReady(ctx context.Context) error {
+	select {
+	case <-s.interopReady:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func mintCreditIDKey(credit *credits.MintCredit) (string, bool) {
