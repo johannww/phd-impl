@@ -21,10 +21,12 @@ CLUSTER_NAME="${CLUSTER_NAME:-carbon-aks}"
 LOCATION="${LOCATION:-centralindia}"
 NODE_COUNT="${NODE_COUNT:-3}"
 VM_SIZE="${VM_SIZE:-Standard_D4s_v5}"  # 4 vCPU, 16 GB RAM
+ENABLE_IN_CLUSTER_EXP_APP="${ENABLE_IN_CLUSTER_EXP_APP:-true}"
 ENABLE_CLUSTER_MONITORING="${ENABLE_CLUSTER_MONITORING:-true}"
 MONITORING_SERVICEMONITORS_ENABLED="${MONITORING_SERVICEMONITORS_ENABLED:-${ENABLE_CLUSTER_MONITORING}}"
 MONITORING_RELEASE_NAME="${MONITORING_RELEASE_NAME:-monitoring}"
 MONITORING_NAMESPACE="${MONITORING_NAMESPACE:-monitoring}"
+EXP_APP_RESULTS_STORAGE_CLASS="${EXP_APP_RESULTS_STORAGE_CLASS:-azurefile-csi}"
 
 COLOR_GREEN='\033[0;32m'
 COLOR_YELLOW='\033[1;33m'
@@ -236,11 +238,26 @@ if [[ -n "${TEE_PID:-}" ]]; then
   fi
 fi
 
-# Deploy exp-app pod (in-cluster)
-echo -e "${COLOR_YELLOW}Deploying exp-app pod...${NC}"
-export RELEASE_NAME EXP_APP_RELEASE_NAME="${RELEASE_NAME}-exp-app"
-. "${SCRIPT_DIR}/deploy_exp_app.bash"
-echo -e "${COLOR_GREEN}✓ exp-app pod deployed${NC}\n"
+# Deploy exp-app pods (in-cluster) or just generate an AKS profile
+if [[ "${ENABLE_IN_CLUSTER_EXP_APP}" == "true" ]]; then
+    echo -e "${COLOR_YELLOW}Deploying exp-app pods inside cluster (one per peer organization)...${NC}"
+    export RELEASE_NAME
+    export EXP_APP_RELEASE_NAME="${RELEASE_NAME}-exp-app"
+    export EXP_APP_FULLNAME_OVERRIDE="exp-app"
+    export PROFILE_OUTPUT="${SCRIPT_DIR}/../vars/network-profile-aks.json"
+    export PROFILE_IN_CLUSTER="true"
+    export PROFILE_NAMESPACE="${NAMESPACE}"
+    export NETWORK_PROFILE_CONFIGMAP_NAME="network-profile"
+    export EXP_APP_RESULTS_STORAGE_CLASS
+    unset EXP_APP_ORGANIZATION EXP_APP_USER_COUNT EXP_APP_RUN_SETUP EXP_APP_RUN_COUPLED
+
+    . "${SCRIPT_DIR}/deploy_exp_app.bash"
+    echo -e "${COLOR_GREEN}✓ exp-app pods deployed${NC}\n"
+else
+    echo -e "${COLOR_YELLOW}Generating in-cluster AKS network profile only...${NC}"
+    . "${SCRIPT_DIR}/generate_network_profile_aks.bash"
+    echo -e "${COLOR_GREEN}✓ AKS network profile generated${NC}\n"
+fi
 
 # Display summary
 echo -e "${COLOR_BLUE}========================================${NC}"
@@ -252,18 +269,23 @@ echo ""
 echo "  View services:  kubectl get svc -n ${NAMESPACE}"
 echo "  View pods:      kubectl get pods -n ${NAMESPACE}"
 echo ""
-echo "  Access exp-app: kubectl exec -it ${RELEASE_NAME}-exp-app -n ${NAMESPACE} -- /bin/sh"
-echo ""
-echo "  Run experiments:"
-echo "    kubectl exec -it ${RELEASE_NAME}-exp-app -n ${NAMESPACE} -- /app/exp-app \\"
-echo "      --profile=/config/network-profile.json \\"
-echo "      --duration=5m \\"
-echo "      --concurrency=20 \\"
-echo "      --enable-metrics \\"
-echo "      --results=/results"
-echo ""
-echo "  Retrieve results:"
-echo "    kubectl cp ${NAMESPACE}/${RELEASE_NAME}-exp-app:/results ./exp-app-results"
+if [[ "${ENABLE_IN_CLUSTER_EXP_APP}" == "true" ]]; then
+    echo "  In-cluster exp-app enabled (one pod per peer organization)."
+    echo "  List exp-app pods:"
+    echo "    kubectl get pods -n ${NAMESPACE} -l app.kubernetes.io/name=exp-app"
+    echo "  Access one pod (example mma):"
+    echo "    kubectl exec -it exp-app-mma -n ${NAMESPACE} -- /bin/sh"
+    echo "  Run workload in one pod (example mma):"
+    echo "    kubectl exec -it exp-app-mma -n ${NAMESPACE} -- /app/exp-app --profile=/config/network-profile.json --duration=5m --output-json=/results/results-mma.json --output-csv=/results/results-mma.csv"
+    echo ""
+    echo "  Run all experiment pods:"
+    echo "    make experiments-run"
+    echo ""
+    echo "  Retrieve results:"
+    echo "    kubectl cp ${NAMESPACE}/exp-app-mma:/results ./exp-app-results-mma"
+else
+    echo "  In-cluster exp-app disabled. AKS profile generated at experiments/deploy/vars/network-profile-aks.json"
+fi
 echo ""
 echo "  Pause cluster:  make aks-stop"
 echo "  Teardown:       make aks-down RESOURCE_GROUP=${RESOURCE_GROUP}"

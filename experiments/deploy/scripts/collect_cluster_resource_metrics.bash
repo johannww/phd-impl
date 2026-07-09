@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
 OUTPUT=""
 TARGET_NAMESPACE="${TARGET_NAMESPACE:-fabric-experiments}"
 MONITORING_NAMESPACE="${MONITORING_NAMESPACE:-monitoring}"
@@ -11,7 +13,8 @@ STEP="15s"
 RATE_WINDOW="${RATE_WINDOW:-5m}"
 
 TIMESERIES_FILE="$(mktemp)"
-trap 'rm -f "${TIMESERIES_FILE}"' EXIT
+FABRIC_STORAGE_FILE="$(mktemp)"
+trap 'rm -f "${TIMESERIES_FILE}" "${FABRIC_STORAGE_FILE}"' EXIT
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -320,8 +323,12 @@ if [[ -n "${START_TS}" ]]; then
           chaincodes: $chaincode_memory_per_pod_series
         }
       }
-    }' > "${TIMESERIES_FILE}"
+  }' > "${TIMESERIES_FILE}"
 fi
+
+"${SCRIPT_DIR}/collect_fabric_storage_metrics.bash" \
+  --output "${FABRIC_STORAGE_FILE}" \
+  --target-namespace "${TARGET_NAMESPACE}" >/dev/null
 
 mkdir -p "$(dirname "${OUTPUT}")"
 
@@ -357,6 +364,7 @@ jq -n \
   --argjson orderer_memory_per_pod "${orderer_memory_per_pod}" \
   --argjson exp_app_memory_per_pod "${exp_app_memory_per_pod}" \
   --argjson chaincode_memory_per_pod "${chaincode_memory_per_pod}" \
+  --slurpfile fabric_storage "${FABRIC_STORAGE_FILE}" \
   --slurpfile timeseries "${TIMESERIES_FILE}" \
   '{
     timestamp: $timestamp,
@@ -404,8 +412,18 @@ jq -n \
           exp_app: $exp_app_memory_per_pod,
           chaincodes: $chaincode_memory_per_pod
         }
-      }
+      },
+      fabric_storage: (($fabric_storage[0].metrics) // {
+        peers: {},
+        orderers: {},
+        totals: {
+          peers: {pod_count: 0, ledger_root_bytes: 0},
+          orderers: {pod_count: 0, ledger_root_bytes: 0},
+          all: {pod_count: 0, ledger_root_bytes: 0}
+        }
+      })
     },
+    fabric_storage_inventory: (($fabric_storage[0].inventory) // {peers: {}, orderers: {}}),
     timeseries: ($timeseries[0] // null)
   }' > "${OUTPUT}"
 

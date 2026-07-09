@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 RELEASE_NAME="${RELEASE_NAME:-fabric-experiments}"
 NAMESPACE="${NAMESPACE:-fabric-experiments}"
 CHAINCODE_RELEASE_NAME="${CHAINCODE_RELEASE_NAME:-${RELEASE_NAME}-chaincode}"
+EXP_APP_RELEASE_NAME="${EXP_APP_RELEASE_NAME:-${RELEASE_NAME}-exp-app}"
 TEE_AUCTION_DIR="${TEE_AUCTION_DIR:-${SCRIPT_DIR}/../../../tee_auction}"
 RESOURCE_GROUP="${RESOURCE_GROUP:-carbon}"
 CLUSTER_NAME="${CLUSTER_NAME:-carbon-aks}"
@@ -40,7 +41,7 @@ if ! kubectl cluster-info &>/dev/null; then
 fi
 
 # Step 1: Uninstall chaincode Helm release
-echo -e "${COLOR_YELLOW}[1/4] Uninstalling chaincode Helm release...${NC}"
+echo -e "${COLOR_YELLOW}[1/5] Uninstalling chaincode Helm release...${NC}"
 if helm status "${CHAINCODE_RELEASE_NAME}" -n "${NAMESPACE}" >/dev/null 2>&1; then
     echo "Uninstalling ${CHAINCODE_RELEASE_NAME}..."
     helm uninstall "${CHAINCODE_RELEASE_NAME}" -n "${NAMESPACE}"
@@ -50,8 +51,19 @@ else
     echo ""
 fi
 
-# Step 2: Uninstall main Fabric network Helm release
-echo -e "${COLOR_YELLOW}[2/4] Uninstalling Fabric network Helm release...${NC}"
+# Step 2: Uninstall exp-app Helm release
+echo -e "${COLOR_YELLOW}[2/5] Uninstalling exp-app Helm release...${NC}"
+if helm status "${EXP_APP_RELEASE_NAME}" -n "${NAMESPACE}" >/dev/null 2>&1; then
+    echo "Uninstalling ${EXP_APP_RELEASE_NAME}..."
+    helm uninstall "${EXP_APP_RELEASE_NAME}" -n "${NAMESPACE}"
+    echo -e "${COLOR_GREEN}✓ exp-app release uninstalled${NC}\n"
+else
+    echo "Release ${EXP_APP_RELEASE_NAME} not found in namespace ${NAMESPACE}, skipping."
+    echo ""
+fi
+
+# Step 3: Uninstall main Fabric network Helm release
+echo -e "${COLOR_YELLOW}[3/5] Uninstalling Fabric network Helm release...${NC}"
 if helm status "${RELEASE_NAME}" -n "${NAMESPACE}" >/dev/null 2>&1; then
     echo "Uninstalling ${RELEASE_NAME}..."
     helm uninstall "${RELEASE_NAME}" -n "${NAMESPACE}"
@@ -61,8 +73,8 @@ else
     echo ""
 fi
 
-# Step 3: Uninstall monitoring stack
-echo -e "${COLOR_YELLOW}[3/4] Uninstalling monitoring stack...${NC}"
+# Step 4: Uninstall monitoring stack
+echo -e "${COLOR_YELLOW}[4/5] Uninstalling monitoring stack...${NC}"
 if [[ "${ENABLE_CLUSTER_MONITORING}" == "true" ]]; then
     . "${SCRIPT_DIR}/uninstall_monitoring_stack.bash"
 else
@@ -70,8 +82,8 @@ else
 fi
 echo -e "${COLOR_GREEN}✓ Monitoring cleanup attempted${NC}\n"
 
-# Step 4: Cleanup TEE auction container in Azure
-echo -e "${COLOR_YELLOW}[4/4] Cleaning up TEE auction container...${NC}"
+# Step 5: Cleanup TEE auction container in Azure
+echo -e "${COLOR_YELLOW}[5/5] Cleaning up TEE auction container...${NC}"
 if ! make -C "${TEE_AUCTION_DIR}" cleanup 2>/dev/null; then
     echo -e "${COLOR_YELLOW}Warning: TEE auction cleanup failed or container not found (continuing)${NC}"
 fi
@@ -85,6 +97,7 @@ echo ""
 echo "What was cleaned up:"
 echo "  - Helm release: ${RELEASE_NAME}"
 echo "  - Helm release: ${CHAINCODE_RELEASE_NAME}"
+echo "  - Helm release: ${EXP_APP_RELEASE_NAME}"
 echo "  - TEE auction Azure Container Instance"
 echo ""
 echo "What remains:"
