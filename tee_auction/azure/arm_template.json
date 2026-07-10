@@ -32,14 +32,14 @@
     },
     "cpuCores": {
       "type": "int",
-      "defaultValue": 1,
+      "defaultValue": 4,
       "metadata": {
         "description": "The number of CPU cores to allocate to the container."
       }
     },
     "memoryInGb": {
       "type": "int",
-      "defaultValue": 1,
+      "defaultValue": 6,
       "metadata": {
         "description": "The amount of memory to allocate to the container in gigabytes."
       }
