@@ -165,7 +165,7 @@ echo -e "${COLOR_GREEN}✓ Fabric binaries installed${NC}\n"
 # Step 6: Deploy TEE auction service (in background)
 echo -e "${COLOR_YELLOW}[6/9] Deploying TEE auction service...${NC}"
 (
-    make -C "${TEE_AUCTION_DIR}" RESOURCE_GROUP="${RESOURCE_GROUP}" LOCATION="${TEE_LOCATION}" resource-group docker policy deploy > /dev/null 2>&1
+    make -C "${TEE_AUCTION_DIR}" LOCATION="${TEE_LOCATION}" docker policy deploy > /dev/null 2>&1
     if [ $? -eq 0 ]; then
         echo -e "${COLOR_GREEN}✓ TEE auction service deployed${NC}"
     else
