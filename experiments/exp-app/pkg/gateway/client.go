@@ -80,8 +80,8 @@ func NewClientWrapper(cfg *GatewayConfig) (*ClientWrapper, error) {
 		client.WithSign(signFunc),
 		client.WithHash(hash.SHA256),
 		client.WithClientConnection(conn),
-		client.WithCommitStatusTimeout(60*time.Second),
-		client.WithEndorseTimeout(60*time.Second),
+		client.WithCommitStatusTimeout(120*time.Second),
+		client.WithEndorseTimeout(120*time.Second),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("connect gateway: %w", err)
