@@ -66,6 +66,9 @@ aks-clean:
 aks-stop:
 	./experiments/deploy/azure/shutdown_aks.sh
 
+aks-delete:
+	az aks delete --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME) --yes --no-wait
+
 aks-start:
 	az aks start --resource-group $(RESOURCE_GROUP) --name $(CLUSTER_NAME)
 
