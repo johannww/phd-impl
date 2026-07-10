@@ -31,6 +31,7 @@ network: &defaultNetwork
   externalIPs: []
   userCount: 1
   peerLedgerStateTotalQueryLimit: 150000
+  peerGatewayServiceConcurrencyLimit: 1000
   batch:
     timeout: "500ms"
     maxMessageCount: 500

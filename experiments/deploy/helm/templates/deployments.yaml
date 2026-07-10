@@ -158,6 +158,8 @@ spec:
               value: "info"
             - name: CORE_LEDGER_STATE_TOTALQUERYLIMIT
               value: "{{ $.Values.network.peerLedgerStateTotalQueryLimit | default 100000 }}"
+            - name: CORE_PEER_LIMITS_CONCURRENCY_GATEWAYSERVICE
+              value: "{{ $.Values.network.peerGatewayServiceConcurrencyLimit | default 500 }}"
             - name: CORE_PEER_GATEWAY_ENDORSEMENTTIMEOUT
               value: "120s"
             - name: CORE_PEER_LOCALMSPID
