@@ -31,7 +31,7 @@ policy:
 	echo y | az confcom acipolicygen -a ./azure/arm_template.json
 
 deploy:
-	az deployment group create --resource-group $(RESOURCE_GROUP) --template-file ./azure/arm_template.json $(AZ_QUIET)
+	az deployment group create --resource-group $(RESOURCE_GROUP) --template-file ./azure/arm_template.json $(AZ_QUIET) --parameters location="$(LOCATION)"
 
 cleanup:
 	az container delete --resource-group $(RESOURCE_GROUP) --name carbon-auction-container --yes $(AZ_QUIET)
