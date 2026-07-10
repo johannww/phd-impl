@@ -86,6 +86,14 @@ mkdir -p "${local_run_dir}"
 POD_FLAGS_FILE="$(mktemp)"
 trap 'rm -f "${POD_FLAGS_FILE}"' EXIT
 
+CLUSTER_CONTEXT_JSON="${local_run_dir}/cluster_context.json"
+
+echo "==> Capturing cluster context"
+bash "${SCRIPT_DIR}/collect_cluster_context.bash" \
+  --output "${CLUSTER_CONTEXT_JSON}" \
+  --resource-group "${RESOURCE_GROUP:-carbon}" \
+  --cluster-name "${CLUSTER_NAME:-carbon-aks}"
+
 CLUSTER_METRICS_BASELINE="${local_run_dir}/cluster-metrics-baseline.json"
 CLUSTER_METRICS_FINAL="${local_run_dir}/cluster-metrics-final.json"
 CLUSTER_METRICS_DELTA="${local_run_dir}/cluster-metrics-delta.json"
