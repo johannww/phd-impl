@@ -342,6 +342,7 @@ if command -v jq >/dev/null 2>&1; then
         timestamp: $final.timestamp,
         target_namespace: $final.target_namespace,
         monitoring: $final.monitoring,
+        external_components_inventory: ($final.external_components_inventory // null),
         fabric_storage_inventory: ($final.fabric_storage_inventory // null),
         run_window: {
           start_ts: $run_start_ts,

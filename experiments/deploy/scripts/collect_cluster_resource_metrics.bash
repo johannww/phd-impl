@@ -11,10 +11,20 @@ START_TS=""
 END_TS=""
 STEP="15s"
 RATE_WINDOW="${RATE_WINDOW:-5m}"
+ENABLE_TEE_AUCTION_METRICS="${ENABLE_TEE_AUCTION_METRICS:-true}"
+TEE_RESOURCE_GROUP="${TEE_RESOURCE_GROUP:-${RESOURCE_GROUP:-carbon}}"
+TEE_CONTAINER_NAME="${TEE_CONTAINER_NAME:-carbon-auction-container}"
+TEE_METRICS_URL="${TEE_METRICS_URL:-}"
+TEE_METRICS_SCHEME="${TEE_METRICS_SCHEME:-https}"
+TEE_METRICS_PORT="${TEE_METRICS_PORT:-8080}"
+TEE_METRICS_PATH="${TEE_METRICS_PATH:-/metrics}"
+TEE_METRICS_INSECURE="${TEE_METRICS_INSECURE:-true}"
+TEE_AZURE_INTERVAL="${TEE_AZURE_INTERVAL:-PT1M}"
 
 TIMESERIES_FILE="$(mktemp)"
 FABRIC_STORAGE_FILE="$(mktemp)"
-trap 'rm -f "${TIMESERIES_FILE}" "${FABRIC_STORAGE_FILE}"' EXIT
+TEE_AZURE_SERIES_FILE="$(mktemp)"
+trap 'rm -f "${TIMESERIES_FILE}" "${FABRIC_STORAGE_FILE}" "${TEE_AZURE_SERIES_FILE}"' EXIT
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -185,10 +195,219 @@ query_prometheus_range_grouped() {
     end'
 }
 
+epoch_to_iso8601() {
+  date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ
+}
+
+query_tee_container_context() {
+  if [[ "${ENABLE_TEE_AUCTION_METRICS}" != "true" ]]; then
+    echo '{}'
+    return 0
+  fi
+
+  if ! command -v az >/dev/null 2>&1; then
+    echo '{}'
+    return 0
+  fi
+
+  if ! az account show >/dev/null 2>&1; then
+    echo '{}'
+    return 0
+  fi
+
+  az container show \
+    --resource-group "${TEE_RESOURCE_GROUP}" \
+    --name "${TEE_CONTAINER_NAME}" \
+    --query '{resource_id:id,ip:ipAddress.ip,location:location,name:name}' \
+    -o json 2>/dev/null || echo '{}'
+}
+
+query_tee_azure_metrics_snapshot() {
+  local resource_id="$1"
+
+  if [[ -z "${resource_id}" ]]; then
+    echo 'null'
+    return 0
+  fi
+
+  local end_iso start_iso raw now_epoch
+  now_epoch="$(date +%s)"
+  end_iso="$(epoch_to_iso8601 "${now_epoch}")"
+  start_iso="$(epoch_to_iso8601 "$((now_epoch - 600))")"
+
+  raw="$(az monitor metrics list \
+    --resource "${resource_id}" \
+    --metrics CPUUsage MemoryUsage \
+    --aggregation Maximum \
+    --interval "${TEE_AZURE_INTERVAL}" \
+    --start-time "${start_iso}" \
+    --end-time "${end_iso}" \
+    -o json 2>/dev/null || true)"
+
+  if [[ -z "${raw}" ]]; then
+    echo 'null'
+    return 0
+  fi
+
+  jq -c '
+    def max_sample($names):
+      ([.value[]? as $metric | select(($names | index($metric.name.value)) != null) | $metric.timeseries[]?.data[]? | .maximum | select(. != null)] | max) // null;
+
+    {
+      cpu_usage_burst_max_millicores: max_sample(["CPUUsage", "CpuUsage"]),
+      memory_usage_burst_max_bytes: max_sample(["MemoryUsage"])
+    }
+  ' <<< "${raw}"
+}
+
+query_tee_azure_metrics_series() {
+  local resource_id="$1"
+
+  if [[ -z "${resource_id}" || -z "${START_TS}" ]]; then
+    echo 'null'
+    return 0
+  fi
+
+  local raw start_iso end_iso
+  start_iso="$(epoch_to_iso8601 "${START_TS}")"
+  end_iso="$(epoch_to_iso8601 "${END_TS}")"
+
+  raw="$(az monitor metrics list \
+    --resource "${resource_id}" \
+    --metrics CPUUsage MemoryUsage \
+    --aggregation Maximum \
+    --interval "${TEE_AZURE_INTERVAL}" \
+    --start-time "${start_iso}" \
+    --end-time "${end_iso}" \
+    -o json 2>/dev/null || true)"
+
+  if [[ -z "${raw}" ]]; then
+    echo 'null'
+    return 0
+  fi
+
+  jq -c '
+    def series($names):
+      [
+        .value[]? as $metric
+        | select(($names | index($metric.name.value)) != null)
+        | $metric.timeseries[]?.data[]?
+        | select(.maximum != null)
+        | {ts: (.timeStamp | fromdateiso8601), value: .maximum}
+      ];
+
+    {
+      cpu_usage_burst_max_millicores: series(["CPUUsage", "CpuUsage"]),
+      memory_usage_burst_max_bytes: series(["MemoryUsage"])
+    }
+  ' <<< "${raw}"
+}
+
+query_tee_app_metrics() {
+  local metrics_url="$1"
+
+  if [[ -z "${metrics_url}" ]]; then
+    echo 'null'
+    return 0
+  fi
+
+  local curl_args=(-fsS)
+  if [[ "${TEE_METRICS_INSECURE}" == "true" ]]; then
+    curl_args+=(-k)
+  fi
+
+  local raw
+  raw="$(curl "${curl_args[@]}" "${metrics_url}" 2>/dev/null || true)"
+  if [[ -z "${raw}" ]]; then
+    echo 'null'
+    return 0
+  fi
+
+  jq -Rn '
+    def parse_labels($text):
+      if ($text == null or $text == "") then {}
+      else
+        reduce ($text | split(",")[]) as $pair ({};
+          if ($pair | length) == 0 then .
+          else ($pair | capture("(?<k>[^=]+)=\"(?<v>[^\"]*)\"")) as $m | .[$m.k] = $m.v
+          end
+        )
+      end;
+
+    def add_to_map($map; $key; $value):
+      $map + {($key): (($map[$key] // 0) + $value)};
+
+    def route_key($labels):
+      ($labels.method // "unknown") + " " + ($labels.route // "unknown") + " " + ($labels.status // "unknown");
+
+    reduce inputs as $line (
+      {
+        http_requests_total: {total: 0, by_route: {}},
+        http_request_duration_seconds: {sum: 0, count: 0, by_route_sum: {}, by_route_count: {}},
+        http_in_flight_requests: 0,
+        auction_requests_total: {},
+        auction_run_duration_seconds: {sum: 0, count: 0},
+        report_deserialize_total: {}
+      };
+      if ($line | test("^tee_auction_http_requests_total(\\{|\\s)")) then
+        ($line | capture("^tee_auction_http_requests_total(?:\\{(?<labels>[^}]*)\\})?\\s+(?<value>[-+0-9.eE]+)$")) as $m |
+        ($m.value | tonumber) as $value |
+        (parse_labels($m.labels // "")) as $labels |
+        .http_requests_total.total += $value |
+        .http_requests_total.by_route = add_to_map(.http_requests_total.by_route; route_key($labels); $value)
+      elif ($line | test("^tee_auction_http_request_duration_seconds_sum(\\{|\\s)")) then
+        ($line | capture("^tee_auction_http_request_duration_seconds_sum(?:\\{(?<labels>[^}]*)\\})?\\s+(?<value>[-+0-9.eE]+)$")) as $m |
+        ($m.value | tonumber) as $value |
+        (parse_labels($m.labels // "")) as $labels |
+        .http_request_duration_seconds.sum += $value |
+        .http_request_duration_seconds.by_route_sum = add_to_map(.http_request_duration_seconds.by_route_sum; route_key($labels); $value)
+      elif ($line | test("^tee_auction_http_request_duration_seconds_count(\\{|\\s)")) then
+        ($line | capture("^tee_auction_http_request_duration_seconds_count(?:\\{(?<labels>[^}]*)\\})?\\s+(?<value>[-+0-9.eE]+)$")) as $m |
+        ($m.value | tonumber) as $value |
+        (parse_labels($m.labels // "")) as $labels |
+        .http_request_duration_seconds.count += $value |
+        .http_request_duration_seconds.by_route_count = add_to_map(.http_request_duration_seconds.by_route_count; route_key($labels); $value)
+      elif ($line | test("^tee_auction_http_in_flight_requests\\s")) then
+        ($line | capture("^tee_auction_http_in_flight_requests\\s+(?<value>[-+0-9.eE]+)$").value | tonumber) as $value |
+        .http_in_flight_requests = $value
+      elif ($line | test("^tee_auction_auction_requests_total(\\{|\\s)")) then
+        ($line | capture("^tee_auction_auction_requests_total(?:\\{(?<labels>[^}]*)\\})?\\s+(?<value>[-+0-9.eE]+)$")) as $m |
+        ($m.value | tonumber) as $value |
+        (parse_labels($m.labels // "")) as $labels |
+        .auction_requests_total = add_to_map(.auction_requests_total; ($labels.result // "unknown"); $value)
+      elif ($line | test("^tee_auction_auction_run_duration_seconds_sum\\s")) then
+        ($line | capture("^tee_auction_auction_run_duration_seconds_sum\\s+(?<value>[-+0-9.eE]+)$").value | tonumber) as $value |
+        .auction_run_duration_seconds.sum = $value
+      elif ($line | test("^tee_auction_auction_run_duration_seconds_count\\s")) then
+        ($line | capture("^tee_auction_auction_run_duration_seconds_count\\s+(?<value>[-+0-9.eE]+)$").value | tonumber) as $value |
+        .auction_run_duration_seconds.count = $value
+      elif ($line | test("^tee_auction_report_deserialize_total(\\{|\\s)")) then
+        ($line | capture("^tee_auction_report_deserialize_total(?:\\{(?<labels>[^}]*)\\})?\\s+(?<value>[-+0-9.eE]+)$")) as $m |
+        ($m.value | tonumber) as $value |
+        (parse_labels($m.labels // "")) as $labels |
+        .report_deserialize_total = add_to_map(.report_deserialize_total; ($labels.result // "unknown"); $value)
+      else
+        .
+      end
+    )
+  ' <<< "${raw}"
+}
+
 peer_pod_regex=".*-peer-.*"
 orderer_pod_regex=".*-orderer-.*"
 exp_app_pod_regex="^exp-app-.*"
 chaincode_pod_regex="^(carbon|interop)-.*"
+
+TEE_CONTEXT_JSON="$(query_tee_container_context)"
+TEE_RESOURCE_ID="$(jq -r '.resource_id // empty' <<< "${TEE_CONTEXT_JSON}")"
+TEE_IP="$(jq -r '.ip // empty' <<< "${TEE_CONTEXT_JSON}")"
+
+if [[ -z "${TEE_METRICS_URL}" && -n "${TEE_IP}" ]]; then
+  TEE_METRICS_URL="${TEE_METRICS_SCHEME}://${TEE_IP}:${TEE_METRICS_PORT}${TEE_METRICS_PATH}"
+fi
+
+TEE_AZURE_METRICS_SNAPSHOT="$(query_tee_azure_metrics_snapshot "${TEE_RESOURCE_ID}")"
+TEE_APP_METRICS_SNAPSHOT="$(query_tee_app_metrics "${TEE_METRICS_URL}")"
 
 cpu_namespace_query="rate(container_cpu_usage_seconds_total{namespace=\"${TARGET_NAMESPACE}\",pod!=\"\"}[${RATE_WINDOW}])"
 memory_namespace_query="container_memory_working_set_bytes{namespace=\"${TARGET_NAMESPACE}\",pod!=\"\"}"
@@ -248,6 +467,7 @@ exp_app_memory_per_pod="$(query_prometheus_map "${exp_app_memory_per_pod_query}"
 chaincode_memory_per_pod="$(query_prometheus_map "${chaincode_memory_per_pod_query}" "pod")"
 
 printf 'null' > "${TIMESERIES_FILE}"
+printf 'null' > "${TEE_AZURE_SERIES_FILE}"
 if [[ -n "${START_TS}" ]]; then
   peer_cpu_total_series="$(query_prometheus_range_values "${peer_cpu_total_query}")"
   orderer_cpu_total_series="$(query_prometheus_range_values "${orderer_cpu_total_query}")"
@@ -324,6 +544,8 @@ if [[ -n "${START_TS}" ]]; then
         }
       }
   }' > "${TIMESERIES_FILE}"
+
+  query_tee_azure_metrics_series "${TEE_RESOURCE_ID}" > "${TEE_AZURE_SERIES_FILE}"
 fi
 
 "${SCRIPT_DIR}/collect_fabric_storage_metrics.bash" \
@@ -337,6 +559,11 @@ jq -n \
   --arg target_namespace "${TARGET_NAMESPACE}" \
   --arg monitoring_namespace "${MONITORING_NAMESPACE}" \
   --arg monitoring_release "${MONITORING_RELEASE_NAME}" \
+  --arg tee_resource_group "${TEE_RESOURCE_GROUP}" \
+  --arg tee_container_name "${TEE_CONTAINER_NAME}" \
+  --arg tee_resource_id "${TEE_RESOURCE_ID}" \
+  --arg tee_ip "${TEE_IP}" \
+  --arg tee_metrics_url "${TEE_METRICS_URL}" \
   --argjson cluster_cpu_cores_used "${cluster_cpu_cores_used}" \
   --argjson cluster_memory_working_set_bytes "${cluster_memory_working_set_bytes}" \
   --argjson cluster_network_receive_bytes_per_sec "${cluster_network_receive_bytes_per_sec}" \
@@ -364,7 +591,10 @@ jq -n \
   --argjson orderer_memory_per_pod "${orderer_memory_per_pod}" \
   --argjson exp_app_memory_per_pod "${exp_app_memory_per_pod}" \
   --argjson chaincode_memory_per_pod "${chaincode_memory_per_pod}" \
+  --argjson tee_azure_metrics_snapshot "${TEE_AZURE_METRICS_SNAPSHOT}" \
+  --argjson tee_app_metrics_snapshot "${TEE_APP_METRICS_SNAPSHOT}" \
   --slurpfile fabric_storage "${FABRIC_STORAGE_FILE}" \
+  --slurpfile tee_azure_series "${TEE_AZURE_SERIES_FILE}" \
   --slurpfile timeseries "${TIMESERIES_FILE}" \
   '{
     timestamp: $timestamp,
@@ -413,6 +643,12 @@ jq -n \
           chaincodes: $chaincode_memory_per_pod
         }
       },
+      external_components: {
+        tee_auction: {
+          azure_monitor: ($tee_azure_metrics_snapshot // null),
+          app_metrics: ($tee_app_metrics_snapshot // null)
+        }
+      },
       fabric_storage: (($fabric_storage[0].metrics) // {
         peers: {},
         orderers: {},
@@ -423,8 +659,23 @@ jq -n \
         }
       })
     },
+    external_components_inventory: {
+      tee_auction: {
+        resource_group: $tee_resource_group,
+        container_name: $tee_container_name,
+        resource_id: $tee_resource_id,
+        ip: $tee_ip,
+        metrics_url: $tee_metrics_url
+      }
+    },
     fabric_storage_inventory: (($fabric_storage[0].inventory) // {peers: {}, orderers: {}}),
-    timeseries: ($timeseries[0] // null)
+    timeseries: (($timeseries[0] // null) | if . == null then null else . + {
+      external_components: {
+        tee_auction: {
+          azure_monitor: (($tee_azure_series[0]) // null)
+        }
+      }
+    } end)
   }' > "${OUTPUT}"
 
 echo "Cluster resource metrics saved: ${OUTPUT}"
