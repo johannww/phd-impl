@@ -18,7 +18,8 @@ TEE_AUCTION_DIR="${TEE_AUCTION_DIR:-${SCRIPT_DIR}/../../../tee_auction}"
 # AKS-specific defaults
 RESOURCE_GROUP="${RESOURCE_GROUP:-carbon}"
 CLUSTER_NAME="${CLUSTER_NAME:-carbon-aks}"
-LOCATION="${LOCATION:-centralindia}"
+LOCATION="${LOCATION:-westcentralus}"
+TEE_LOCATION="${TEE_LOCATION:-eastus}" # Azure Confidential Computing is not available in all regions; eastus is a common choice for SEV-SNP support
 NODE_COUNT="${NODE_COUNT:-3}"
 VM_SIZE="${VM_SIZE:-Standard_D4s_v5}"  # 4 vCPU, 16 GB RAM
 ENABLE_IN_CLUSTER_EXP_APP="${ENABLE_IN_CLUSTER_EXP_APP:-true}"
@@ -164,7 +165,7 @@ echo -e "${COLOR_GREEN}✓ Fabric binaries installed${NC}\n"
 # Step 6: Deploy TEE auction service (in background)
 echo -e "${COLOR_YELLOW}[6/9] Deploying TEE auction service...${NC}"
 (
-    make -C "${TEE_AUCTION_DIR}" RESOURCE_GROUP="${RESOURCE_GROUP}" LOCATION="${LOCATION}" resource-group docker policy deploy > /dev/null 2>&1
+    make -C "${TEE_AUCTION_DIR}" RESOURCE_GROUP="${RESOURCE_GROUP}" LOCATION="${TEE_LOCATION}" resource-group docker policy deploy > /dev/null 2>&1
     if [ $? -eq 0 ]; then
         echo -e "${COLOR_GREEN}✓ TEE auction service deployed${NC}"
     else
