@@ -137,7 +137,7 @@ sicar:
     tag: "latest"
     pullPolicy: Always
   mockgen:
-    count: 100
+    count: 1000
     seed: "sicar-dev"
   servicePort: 8443
   nodePort: 30443
