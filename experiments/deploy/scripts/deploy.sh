@@ -15,6 +15,7 @@ CHART_DIR="${CHART_DIR:-${SCRIPT_DIR}/../helm}"
 CHAINCODE_CHART_DIR="${CHAINCODE_CHART_DIR:-${CHART_DIR}/charts/chaincode-service}"
 CHAINCODE_RELEASE_NAME="${CHAINCODE_RELEASE_NAME:-${RELEASE_NAME}-chaincode}"
 TEE_AUCTION_DIR="${TEE_AUCTION_DIR:-${SCRIPT_DIR}/../../../tee_auction}"
+TEE_LOCATION="${TEE_LOCATION:-centralindia}"
 CPUS="${CPUS:-6}"
 MEMORY="${MEMORY:-12000}"
 ENABLE_IN_CLUSTER_EXP_APP="${ENABLE_IN_CLUSTER_EXP_APP:-true}"
@@ -27,7 +28,7 @@ NC='\033[0m' # No Color
 
 (
     echo "Deploying confidential container (tee_auction): docker, policy, deploy..."
-    make -C "${TEE_AUCTION_DIR}" resource-group docker policy deploy > /dev/null 2>&1
+    make -C "${TEE_AUCTION_DIR}" LOCATION="${TEE_LOCATION}" resource-group docker policy deploy > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "${COLOR_RED}Error deploying tee_auction confidential container. Please check the output above for details.${NC}"
     fi

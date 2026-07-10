@@ -4,11 +4,12 @@ REGISTRY_NAME=carbonchain
 REGISTRY=ghcr.io/johannww/phd-impl
 RESOURCE_GROUP=carbon
 AZ_QUIET=--only-show-errors --output none
+LOCATION=centralindia
 
 all: resource-group registry docker policy deploy verify-policy-image-layers
 
 resource-group:
-	az group create --name $(RESOURCE_GROUP) --location centralindia
+	az group create --name $(RESOURCE_GROUP) --location $(LOCATION)
 
 registry:
 	az acr create --resource-group carbon --name $(REGISTRY_NAME) --sku Basic --admin-enabled true
