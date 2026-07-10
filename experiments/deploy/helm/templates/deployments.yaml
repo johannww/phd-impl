@@ -160,6 +160,8 @@ spec:
               value: "{{ $.Values.network.peerLedgerStateTotalQueryLimit | default 100000 }}"
             - name: CORE_PEER_LIMITS_CONCURRENCY_GATEWAYSERVICE
               value: "{{ $.Values.network.peerGatewayServiceConcurrencyLimit | default 500 }}"
+            - name: CORE_CHAINCODE_EXECUTETIMEOUT
+              value: "{{ $.Values.network.peerChaincodeExecuteTimeout | default "30s" }}"
             - name: CORE_PEER_GATEWAY_ENDORSEMENTTIMEOUT
               value: "120s"
             - name: CORE_PEER_LOCALMSPID

@@ -32,6 +32,7 @@ network: &defaultNetwork
   userCount: 1
   peerLedgerStateTotalQueryLimit: 150000
   peerGatewayServiceConcurrencyLimit: 1000
+  peerChaincodeExecuteTimeout: "120s"
   batch:
     timeout: "500ms"
     maxMessageCount: 500
